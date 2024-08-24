@@ -1,2 +1,2 @@
 # makesLifeEasier
-For CS307 project
+For CS30700 project
