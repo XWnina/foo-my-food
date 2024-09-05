@@ -30,8 +30,8 @@ FOO MY FOOD is an application that helps users automatically categorize and stor
 ## Prerequisites
 
 Before you can run this project, you need to install and configure the following:
-But I highly recommend looking for video tutorials online for all installation processes especially environment configuration. 
-There are some environment configurations and settings that are not mentioned in this tutorial.
+**！！！But I highly recommend looking for video tutorials online for all installation processes especially environment configuration.**
+There are some environment configurations and settings that are **not mentioned** in this tutorial.
 
 ### 1. Install JDK 17
 - Download JDK 17 from Oracle: [Oracle JDK 17](https://www.oracle.com/java/technologies/javase-jdk17-downloads.html)
