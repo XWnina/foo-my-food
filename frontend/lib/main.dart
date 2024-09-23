@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'user_info_page.dart';
+import 'login_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,7 +33,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 30, 108, 168)),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Foo my food Demo'),
+      home: const LoginPage(),
     );
   }
 }
@@ -72,6 +74,14 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _selectedIndex = index;
     });
+    // 判断选中的tab
+    if (index == 2) {
+      // 如果选择了用户信息页面，进行导航
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const UserInfoPage()),
+      );
+    }
   }
 
   @override
