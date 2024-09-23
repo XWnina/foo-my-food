@@ -10,24 +10,75 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Foo my food Demo',
+      title: 'Change Password Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 30, 108, 168)),
         useMaterial3: true,
       ),
-      home: const PasswordResetPage(),
+      home: const ChangePasswordPage(),
     );
   }
 }
 
-class PasswordResetPage extends StatelessWidget {
-  const PasswordResetPage({super.key});
+class ChangePasswordPage extends StatefulWidget {
+  const ChangePasswordPage({super.key});
+
+  @override
+  State<ChangePasswordPage> createState() => _ChangePasswordPageState();
+}
+
+class _ChangePasswordPageState extends State<ChangePasswordPage> {
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+
+  void _changePassword() {
+    String password = _passwordController.text;
+    String confirmPassword = _confirmPasswordController.text;
+
+    if (password == confirmPassword) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Success'),
+            content: const Text('Password changed successfully.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: const Text('Passwords do not match. Please try again.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Password Reset'),
+        title: const Text('Change Password'),
         backgroundColor: const Color.fromARGB(255, 30, 108, 168),
       ),
       body: Padding(
@@ -36,54 +87,37 @@ class PasswordResetPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'Enter your username and email to reset your password',
+              'Enter your new password twice to confirm the change',
               style: TextStyle(fontSize: 18),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            // Username input field
+            // New password input field
             TextField(
+              controller: _passwordController,
               decoration: InputDecoration(
-                labelText: 'Username',
+                labelText: 'New Password',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
-              keyboardType: TextInputType.text,
+              obscureText: true, // For password input
             ),
             const SizedBox(height: 20),
-            // Email input field
+            // Confirm password input field
             TextField(
+              controller: _confirmPasswordController,
               decoration: InputDecoration(
-                labelText: 'Email',
+                labelText: 'Confirm New Password',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
-              keyboardType: TextInputType.emailAddress,
+              obscureText: true, // For password input
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                // Add your verification logic here
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Verification'),
-                      content: const Text('A verification link has been sent to your email. Reset your password in your email.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
+              onPressed: _changePassword,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 250, 251, 251), // Matches the app color
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -92,7 +126,7 @@ class PasswordResetPage extends StatelessWidget {
                 ),
               ),
               child: const Text(
-                'Send Verification',
+                'Change Password',
                 style: TextStyle(fontSize: 16),
               ),
             ),

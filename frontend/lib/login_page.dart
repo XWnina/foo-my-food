@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'main.dart';
 import 'create_account_page.dart';
-import 'set_password.dart';
+import 'set_password_info_varification.dart';
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 

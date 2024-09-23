@@ -1,0 +1,1 @@
+ /Users/myfile/development/cs307/foo-my-food/frontend/.dart_tool/flutter_build/c4992e4b0595d227924b5da9e6dc2a93/native_assets.yaml: 
