@@ -8,3 +8,12 @@ frontend/linux/flutter/generated_plugin_registrant.cc
 frontend/linux/flutter/generated_plugins.cmake
 frontend/macos/Flutter/GeneratedPluginRegistrant.swift
 frontend/windows/flutter/generated_plugins.cmake
+frontend/windows/flutter/generated_plugin_registrant.cc
+frontend/windows/flutter/generated_plugins.cmake
+frontend/macos/Flutter/GeneratedPluginRegistrant.swift
+frontend/macos/Flutter/Flutter-Release.xcconfig
+frontend/macos/Flutter/Flutter-Debug.xcconfig
+frontend/linux/flutter/generated_plugins.cmake
+frontend/linux/flutter/generated_plugin_registrant.cc
+frontend/ios/Flutter/Release.xcconfig
+frontend/ios/Flutter/Debug.xcconfig
