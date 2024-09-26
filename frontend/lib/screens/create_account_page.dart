@@ -124,8 +124,7 @@ class CreateAccountState extends State<CreateAccount> {
                     ? null // 如果密码不匹配，禁用按钮
                     : () {
                         // 如果密码匹配，继续创建账号
-                        print(
-                            'Passwords match, proceed with account creation.');
+                      
                       },
                 child: const Text(
                   'Create',
