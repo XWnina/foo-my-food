@@ -25,18 +25,13 @@ class CreateAccountState extends State<CreateAccount> {
     }
   }
 
-  // 验证两次密码是否匹配
-  void _validatePassword() {
-    setState(() {
-      // 如果密码不匹配，设置 _passwordsDoNotMatch 为 true，否则为 false
-      _passwordsDoNotMatch = _passwordController.text != _confirmPasswordController.text;
-    });
+  /// 验证两次密码是否匹配
+void _checkPasswordsMatch(String value) {
+  setState(() {
+    _passwordsDoNotMatch = _passwordController.text != _confirmPasswordController.text;
+  });
+}
 
-    if (!_passwordsDoNotMatch) {
-      // 如果匹配，则执行其他逻辑，如创建账号
-      print('Passwords match, proceed with account creation.');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,101 +41,102 @@ class CreateAccountState extends State<CreateAccount> {
         title: const Text('Create Account'),
         backgroundColor: const Color(0xFF47709B),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
+      body: SafeArea(
+        child: ListView(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 页面标题
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 30, bottom: 10),
-                  child: Text(
-                    'CREATE ACCOUNT',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+          children: [
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.only(top: 30, bottom: 10),
+                child: Text(
+                  'CREATE ACCOUNT',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
                 ),
               ),
+            ),
 
-              // 头像上传框
-              Center(
-                child: GestureDetector(
-                  onTap: _pickImage, // 点击时调用选择图片的方法
-                  child: CircleAvatar(
-                    radius: 50, // 圆形头像的半径
-                    backgroundColor: Colors.grey[300], // 默认背景颜色
-                    backgroundImage: _image != null ? FileImage(_image!) : null, // 如果有图片则显示
-                    child: _image == null
-                        ? Icon(
-                            Icons.camera_alt,
-                            color: Colors.grey[700], // 上传图标
-                            size: 30,
-                          )
-                        : null, // 如果没有图片则显示图标
+            // 头像上传框
+            Center(
+              child: GestureDetector(
+                onTap: _pickImage, // 点击时调用选择图片的方法
+                child: CircleAvatar(
+                  radius: 50, // 圆形头像的半径
+                  backgroundColor: Colors.grey[300], // 默认背景颜色
+                  backgroundImage: _image != null ? FileImage(_image!) : null, // 如果有图片则显示
+                  child: _image == null
+                      ? Icon(
+                          Icons.camera_alt,
+                          color: Colors.grey[700], // 上传图标
+                          size: 30,
+                        )
+                      : null, // 如果没有图片则显示图标
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // 输入框: First Name
+            _buildTextInputField(label: 'FIRST NAME'),
+
+            // 输入框: Last Name
+            _buildTextInputField(label: 'LAST NAME'),
+
+            // 输入框: Email Address
+            _buildTextInputField(label: 'EMAIL ADDRESS'),
+
+            // 输入框: Username
+            _buildTextInputField(label: 'USERNAME'),
+
+            // 输入框: Phone Number
+            _buildTextInputField(label: 'PHONE NUMBER'),
+
+            // 输入框: Password
+            _buildPasswordInputField(label: 'PASSWORD', controller: _passwordController),
+
+            // 输入框: Confirm Password
+            _buildPasswordInputField(
+              label: 'CONFIRM PASSWORD',
+              controller: _confirmPasswordController,
+              isError: _passwordsDoNotMatch, // 密码不匹配时设置错误
+              onChanged: _checkPasswordsMatch, // 每次输入时都检查密码是否匹配
+            ),
+
+            if (_passwordsDoNotMatch) // 如果密码不一致，显示错误信息
+              const Padding(
+                padding: EdgeInsets.only(top: 8.0),
+                child: Text(
+                  'Passwords do not match',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+
+            const SizedBox(height: 20), // 增加一些间距
+            Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15), backgroundColor: const Color(0xFF47709B),
+                ),
+                onPressed: _passwordsDoNotMatch
+                    ? null // 如果密码不匹配，禁用按钮
+                    : () {
+                        // 如果密码匹配，继续创建账号
+                        print('Passwords match, proceed with account creation.');
+                      },
+                child: const Text(
+                  'Create',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-
-              // 输入框: First Name
-              _buildTextInputField(label: 'FIRST NAME'),
-
-              // 输入框: Last Name
-              _buildTextInputField(label: 'LAST NAME'),
-
-              // 输入框: Email Address
-              _buildTextInputField(label: 'EMAIL ADDRESS'),
-
-              // 输入框: Username
-              _buildTextInputField(label: 'USERNAME'),
-
-              // 输入框: Phone Number
-              _buildTextInputField(label: 'PHONE NUMBER'),
-
-              // 输入框: Password
-              _buildPasswordInputField(label: 'PASSWORD', controller: _passwordController),
-
-              // 输入框: Confirm Password
-              _buildPasswordInputField(
-                label: 'CONFIRM PASSWORD',
-                controller: _confirmPasswordController,
-                isError: _passwordsDoNotMatch, // 密码不匹配时设置错误
-              ),
-
-              if (_passwordsDoNotMatch) // 如果密码不一致，显示错误信息
-                const Padding(
-                  padding: EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    'Passwords do not match',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                ),
-
-              // 按钮: Create Account
-              const SizedBox(height: 20), // 增加一些间距
-              Center(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15), backgroundColor: const Color(0xFF47709B),
-                  ),
-                  onPressed: _validatePassword, // 验证密码是否一致
-                  child: const Text(
-                    'Create',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );
@@ -181,12 +177,18 @@ class CreateAccountState extends State<CreateAccount> {
   }
 
   // 创建密码输入框的通用方法，支持错误提示
-  Widget _buildPasswordInputField({required String label, required TextEditingController controller, bool isError = false}) {
+  Widget _buildPasswordInputField({
+    required String label,
+    required TextEditingController controller,
+    bool isError = false,
+    void Function(String)? onChanged, // 增加 onChanged 回调
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextField(
         controller: controller,
         obscureText: true, // 隐藏密码
+        onChanged: onChanged, // 当输入改变时调用回调
         decoration: InputDecoration(
           labelText: label,
           filled: true,
