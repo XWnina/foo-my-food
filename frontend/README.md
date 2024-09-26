@@ -44,23 +44,23 @@ There are some environment configurations and settings that are **not mentioned*
 
 ### 3. Install Xcode (for iOS Development)
 - Download Xcode from the Mac App Store.
-  
+
 ### 4. Install Android Studio (for Android Development)
 - Download and install Android Studio: [Android Studio](https://developer.android.com/studio).
-  
+
 ### 5. Install Flutter Plugin in VS Code
 - Download and install [Visual Studio Code](https://code.visualstudio.com/).
 - To install the Flutter plugin in VS Code, follow these steps:
   1. Open **VS Code**.
-  2. Go to the **Extensions** 
-  3. In the search bar, search `Flutter` 
+  2. Go to the **Extensions**
+  3. In the search bar, search `Flutter`
   4. Click **Install** on both the **Flutter** and **Dart** extensions.
 ### 6. Verify Environment Setup with `flutter doctor`
 - After installing all the necessary tools, use the following command to check if your environment is properly configured:
-  
+
   ```bash
   flutter doctor
-  
+
 - If there are no errors in the installation it will show the result in the picture.
 <img width="570" alt="截屏2024-09-05 下午5 34 35" src="https://github.com/user-attachments/assets/d4af7ed6-f4cd-492e-a497-abab1868ded4">
 
@@ -87,5 +87,9 @@ To run the project, use the following command:
 flutter run
 ```
 
+## file strusture
+models: This folder is typically used to hold data models, such as classes or structures, that represent the various data structures in your application. The models folder may contain definitions of objects in your application, such as users, products, orders, and so on.
+
+utils: This folder is usually used to store utility classes or generic helper functions that can be used by different parts of the overall project. Common utility class code includes common functions such as date formatting, string handling, and so on.
 
 
