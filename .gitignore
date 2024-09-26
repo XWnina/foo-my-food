@@ -3,3 +3,9 @@
 
 *.class
 
+frontend/.idea/caches/deviceStreaming.xml
+frontend/.idea/vcs.xml
+frontend/.idea/modules.xml
+frontend/.idea/libraries/Flutter_Plugins.xml
+frontend/.idea/libraries/Dart_SDK.xml
+frontend/.idea/frontend.iml
