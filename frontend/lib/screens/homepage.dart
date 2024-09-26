@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'user_info_page.dart';
+import 'add_ingredient_manually.dart';
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
@@ -31,6 +32,13 @@ class _MyHomePageState extends State<MyHomePage> {
       // called again, and so nothing would appear to happen.
       _counter++;
     });
+  }
+  // Remove the increment function and replace it with navigation to the ingredient page
+  void _navigateToAddIngredient() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AddIngredientPage()), // Navigate to Add Ingredient Page
+    );
   }
   void _onItemTapped(int index) {
     setState(() {
@@ -95,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
 
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
+        onPressed: _navigateToAddIngredient,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
