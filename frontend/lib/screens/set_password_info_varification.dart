@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:foo_my_food_app/utils/colors.dart';// 导入 color.dart 文件
+import 'package:foo_my_food_app/utils/colors.dart'; // 导入 color.dart 文件
 import 'components/text_field.dart'; // 导入通用输入框函数
 
 void main() {
@@ -22,8 +22,17 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class PasswordResetPage extends StatelessWidget {
+class PasswordResetPage extends StatefulWidget {
   const PasswordResetPage({super.key});
+
+  @override
+  PasswordResetPageState createState() => PasswordResetPageState();
+}
+
+class PasswordResetPageState extends State<PasswordResetPage> {
+  // 创建 TextEditingController
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -48,12 +57,18 @@ class PasswordResetPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // 使用通用的 buildTextInputField 替代
-            buildTextInputField(label: 'USERNAME'),
+            // 使用通用的 buildTextInputField 替代，并传递 controller
+            buildTextInputField(
+              label: 'USERNAME',
+              controller: _usernameController, // 传递用户名输入框的控制器
+            ),
             const SizedBox(height: 20),
 
-            // 使用通用的 buildTextInputField 替代
-            buildTextInputField(label: 'EMAIL'),
+            // 使用通用的 buildTextInputField 替代，并传递 controller
+            buildTextInputField(
+              label: 'EMAIL',
+              controller: _emailController, // 传递邮箱输入框的控制器
+            ),
 
             const SizedBox(height: 20),
             ElevatedButton(
