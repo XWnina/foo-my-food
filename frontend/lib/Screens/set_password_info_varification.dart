@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'components/text_field.dart'; // 导入通用输入框函数
 
 void main() {
   runApp(const MyApp());
@@ -41,49 +42,18 @@ class PasswordResetPage extends StatelessWidget {
           children: [
             const Text(
               'Enter your username and email to reset your password',
-              style: TextStyle(fontSize: 18, color: Color.fromARGB(255, 18, 32, 47)), 
+              style: TextStyle(fontSize: 18, color: Color.fromARGB(255, 18, 32, 47)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            // Username input field
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'USERNAME',
-                labelStyle: const TextStyle(color: Color.fromARGB(255, 18, 32, 47)), // 标签字体颜色
-                filled: true, // 启用背景填充
-                fillColor: Colors.white, // 填充背景为白色
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: const BorderSide(color: Color.fromARGB(255, 18, 32, 47)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: const BorderSide(color: Color.fromARGB(255, 18, 32, 47)),
-                ),
-              ),
-              style: const TextStyle(color: Color.fromARGB(255, 18, 32, 47)), // 输入字体颜色
-              keyboardType: TextInputType.text,
-            ),
+
+            // 使用通用的 buildTextInputField 替代
+            buildTextInputField(label: 'USERNAME'),
             const SizedBox(height: 20),
-            // Email input field
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'EMAIL',
-                labelStyle: const TextStyle(color: Color.fromARGB(255, 18, 32, 47)),
-                filled: true, // 启用背景填充
-                fillColor: Colors.white, // 填充背景为白色
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: const BorderSide(color: Color.fromARGB(255, 18, 32, 47)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: const BorderSide(color: Color.fromARGB(255, 18, 32, 47)),
-                ),
-              ),
-              style: const TextStyle(color: Color.fromARGB(255, 18, 32, 47)), // 输入框内字体颜色
-              keyboardType: TextInputType.emailAddress,
-            ),
+
+            // 使用通用的 buildTextInputField 替代
+            buildTextInputField(label: 'EMAIL'),
+
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {

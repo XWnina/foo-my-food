@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'components/text_field.dart'; // 导入你自定义的 text_field.dart 文件
 
 void main() {
   runApp(const MyApp());
@@ -96,46 +97,15 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            // New password input field
-            TextField(
+            // 使用 buildPasswordInputField 替代原先的 TextField
+            buildPasswordInputField(
+              label: 'New Password',
               controller: _passwordController,
-              decoration: InputDecoration(
-                labelText: 'New Password',
-                labelStyle: const TextStyle(color: Color.fromARGB(255, 18, 32, 47)), // 标签字体颜色
-                filled: true, // 启用背景填充
-                fillColor: Colors.white, // 输入框背景颜色设为白色
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: const BorderSide(color: Color.fromARGB(255, 18, 32, 47)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: const BorderSide(color: Color.fromARGB(255, 18, 32, 47)),
-                ),
-              ),
-              style: const TextStyle(color: Color.fromARGB(255, 18, 32, 47)), // 输入框内文字颜色
-              obscureText: true, // For password input
             ),
             const SizedBox(height: 20),
-            // Confirm password input field
-            TextField(
+            buildPasswordInputField(
+              label: 'Confirm New Password',
               controller: _confirmPasswordController,
-              decoration: InputDecoration(
-                labelText: 'Confirm New Password',
-                labelStyle: const TextStyle(color: Color.fromARGB(255, 18, 32, 47)), // 标签字体颜色
-                filled: true, // 启用背景填充
-                fillColor: Colors.white, // 输入框背景颜色设为白色
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: const BorderSide(color: Color.fromARGB(255, 18, 32, 47)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: const BorderSide(color: Color.fromARGB(255, 18, 32, 47)),
-                ),
-              ),
-              style: const TextStyle(color: Color.fromARGB(255, 18, 32, 47)), // 输入框内文字颜色
-              obscureText: true, // For password input
             ),
             const SizedBox(height: 20),
             ElevatedButton(
