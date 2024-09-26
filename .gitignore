@@ -9,10 +9,6 @@ frontend/.idea/modules.xml
 frontend/.idea/libraries/Flutter_Plugins.xml
 frontend/.idea/libraries/Dart_SDK.xml
 frontend/.idea/frontend.iml
-<<<<<<< Updated upstream
-frontend/build/ios/XCBuildData/PIFCache/workspace/WORKSPACE@v11_hash=(null)_subobjects=89a8d809df5b4cc7ac4500960eaa4dc5-json
-=======
-frontend/.dart_tool/dartpad/web_plugin_registrant.dart
-frontend/.dart_tool/package_config.json
 frontend/.dart_tool/package_config_subset
->>>>>>> Stashed changes
+frontend/.dart_tool/package_config.json
+frontend/.dart_tool/dartpad/web_plugin_registrant.dart
