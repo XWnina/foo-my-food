@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'components/text_field.dart'; // 导入 text_field.dart，里面包含了通用的输入框函数
+import 'package:foo_my_food_app/utils/helper_function.dart'; // 导入验证函数
+import 'package:foo_my_food_app/utils/constants.dart'; // 导入常量
+import 'package:foo_my_food_app/utils/colors.dart'; // 导入颜色常量
+import 'components/text_field.dart';
 class CreateAccount extends StatefulWidget {
   const CreateAccount({super.key});
 
@@ -12,14 +14,25 @@ class CreateAccount extends StatefulWidget {
 
 class CreateAccountState extends State<CreateAccount> {
   File? _image; // 存储选中的图片
-  final _passwordController = TextEditingController(); // 用于第一个密码输入框
-  final _confirmPasswordController = TextEditingController(); // 用于确认密码输入框
-  bool _passwordsDoNotMatch = false; // 用于检测密码是否匹配
+  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+
+  bool _usernameInvalid = false;
+  bool _usernameTaken = false;
+  bool _emailInvalid = false;
+  bool _emailTaken = false;
+  bool _phoneInvalid = false;
+  bool _phoneTaken = false;
+  bool _passwordsDoNotMatch = false;
 
   // 从图库或相机选择图片
   Future<void> _pickImage() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path); // 更新图片路径
@@ -27,11 +40,24 @@ class CreateAccountState extends State<CreateAccount> {
     }
   }
 
-  /// 验证两次密码是否匹配
-  void _checkPasswordsMatch(String value) {
+  // 验证所有输入字段
+  void _validateInput() {
+    final validationResults = HelperFunctions.validateInput(
+      username: _usernameController.text,
+      email: _emailController.text,
+      phoneNumber: _phoneController.text,
+      password: _passwordController.text,
+      confirmPassword: _confirmPasswordController.text,
+    );
+
     setState(() {
-      _passwordsDoNotMatch =
-          _passwordController.text != _confirmPasswordController.text;
+      _usernameInvalid = validationResults['usernameInvalid'];
+      _usernameTaken = validationResults['usernameTaken'];
+      _emailInvalid = validationResults['emailInvalid'];
+      _emailTaken = validationResults['emailTaken'];
+      _phoneInvalid = validationResults['phoneInvalid'];
+      _phoneTaken = validationResults['phoneTaken'];
+      _passwordsDoNotMatch = validationResults['passwordsDoNotMatch'];
     });
   }
 
@@ -51,7 +77,7 @@ class CreateAccountState extends State<CreateAccount> {
               child: Padding(
                 padding: EdgeInsets.only(top: 30, bottom: 10),
                 child: Text(
-                  'CREATE ACCOUNT',
+                  createAccountTitle, // 使用 constants.dart 中的标题常量
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -64,67 +90,81 @@ class CreateAccountState extends State<CreateAccount> {
             // 头像上传框
             Center(
               child: GestureDetector(
-                onTap: _pickImage, // 点击时调用选择图片的方法
+                onTap: _pickImage,
                 child: CircleAvatar(
-                  radius: 50, // 圆形头像的半径
-                  backgroundColor: greyBackgroundColor, // 使用 color.dart 中的灰色背景
-                  backgroundImage:
-                      _image != null ? FileImage(_image!) : null, // 如果有图片则显示
+                  radius: 50.0,
+                  backgroundColor: greyBackgroundColor,
+                  backgroundImage: _image != null ? FileImage(_image!) : null,
                   child: _image == null
-                      ? Icon(
-                          Icons.camera_alt,
-                          color: greyIconColor, // 使用 color.dart 中的图标颜色
-                          size: 30,
-                        )
-                      : null, // 如果没有图片则显示图标
+                      ? Icon(Icons.camera_alt, color: greyIconColor, size: 30)
+                      : null,
                 ),
               ),
             ),
             const SizedBox(height: 20),
 
-            // 使用 buildTextInputField 构建通用文本输入框
-            buildTextInputField(label: 'FIRST NAME'),
-            buildTextInputField(label: 'LAST NAME'),
-            buildTextInputField(label: 'EMAIL ADDRESS'),
-            buildTextInputField(label: 'USERNAME'),
-            buildTextInputField(label: 'PHONE NUMBER'),
+            // First Name 输入框
+            buildTextInputField(label: 'FIRST NAME', controller: _firstNameController),
 
-            // 使用 buildPasswordInputField 构建密码输入框
+            // Last Name 输入框
+            buildTextInputField(label: 'LAST NAME', controller: _lastNameController),
+
+            // Username 输入框
+            buildTextInputField(
+              label: 'USERNAME',
+              controller: _usernameController,
+              onChanged: (value) => _validateInput(),
+            ),
+            if (_usernameInvalid) const Text(usernameInvalidError, style: TextStyle(color: redErrorTextColor)),
+            if (_usernameTaken) const Text(usernameTakenError, style: TextStyle(color: redErrorTextColor)),
+
+            // Email 输入框
+            buildTextInputField(
+              label: 'EMAIL ADDRESS',
+              controller: _emailController,
+              onChanged: (value) => _validateInput(),
+            ),
+            if (_emailInvalid) const Text(emailInvalidError, style: TextStyle(color: redErrorTextColor)),
+            if (_emailTaken) const Text(emailTakenError, style: TextStyle(color: redErrorTextColor)),
+
+            // Phone Number 输入框
+            buildTextInputField(
+              label: 'PHONE NUMBER',
+              controller: _phoneController,
+              onChanged: (value) => _validateInput(),
+              keyboardType: TextInputType.phone,
+            ),
+            if (_phoneInvalid) const Text(phoneInvalidError, style: TextStyle(color: redErrorTextColor)),
+            if (_phoneTaken) const Text(phoneTakenError, style: TextStyle(color: redErrorTextColor)),
+
+            // Password 输入框
             buildPasswordInputField(
               label: 'PASSWORD',
               controller: _passwordController,
+              onChanged: (value) => _validateInput(),
             ),
 
-            // 确认密码输入框，支持错误提示
+            // Confirm Password 输入框
             buildPasswordInputField(
               label: 'CONFIRM PASSWORD',
               controller: _confirmPasswordController,
-              isError: _passwordsDoNotMatch, // 密码不匹配时设置错误
-              onChanged: _checkPasswordsMatch, // 每次输入时都检查密码是否匹配
+              isError: _passwordsDoNotMatch,
+              onChanged: (value) => _validateInput(),
             ),
-
-            if (_passwordsDoNotMatch) // 如果密码不一致，显示错误信息
-              const Padding(
-                padding: EdgeInsets.only(top: 8.0),
-                child: Text(
-                  'Passwords do not match',
-                  style: TextStyle(color: redErrorTextColor), // 使用 color.dart 中定义的红色文字颜色
-                ),
-              ),
+            if (_passwordsDoNotMatch) const Text(passwordMismatchError, style: TextStyle(color: redErrorTextColor)),
 
             const SizedBox(height: 20), // 增加一些间距
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  padding: const EdgeInsets.symmetric(horizontal: 50.0, vertical: 15.0),
                   backgroundColor: buttonBackgroundColor, // 使用 color.dart 中的按钮背景颜色
                 ),
-                onPressed: _passwordsDoNotMatch
-                    ? null // 如果密码不匹配，禁用按钮
+                // 禁用按钮的条件是用户名无效、用户名已被使用、邮箱格式错误、邮箱已被使用、电话号码无效、电话号码已被使用或密码不匹配
+                onPressed: _usernameInvalid || _usernameTaken || _emailInvalid || _emailTaken || _phoneInvalid || _phoneTaken || _passwordsDoNotMatch
+                    ? null
                     : () {
-                        // 如果密码匹配，继续创建账号
-                      
+                        // 创建账号逻辑
                       },
                 child: const Text(
                   'Create',
