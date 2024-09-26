@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'components/text_field.dart'; // 导入 text_field.dart，里面包含了通用的输入框函数
-
 class CreateAccount extends StatefulWidget {
   const CreateAccount({super.key});
 
@@ -38,10 +38,10 @@ class CreateAccountState extends State<CreateAccount> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFD1E7FE),
+      backgroundColor: backgroundColor, // 使用 color.dart 中定义的背景颜色
       appBar: AppBar(
         title: const Text('Create Account'),
-        backgroundColor: const Color(0xFF47709B),
+        backgroundColor: appBarColor, // 使用 color.dart 中定义的 AppBar 颜色
       ),
       body: SafeArea(
         child: ListView(
@@ -55,7 +55,7 @@ class CreateAccountState extends State<CreateAccount> {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: blackTextColor, // 使用 color.dart 中定义的黑色文字颜色
                   ),
                 ),
               ),
@@ -67,13 +67,13 @@ class CreateAccountState extends State<CreateAccount> {
                 onTap: _pickImage, // 点击时调用选择图片的方法
                 child: CircleAvatar(
                   radius: 50, // 圆形头像的半径
-                  backgroundColor: Colors.grey[300], // 默认背景颜色
+                  backgroundColor: greyBackgroundColor, // 使用 color.dart 中的灰色背景
                   backgroundImage:
                       _image != null ? FileImage(_image!) : null, // 如果有图片则显示
                   child: _image == null
                       ? Icon(
                           Icons.camera_alt,
-                          color: Colors.grey[700], // 上传图标
+                          color: greyIconColor, // 使用 color.dart 中的图标颜色
                           size: 30,
                         )
                       : null, // 如果没有图片则显示图标
@@ -108,7 +108,7 @@ class CreateAccountState extends State<CreateAccount> {
                 padding: EdgeInsets.only(top: 8.0),
                 child: Text(
                   'Passwords do not match',
-                  style: TextStyle(color: Colors.red),
+                  style: TextStyle(color: redErrorTextColor), // 使用 color.dart 中定义的红色文字颜色
                 ),
               ),
 
@@ -118,7 +118,7 @@ class CreateAccountState extends State<CreateAccount> {
                 style: ElevatedButton.styleFrom(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                  backgroundColor: const Color(0xFF47709B),
+                  backgroundColor: buttonBackgroundColor, // 使用 color.dart 中的按钮背景颜色
                 ),
                 onPressed: _passwordsDoNotMatch
                     ? null // 如果密码不匹配，禁用按钮
@@ -130,7 +130,7 @@ class CreateAccountState extends State<CreateAccount> {
                 child: const Text(
                   'Create',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: whiteTextColor, // 使用 color.dart 中的白色文字颜色
                     fontSize: 16,
                   ),
                 ),

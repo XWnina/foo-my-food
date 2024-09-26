@@ -1,5 +1,6 @@
 // text_field.dart
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/utils/colors.dart'; // 导入 color.dart 文件
 
 // 通用的文本输入框构造方法
 Widget buildTextInputField({
@@ -11,24 +12,24 @@ Widget buildTextInputField({
       decoration: InputDecoration(
         labelText: label,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: whiteFillColor, // 使用 color.dart 中的白色背景
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
           borderSide: const BorderSide(
-            color: Colors.blue,
+            color: blueBorderColor, // 使用 color.dart 中的蓝色边框
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
           borderSide: const BorderSide(
-            color: Colors.grey,
+            color: greyBorderColor, // 使用 color.dart 中的灰色边框
             width: 1.0,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
           borderSide: const BorderSide(
-            color: Colors.blue,
+            color: blueBorderColor, // 使用 color.dart 中的蓝色边框
             width: 2.0,
           ),
         ),
@@ -53,21 +54,21 @@ Widget buildPasswordInputField({
       decoration: InputDecoration(
         labelText: label,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: whiteFillColor, // 使用 color.dart 中的白色背景
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
           borderSide: BorderSide(
-            color: isError ? Colors.red : Colors.grey, // 如果有错误，边框变红
+            color: isError ? redErrorBorderColor : greyBorderColor, // 错误时变红
             width: 1.0,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
           borderSide: BorderSide(
-            color: isError ? Colors.red : Colors.blue, // 焦点状态下变红
+            color: isError ? redErrorBorderColor : blueBorderColor, // 焦点状态下变红
             width: 2.0,
           ),
         ),
