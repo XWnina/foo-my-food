@@ -1,0 +1,1 @@
+// Futrue use abstract class for web request and database
