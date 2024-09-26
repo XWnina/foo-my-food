@@ -78,17 +78,21 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Change Password'),
+        title: const Text(
+          'Change Password',
+          style: TextStyle(color: Colors.white), // 标题文字改为白色
+        ),
         backgroundColor: const Color.fromARGB(255, 30, 108, 168),
       ),
-      body: Padding(
+      body: Container(
+        color: const Color(0xFFD1E7FE), // 与登录页保持一致的背景颜色
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
               'Enter your new password twice to confirm the change',
-              style: TextStyle(fontSize: 18),
+              style: TextStyle(fontSize: 18, color: Color.fromARGB(255, 18, 32, 47)), // 文本颜色改为深蓝色
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -97,10 +101,19 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               controller: _passwordController,
               decoration: InputDecoration(
                 labelText: 'New Password',
-                border: OutlineInputBorder(
+                labelStyle: const TextStyle(color: Color.fromARGB(255, 18, 32, 47)), // 标签字体颜色
+                filled: true, // 启用背景填充
+                fillColor: Colors.white, // 输入框背景颜色设为白色
+                enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
+                  borderSide: const BorderSide(color: Color.fromARGB(255, 18, 32, 47)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                  borderSide: const BorderSide(color: Color.fromARGB(255, 18, 32, 47)),
                 ),
               ),
+              style: const TextStyle(color: Color.fromARGB(255, 18, 32, 47)), // 输入框内文字颜色
               obscureText: true, // For password input
             ),
             const SizedBox(height: 20),
@@ -109,17 +122,26 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               controller: _confirmPasswordController,
               decoration: InputDecoration(
                 labelText: 'Confirm New Password',
-                border: OutlineInputBorder(
+                labelStyle: const TextStyle(color: Color.fromARGB(255, 18, 32, 47)), // 标签字体颜色
+                filled: true, // 启用背景填充
+                fillColor: Colors.white, // 输入框背景颜色设为白色
+                enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
+                  borderSide: const BorderSide(color: Color.fromARGB(255, 18, 32, 47)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                  borderSide: const BorderSide(color: Color.fromARGB(255, 18, 32, 47)),
                 ),
               ),
+              style: const TextStyle(color: Color.fromARGB(255, 18, 32, 47)), // 输入框内文字颜色
               obscureText: true, // For password input
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _changePassword,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 250, 251, 251), // Matches the app color
+                backgroundColor: const Color.fromARGB(255, 30, 108, 168), // 按钮颜色改为深蓝色
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
@@ -127,7 +149,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               ),
               child: const Text(
                 'Change Password',
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 16, color: Colors.white), // 按钮文字颜色改为白色
               ),
             ),
           ],
