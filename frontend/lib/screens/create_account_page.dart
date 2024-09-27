@@ -5,6 +5,7 @@ import 'package:foo_my_food_app/utils/helper_function.dart'; // 导入验证函�
 import 'package:foo_my_food_app/utils/constants.dart'; // 导入常量
 import 'package:foo_my_food_app/utils/colors.dart'; // 导入颜色常量
 import 'components/text_field.dart';
+
 class CreateAccount extends StatefulWidget {
   const CreateAccount({super.key});
 
@@ -40,23 +41,61 @@ class CreateAccountState extends State<CreateAccount> {
     }
   }
 
-  // 验证所有输入字段
-  void _validateInput() {
-    final validationResults = HelperFunctions.validateInput(
-      username: _usernameController.text,
-      email: _emailController.text,
-      phoneNumber: _phoneController.text,
-      password: _passwordController.text,
-      confirmPassword: _confirmPasswordController.text,
-    );
-
+  // 验证用户名字段
+  void _validateUsername() {
     setState(() {
+      final validationResults = HelperFunctions.validateInput(
+        username: _usernameController.text,
+        email: _emailController.text, // 其他字段暂时保持现状
+        phoneNumber: _phoneController.text,
+        password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
+      );
       _usernameInvalid = validationResults['usernameInvalid'];
       _usernameTaken = validationResults['usernameTaken'];
+    });
+  }
+
+  // 验证邮箱字段
+  void _validateEmail() {
+    setState(() {
+      final validationResults = HelperFunctions.validateInput(
+        username: _usernameController.text,
+        email: _emailController.text,
+        phoneNumber: _phoneController.text,
+        password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
+      );
       _emailInvalid = validationResults['emailInvalid'];
       _emailTaken = validationResults['emailTaken'];
+    });
+  }
+
+  // 验证电话号码字段
+  void _validatePhoneNumber() {
+    setState(() {
+      final validationResults = HelperFunctions.validateInput(
+        username: _usernameController.text,
+        email: _emailController.text,
+        phoneNumber: _phoneController.text,
+        password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
+      );
       _phoneInvalid = validationResults['phoneInvalid'];
       _phoneTaken = validationResults['phoneTaken'];
+    });
+  }
+
+  // 验证密码字段
+  void _validatePasswords() {
+    setState(() {
+      final validationResults = HelperFunctions.validateInput(
+        username: _usernameController.text,
+        email: _emailController.text,
+        phoneNumber: _phoneController.text,
+        password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
+      );
       _passwordsDoNotMatch = validationResults['passwordsDoNotMatch'];
     });
   }
@@ -113,7 +152,7 @@ class CreateAccountState extends State<CreateAccount> {
             buildTextInputField(
               label: 'USERNAME',
               controller: _usernameController,
-              onChanged: (value) => _validateInput(),
+              onChanged: (value) => _validateUsername(),
             ),
             if (_usernameInvalid) const Text(usernameInvalidError, style: TextStyle(color: redErrorTextColor)),
             if (_usernameTaken) const Text(usernameTakenError, style: TextStyle(color: redErrorTextColor)),
@@ -122,7 +161,7 @@ class CreateAccountState extends State<CreateAccount> {
             buildTextInputField(
               label: 'EMAIL ADDRESS',
               controller: _emailController,
-              onChanged: (value) => _validateInput(),
+              onChanged: (value) => _validateEmail(),
             ),
             if (_emailInvalid) const Text(emailInvalidError, style: TextStyle(color: redErrorTextColor)),
             if (_emailTaken) const Text(emailTakenError, style: TextStyle(color: redErrorTextColor)),
@@ -131,7 +170,7 @@ class CreateAccountState extends State<CreateAccount> {
             buildTextInputField(
               label: 'PHONE NUMBER',
               controller: _phoneController,
-              onChanged: (value) => _validateInput(),
+              onChanged: (value) => _validatePhoneNumber(),
               keyboardType: TextInputType.phone,
             ),
             if (_phoneInvalid) const Text(phoneInvalidError, style: TextStyle(color: redErrorTextColor)),
@@ -141,7 +180,7 @@ class CreateAccountState extends State<CreateAccount> {
             buildPasswordInputField(
               label: 'PASSWORD',
               controller: _passwordController,
-              onChanged: (value) => _validateInput(),
+              onChanged: (value) => _validatePasswords(),
             ),
 
             // Confirm Password 输入框
@@ -149,7 +188,7 @@ class CreateAccountState extends State<CreateAccount> {
               label: 'CONFIRM PASSWORD',
               controller: _confirmPasswordController,
               isError: _passwordsDoNotMatch,
-              onChanged: (value) => _validateInput(),
+              onChanged: (value) => _validatePasswords(),
             ),
             if (_passwordsDoNotMatch) const Text(passwordMismatchError, style: TextStyle(color: redErrorTextColor)),
 
