@@ -12,6 +12,7 @@ frontend/.idea/frontend.iml
 frontend/.dart_tool/package_config_subset
 frontend/.dart_tool/package_config.json
 <<<<<<< HEAD
+<<<<<<< HEAD
 frontend/.dart_tool/package_config_subset
 frontend/.dart_tool/version
 frontend/.flutter-plugins
@@ -23,6 +24,10 @@ frontend/build/ios/XCBuildData/PIFCache/target/TARGET@v11_hash=8188a1e45fb702315
 frontend/build/ios/XCBuildData/PIFCache/target/TARGET@v11_hash=87b922daaf7ee90191c99c1a97be78b4-json
 frontend/build/ios/XCBuildData/PIFCache/target/TARGET@v11_hash=fc4bb5e468a015271b4c86686e8b6d62-json
 frontend/build/ios/XCBuildData/PIFCache/workspace/WORKSPACE@v11_hash=(null)_subobjects=9778d472f300571dae685c2332e4e8b1-json
+=======
+frontend/.dart_tool/dartpad/web_plugin_registrant.dart
+frontend/.dart_tool/version
+>>>>>>> parent of 23c28d6 (Update .gitignore)
 =======
 frontend/.dart_tool/dartpad/web_plugin_registrant.dart
 frontend/.dart_tool/version
