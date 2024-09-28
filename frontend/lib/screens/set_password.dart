@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/utils/colors.dart';// 导入 color.dart 文件
+import 'components/text_field.dart'; // 导入你自定义的 text_field.dart 文件
 
 void main() {
   runApp(const MyApp());
@@ -12,7 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Change Password Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 30, 108, 168)),
+        colorScheme: ColorScheme.fromSeed(seedColor: appBarColor), // 使用 color.dart 中的颜色
         useMaterial3: true,
       ),
       home: const ChangePasswordPage(),
@@ -78,48 +80,39 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Change Password'),
-        backgroundColor: const Color.fromARGB(255, 30, 108, 168),
+        title: const Text(
+          'Change Password',
+          style: TextStyle(color: whiteTextColor), // 使用 color.dart 中的白色文字颜色
+        ),
+        backgroundColor: appBarColor, // 使用 color.dart 中的 AppBar 背景颜色
       ),
-      body: Padding(
+      body: Container(
+        color: backgroundColor, // 使用 color.dart 中的背景颜色
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
               'Enter your new password twice to confirm the change',
-              style: TextStyle(fontSize: 18),
+              style: TextStyle(fontSize: 18, color: blackTextColor), // 使用 color.dart 中的深蓝色文字颜色
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            // New password input field
-            TextField(
+            // 使用 buildPasswordInputField 替代原先的 TextField
+            buildPasswordInputField(
+              label: 'New Password',
               controller: _passwordController,
-              decoration: InputDecoration(
-                labelText: 'New Password',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-              ),
-              obscureText: true, // For password input
             ),
             const SizedBox(height: 20),
-            // Confirm password input field
-            TextField(
+            buildPasswordInputField(
+              label: 'Confirm New Password',
               controller: _confirmPasswordController,
-              decoration: InputDecoration(
-                labelText: 'Confirm New Password',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-              ),
-              obscureText: true, // For password input
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _changePassword,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 250, 251, 251), // Matches the app color
+                backgroundColor: buttonBackgroundColor, // 使用 color.dart 中的按钮背景颜色
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
@@ -127,7 +120,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               ),
               child: const Text(
                 'Change Password',
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 16, color: whiteTextColor), // 使用 color.dart 中的白色文字颜色
               ),
             ),
           ],

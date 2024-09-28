@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'main.dart';
+import 'homepage.dart';
 import 'create_account_page.dart';
 import 'set_password_info_varification.dart';
+
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
@@ -80,14 +81,17 @@ class LoginPage extends StatelessWidget {
               ),
               // LOG IN Button
               Positioned(
-                left: 136,
+                left: 135,
                 top: 424,
                 child: SizedBox(
-                  width: 89,
-                  height: 29,
+                  width: 110, // 增加宽度
+                  height: 40, // 增加高度
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF47709B),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20), // 圆角按钮
+                      ),
                     ),
                     onPressed: () {
                       // 在点击按钮时导航到 MyHomePage
@@ -103,7 +107,40 @@ class LoginPage extends StatelessWidget {
                       'LOG IN',
                       style: TextStyle(
                         color: Color(0xFFE5E5E5),
-                        fontSize: 12,
+                        fontSize: 15, // 增加字体大小
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Forget/Reset Password Button
+              Positioned(
+                left: 110,
+                top: 480, // 调整位置，放在 LOG IN 按钮下方
+                child: SizedBox(
+                  width: 150, // 增加宽度
+                  height: 40, // 增加高度
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF47709B),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20), // 圆角按钮
+                      ),
+                    ),
+                    onPressed: () {
+                      // 导航到 SetPasswordInfoVarification 页面
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PasswordResetPage(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      'Forget/Reset Password',
+                      style: TextStyle(
+                        color: Color(0xFFE5E5E5),
+                        fontSize: 13, // 保持字体大小一致
                       ),
                     ),
                   ),
@@ -111,14 +148,17 @@ class LoginPage extends StatelessWidget {
               ),
               // Create Account Button
               Positioned(
-                left: 116,
-                top: 535,
+                left: 110,
+                top: 535, // 放置在 Forget/Reset Password 按钮下方
                 child: SizedBox(
-                  width: 129,
-                  height: 29,
+                  width: 150, // 增加宽度
+                  height: 40, // 增加高度
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF47709B),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20), // 圆角按钮
+                      ),
                     ),
                     onPressed: () {
                       // Handle create account action here
@@ -133,7 +173,7 @@ class LoginPage extends StatelessWidget {
                       'Create Account',
                       style: TextStyle(
                         color: Color(0xFFE5E5E5),
-                        fontSize: 13,
+                        fontSize: 13, // 保持字体大小一致
                       ),
                     ),
                   ),

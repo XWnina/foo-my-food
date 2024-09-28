@@ -2,3 +2,13 @@
 .vscode
 
 *.class
+
+frontend/.idea/caches/deviceStreaming.xml
+frontend/.idea/vcs.xml
+frontend/.idea/modules.xml
+frontend/.idea/libraries/Flutter_Plugins.xml
+frontend/.idea/libraries/Dart_SDK.xml
+frontend/.idea/frontend.iml
+frontend/.dart_tool/package_config_subset
+frontend/.dart_tool/package_config.json
+frontend/.dart_tool/dartpad/web_plugin_registrant.dart

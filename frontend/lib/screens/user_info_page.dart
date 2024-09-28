@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'set_password_info_varification.dart';
 class UserInfoPage extends StatelessWidget {
   const UserInfoPage({super.key});
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/utils/colors.dart'; // 导入 color.dart 文件
+import 'components/text_field.dart'; // 导入通用输入框函数
 
 void main() {
   runApp(const MyApp());
@@ -20,48 +22,54 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class PasswordResetPage extends StatelessWidget {
+class PasswordResetPage extends StatefulWidget {
   const PasswordResetPage({super.key});
+
+  @override
+  PasswordResetPageState createState() => PasswordResetPageState();
+}
+
+class PasswordResetPageState extends State<PasswordResetPage> {
+  // 创建 TextEditingController
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Password Reset'),
-        backgroundColor: const Color.fromARGB(255, 30, 108, 168),
+        title: const Text(
+          'Password Reset',
+          style: TextStyle(color: whiteTextColor), // 使用 color.dart 中的白色文字颜色
+        ),
+        backgroundColor: appBarColor, // 使用 color.dart 中的 AppBar 颜色
       ),
-      body: Padding(
+      body: Container(
+        color: backgroundColor, // 使用 color.dart 中的背景颜色
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
               'Enter your username and email to reset your password',
-              style: TextStyle(fontSize: 18),
+              style: TextStyle(fontSize: 18, color: blackTextColor), // 使用 color.dart 中的黑色文字颜色
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            // Username input field
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Username',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-              ),
-              keyboardType: TextInputType.text,
+
+            // 使用通用的 buildTextInputField 替代，并传递 controller
+            buildTextInputField(
+              label: 'USERNAME',
+              controller: _usernameController, // 传递用户名输入框的控制器
             ),
             const SizedBox(height: 20),
-            // Email input field
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-              ),
-              keyboardType: TextInputType.emailAddress,
+
+            // 使用通用的 buildTextInputField 替代，并传递 controller
+            buildTextInputField(
+              label: 'EMAIL',
+              controller: _emailController, // 传递邮箱输入框的控制器
             ),
+
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
@@ -85,7 +93,7 @@ class PasswordResetPage extends StatelessWidget {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 250, 251, 251), // Matches the app color
+                backgroundColor: buttonBackgroundColor, // 使用 color.dart 中的按钮背景颜色
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
@@ -93,7 +101,7 @@ class PasswordResetPage extends StatelessWidget {
               ),
               child: const Text(
                 'Send Verification',
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 16, color: whiteTextColor), // 使用 color.dart 中的白色文字颜色
               ),
             ),
           ],
