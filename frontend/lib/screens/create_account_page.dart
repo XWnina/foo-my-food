@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:http/http.dart' as http; // 用于发送 HTTP 请求
+import 'dart:convert'; // 用于 JSON 序列化和反序列化
+
+// 导入你项目中的颜色和常量
 import 'package:foo_my_food_app/utils/helper_function.dart'; // 导入验证函数
 import 'package:foo_my_food_app/utils/constants.dart'; // 导入常量
 import 'package:foo_my_food_app/utils/colors.dart'; // 导入颜色常量
@@ -46,7 +50,7 @@ class CreateAccountState extends State<CreateAccount> {
     setState(() {
       final validationResults = HelperFunctions.validateInput(
         username: _usernameController.text,
-        email: _emailController.text, // 其他字段暂时保持现状
+        email: _emailController.text,
         phoneNumber: _phoneController.text,
         password: _passwordController.text,
         confirmPassword: _confirmPasswordController.text,
@@ -98,6 +102,50 @@ class CreateAccountState extends State<CreateAccount> {
       );
       _passwordsDoNotMatch = validationResults['passwordsDoNotMatch'];
     });
+  }
+
+  // 显示 SnackBar 消息
+  void _showSnackBar(String message) {
+    final snackBar = SnackBar(content: Text(message));
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  // 提交创建账号请求
+  Future<void> _submitCreateAccount() async {
+    final String apiUrl = 'http://192.168.x.x:8080/create-account'; // 使用你的后端API URL
+
+    // 构建请求体
+    final Map<String, dynamic> requestBody = {
+      'firstName': _firstNameController.text,
+      'lastName': _lastNameController.text,
+      'username': _usernameController.text,
+      'email': _emailController.text,
+      'phone': _phoneController.text,
+      'password': _passwordController.text,
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        // 成功注册，提示用户
+        print('Account created successfully.');
+        _showSnackBar('Account created successfully. Please check your email for verification.');
+      } else {
+        // 注册失败，打印错误信息
+        print('Failed to create account. ${response.body}');
+        _showSnackBar('Failed to create account: ${response.body}');
+      }
+    } catch (error) {
+      print('Error: $error');
+      _showSnackBar('Error occurred: $error');
+    }
   }
 
   @override
@@ -203,7 +251,7 @@ class CreateAccountState extends State<CreateAccount> {
                 onPressed: _usernameInvalid || _usernameTaken || _emailInvalid || _emailTaken || _phoneInvalid || _phoneTaken || _passwordsDoNotMatch
                     ? null
                     : () {
-                        // 创建账号逻辑
+                        _submitCreateAccount(); // 发送创建账号的请求
                       },
                 child: const Text(
                   'Create',
