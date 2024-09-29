@@ -1,8 +1,8 @@
 package com.foomyfood.foomyfood.controller;
 
 import com.foomyfood.foomyfood.service.PasswordResetService;
-import com.foomyfood.foomyfood.model.dto.PasswordResetRequest;
-import com.foomyfood.foomyfood.model.dto.ResetPasswordRequest;
+import com.foomyfood.foomyfood.dto.PasswordResetRequest;
+import com.foomyfood.foomyfood.dto.ResetPasswordRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
