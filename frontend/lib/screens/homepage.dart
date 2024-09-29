@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'user_info_page.dart';
 import 'add_ingredient_manually.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:foo_my_food_app/datasource/temp_db.dart';
+import 'ingredient_detail.dart';
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
@@ -23,7 +25,12 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   int _selectedIndex = 0;
-
+  List <Map<String,dynamic>> foodItems=[];
+  @override
+  void initState() {
+    super.initState();
+    foodItems = TempDB.getAllFoodItems();
+  }
   // Remove the increment function and replace it with navigation to the ingredient page
   void _navigateToAddIngredient() {
     Navigator.push(
@@ -83,13 +90,37 @@ class _MyHomePageState extends State<MyHomePage> {
                 crossAxisCount: 2,
                 childAspectRatio: 3,
               ),
-              itemCount: 10, // Adjust the number of items as needed
+              itemCount: foodItems.length, // 10 Adjust the number of items as needed
               itemBuilder: (context, index) {
+                final item = foodItems[index];
                 return Card(
                   margin: EdgeInsets.all(8.0),
+                  // child: ListTile(
+                  //   leading: Icon(Icons.fastfood), // Replace with appropriate icons
+                  //   title: Text('Food Item ${index + 1}'),
+                  // ),
                   child: ListTile(
-                    leading: Icon(Icons.fastfood), // Replace with appropriate icons
-                    title: Text('Food Item ${index + 1}'),
+                    leading: CircleAvatar(
+                      backgroundImage: NetworkImage(item['imageUrl']),
+                    ),
+                    title: Text(item['name']),
+                    subtitle: Text('Expires: ${item['expirationDate'].toString().split(' ')[0]}'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FoodItemDetailPage(
+                            name: item['name'],
+                            imageUrl: item['imageUrl'],
+                            expirationDate: item['expirationDate'],
+                            nutritionInfo: item['nutritionInfo'],
+                            category: item['category'],
+                            storageMethod: item['storageMethod'],
+                            quantity: item['quantity'],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
