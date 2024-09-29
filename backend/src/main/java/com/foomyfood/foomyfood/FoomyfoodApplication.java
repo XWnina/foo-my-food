@@ -1,6 +1,5 @@
 package com.foomyfood.foomyfood;
 
-import jdk.jfr.Registered;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -11,7 +10,7 @@ public class FoomyfoodApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(FoomyfoodApplication.class, args);
-
+		System.out.println("HELLO WORLD!");
 	}
 
 }
