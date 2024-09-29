@@ -1,4 +1,4 @@
-package com.foomyfood.foomyfood.dto;
+package com.foomyfood.foomyfood.model.dto;
 
 public class ResetPasswordRequest {
     private String token;
