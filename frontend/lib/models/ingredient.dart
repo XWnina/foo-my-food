@@ -12,6 +12,6 @@ class Ingredient {
     required this.storageMethod,
     required this.quantity,
     required this.expirationDate,
-    this.image,
+    required this.FileImage,
   });
 }

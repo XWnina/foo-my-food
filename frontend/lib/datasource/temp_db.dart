@@ -53,7 +53,59 @@ class TempDB {
       "phoneNumber": "1122334455"
     },
   ];
-
+// Sample food items
+  static List<Map<String, dynamic>> foodItems = [
+    {
+      'id': 1,
+      'name': 'Apple',
+      'category': 'Fruits',
+      'imageUrl': 'https://example.com/apple.jpg',
+      'expirationDate': DateTime.now().add(Duration(days: 7)),
+      'nutritionInfo': {'Calories': '95', 'Carbs': '25g', 'Fiber': '4g'},
+      'storageMethod': 'Refrigerator',
+      'quantity': 5,
+    },
+    {
+      'id': 2,
+      'name': 'Chicken Breast',
+      'category': 'Meat',
+      'imageUrl': 'https://example.com/chicken.jpg',
+      'expirationDate': DateTime.now().add(Duration(days: 3)),
+      'nutritionInfo': {'Calories': '165', 'Protein': '31g', 'Fat': '3.6g'},
+      'storageMethod': 'Freezer',
+      'quantity': 2,
+    },
+    {
+      'id': 3,
+      'name': 'Milk',
+      'category': 'Dairy',
+      'imageUrl': 'https://example.com/milk.jpg',
+      'expirationDate': DateTime.now().add(Duration(days: 5)),
+      'nutritionInfo': {'Calories': '103', 'Protein': '8g', 'Fat': '2.4g'},
+      'storageMethod': 'Refrigerator',
+      'quantity': 1,
+    },
+    {
+      'id': 4,
+      'name': 'Bread',
+      'category': 'Grains',
+      'imageUrl': 'https://example.com/bread.jpg',
+      'expirationDate': DateTime.now().add(Duration(days: 4)),
+      'nutritionInfo': {'Calories': '79', 'Carbs': '14g', 'Protein': '3g'},
+      'storageMethod': 'Pantry',
+      'quantity': 1,
+    },
+    {
+      'id': 5,
+      'name': 'Spinach',
+      'category': 'Vegetables',
+      'imageUrl': 'https://example.com/spinach.jpg',
+      'expirationDate': DateTime.now().add(Duration(days: 5)),
+      'nutritionInfo': {'Calories': '7', 'Carbs': '1g', 'Protein': '0.9g'},
+      'storageMethod': 'Refrigerator',
+      'quantity': 1,
+    },
+  ];
   // 根据用户名获取用户信息 (区分大小写)
   static Map<String, dynamic> getUserByUsername(String username) {
     return users.firstWhere(
@@ -75,6 +127,18 @@ class TempDB {
     return users.firstWhere(
       (user) => user['phoneNumber'] == phoneNumber,
       orElse: () => <String, dynamic>{}, // 返回一个空的 Map
+    );
+  }
+  // Get all food items
+  static List<Map<String, dynamic>> getAllFoodItems() {
+    return foodItems;
+  }
+
+  // Get food item by id
+  static Map<String, dynamic> getFoodItemById(int id) {
+    return foodItems.firstWhere(
+      (item) => item['id'] == id,
+      orElse: () => <String, dynamic>{},
     );
   }
 }
