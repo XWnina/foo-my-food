@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:http/http.dart' as http; // 用于发送 HTTP 请求
-import 'dart:convert'; // 用于 JSON 序列化和反序列化
-
-// 导入你项目中的颜色和常量
+import 'package:foo_my_food_app/services/create_account_api_service.dart'; // 导入 CreateAccount API 服务
+import 'dart:developer' as developer; // 使用 log 函数
 import 'package:foo_my_food_app/utils/helper_function.dart'; // 导入验证函数
 import 'package:foo_my_food_app/utils/constants.dart'; // 导入常量
 import 'package:foo_my_food_app/utils/colors.dart'; // 导入颜色常量
-import 'components/text_field.dart';
+import 'components/text_field.dart'; // 自定义输入框组件
 
 class CreateAccount extends StatefulWidget {
   const CreateAccount({super.key});
@@ -18,7 +16,7 @@ class CreateAccount extends StatefulWidget {
 }
 
 class CreateAccountState extends State<CreateAccount> {
-  File? _image; // 存储选中的图片
+  File? _image; // 存储用户选择的头像
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -112,38 +110,35 @@ class CreateAccountState extends State<CreateAccount> {
 
   // 提交创建账号请求
   Future<void> _submitCreateAccount() async {
-    final String apiUrl = 'http://192.168.x.x:8080/create-account'; // 使用你的后端API URL
-
-    // 构建请求体
-    final Map<String, dynamic> requestBody = {
-      'firstName': _firstNameController.text,
-      'lastName': _lastNameController.text,
-      'username': _usernameController.text,
-      'email': _emailController.text,
-      'phone': _phoneController.text,
-      'password': _passwordController.text,
-    };
+    if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() {
+        _passwordsDoNotMatch = true;
+      });
+      _showSnackBar('Passwords do not match.');
+      return;
+    }
 
     try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(requestBody),
+      // 调用 API 服务进行账号创建
+      final response = await CreateAccountApiService.createAccount(
+        firstName: _firstNameController.text,
+        lastName: _lastNameController.text,
+        username: _usernameController.text,
+        email: _emailController.text,
+        phone: _phoneController.text,
+        password: _passwordController.text,
+        image: _image,
       );
 
       if (response.statusCode == 200) {
-        // 成功注册，提示用户
-        print('Account created successfully.');
+        developer.log('Account created successfully.', name: 'CreateAccount');
         _showSnackBar('Account created successfully. Please check your email for verification.');
       } else {
-        // 注册失败，打印错误信息
-        print('Failed to create account. ${response.body}');
-        _showSnackBar('Failed to create account: ${response.body}');
+        developer.log('Failed to create account.', name: 'CreateAccount');
+        _showSnackBar('Failed to create account.');
       }
     } catch (error) {
-      print('Error: $error');
+      developer.log('Error occurred: $error', name: 'CreateAccount', error: error);
       _showSnackBar('Error occurred: $error');
     }
   }
