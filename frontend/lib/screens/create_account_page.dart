@@ -119,17 +119,18 @@ class CreateAccountState extends State<CreateAccount> {
     }
 
     try {
-      // 调用 API 服务进行账号创建
-      final response = await CreateAccountApiService.createAccount(
+      // 调用 CreateAccountApiService 来处理请求
+      var response = await CreateAccountApiService.createAccount(
         firstName: _firstNameController.text,
         lastName: _lastNameController.text,
         username: _usernameController.text,
         email: _emailController.text,
         phone: _phoneController.text,
         password: _passwordController.text,
-        image: _image,
+        image: _image, // 用户头像
       );
 
+      // 处理响应
       if (response.statusCode == 200) {
         developer.log('Account created successfully.', name: 'CreateAccount');
         _showSnackBar('Account created successfully. Please check your email for verification.');
