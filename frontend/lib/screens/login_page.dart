@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'homepage.dart';
 import 'create_account_page.dart';
-import 'set_password_info_varification.dart';
+import 'security_or_email.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -128,11 +128,11 @@ class LoginPage extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      // 导航到 SetPasswordInfoVarification 页面
+                      // 导航到 security or email 页面
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const PasswordResetPage(),
+                          builder: (context) => const PasswordResetChoicePage(),
                         ),
                       );
                     },
