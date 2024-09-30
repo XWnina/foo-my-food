@@ -11,26 +11,30 @@ class CreateAccountApiService {
     required String email,
     required String phone,
     required String password,
-    File? image,
+    File? image, // 可选的图片文件
   }) async {
-    final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
 
-    // 添加文本字段
-    request.fields['firstName'] = firstName;
-    request.fields['lastName'] = lastName;
-    request.fields['username'] = username;
-    request.fields['email'] = email;
-    request.fields['phone'] = phone;
-    request.fields['password'] = password;
+      // 添加文本字段
+      request.fields['firstName'] = firstName;
+      request.fields['lastName'] = lastName;
+      request.fields['username'] = username;
+      request.fields['email'] = email;
+      request.fields['phone'] = phone;
+      request.fields['password'] = password;
 
-    // 如果用户上传了头像，添加到请求中
-    if (image != null) {
-      request.files.add(
-        await http.MultipartFile.fromPath('avatar', image.path),
-      );
+      // 如果用户上传了头像，添加到请求中，确保字段名为 'image'
+      if (image != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('image', image.path), // 字段名应与后端匹配
+        );
+      }
+
+      // 发送请求并返回响应
+      return await request.send();
+    } catch (error) {
+      throw Exception('Failed to create account: $error');
     }
-
-    // 发送请求并返回响应
-    return await request.send();
   }
 }
