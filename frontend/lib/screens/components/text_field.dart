@@ -7,6 +7,7 @@ Widget buildTextInputField({
   required TextEditingController controller, // 控制输入框的 controller
   void Function(String)? onChanged, // 输入变化时的回调
   TextInputType keyboardType = TextInputType.text, // 输入框的类型，默认是文本输入
+  bool isError = false, // 用于控制是否显示错误状态
 }) {
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -20,21 +21,22 @@ Widget buildTextInputField({
         fillColor: whiteFillColor, // 使用 color.dart 中的白色背景
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
-          borderSide: const BorderSide(
-            color: blueBorderColor, // 使用 color.dart 中的蓝色边框
+          borderSide: BorderSide(
+            color: isError ? redErrorBorderColor : blueBorderColor, // 根据 isError 判断边框颜色
+            width: 2.0,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
-          borderSide: const BorderSide(
-            color: greyBorderColor, // 使用 color.dart 中的灰色边框
+          borderSide: BorderSide(
+            color: isError ? redErrorBorderColor : greyBorderColor, // 根据 isError 判断边框颜色
             width: 1.0,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
-          borderSide: const BorderSide(
-            color: blueBorderColor, // 使用 color.dart 中的蓝色边框
+          borderSide: BorderSide(
+            color: isError ? redErrorBorderColor : blueBorderColor, // 焦点状态下根据 isError 判断边框颜色
             width: 2.0,
           ),
         ),
@@ -42,6 +44,7 @@ Widget buildTextInputField({
     ),
   );
 }
+
 
 // 通用的密码输入框构造方法，支持错误提示
 Widget buildPasswordInputField({

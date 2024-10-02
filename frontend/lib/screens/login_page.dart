@@ -1,180 +1,237 @@
-import 'package:flutter/material.dart';
-import 'homepage.dart';
-import 'create_account_page.dart';
-import 'security_or_email.dart';
+import 'dart:convert';
 
-class LoginPage extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/screens/components/text_field.dart'; // 导入 text_field.dart
+import 'package:foo_my_food_app/utils/colors.dart'; // 导入 color.dart 文件
+import 'package:foo_my_food_app/services/login_service.dart'; // 导入 login_service.dart 文件
+import 'package:foo_my_food_app/utils/constants.dart'; // 导入 constants.dart 文件
+import 'homepage.dart'; // 导入主页
+import 'create_account_page.dart'; // 导入创建账户页面
+import 'security_or_email.dart'; // 导入密码重置页面
+import 'package:logging/logging.dart';
+
+final Logger _logger = Logger('LoginPage');
+
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
+  LoginPageState createState() => LoginPageState();
+}
+
+class LoginPageState extends State<LoginPage> {
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  bool _emailInvalid = false;  // 是否为无效的邮箱
+  bool _usernameNotFound = false; // 是否未找到用户名
+  bool _passwordInvalid = false;  // 是否为无效的密码
+  String errorMessage = '';
+
+  final LoginService loginService = LoginService(); // 实例化 LoginService
+
+  Future<void> login() async {
+    String userInput = usernameController.text;
+    String password = passwordController.text;
+
+    try {
+      final response = await loginService.login(userInput, password);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (!mounted) return;
+
+        // 成功登录后跳转到主页
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Home Page')),
+        );
+      } else if (response.statusCode == 404) {
+        // 判断是邮箱错误还是用户名错误
+        String errorMessage = jsonDecode(response.body)['message'];
+        setState(() {
+          if (errorMessage.contains("Email")) {
+            _emailInvalid = true;
+            _usernameNotFound = false;
+          } else if (errorMessage.contains("Username")) {
+            _usernameNotFound = true;
+            _emailInvalid = false;
+          }
+          _passwordInvalid = false;  // 清除密码错误状态
+        });
+      } else if (response.statusCode == 401) {
+        // 密码错误
+        setState(() {
+          _passwordInvalid = true;
+          _emailInvalid = false;
+          _usernameNotFound = false;
+        });
+      } else {
+        setState(() {
+          errorMessage = "An unexpected error occurred";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "Error occurred during login: $e";
+      });
+      _logger.severe("Error occurred during login: $e");
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 18, 32, 47),
-      body: Center(
-        child: Container(
-          width: 360,
-          height: 640,
-          decoration: BoxDecoration(
-            color: const Color(0xFFD1E7FE),
-            border: Border.all(width: 1),
-          ),
-          child: Stack(
+      backgroundColor: backgroundColor,
+      body: SafeArea(  // 确保内容不会与系统元素（如状态栏）重叠
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo Image
-              Positioned(
-                left: 81,
-                top: 77,
-                child: Container(
-                  width: 199,
-                  height: 199,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    image: DecorationImage(
-                      image: AssetImage("image/logo3.png"),
-                      fit: BoxFit.fill,
+              // Logo 区域
+              Container(
+                width: screenWidth * 0.6,
+                height: screenHeight * 0.3,
+                decoration: BoxDecoration(
+                  color: whiteFillColor,
+                  border: Border.all(width: 1, color: greyBorderColor),
+                ),
+                child: Center(
+                  child: Image.asset(
+                    "image/logo3.png",
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20), // 间距
+              // App 名字
+              Text(
+                '-FOO MY FOOD-',
+                style: TextStyle(
+                  fontSize: screenWidth * 0.05,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
+              const SizedBox(height: 20), // 间距
+
+              // 用户名或邮箱输入框
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: screenWidth * inputFieldWidthFactor),
+                child: buildTextInputField(
+                  label: 'Email Or Username',
+                  controller: usernameController,
+                  isError: _emailInvalid || _usernameNotFound, // 根据错误状态设置边框颜色
+                  onChanged: (text) {
+                    setState(() {
+                      _emailInvalid = false;
+                      _usernameNotFound = false;
+                    });
+                  },
+                ),
+              ),
+              if (_emailInvalid)
+                const Text(emailInvalidError, style: TextStyle(color: redErrorTextColor)),
+              if (_usernameNotFound)
+                const Text(usernameNotRegisteredError, style: TextStyle(color: redErrorTextColor)),
+
+              const SizedBox(height: 20), // 间距
+
+              // 密码输入框
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: screenWidth * inputFieldWidthFactor),
+                child: buildPasswordInputField(
+                  label: 'Password',
+                  controller: passwordController,
+                  isError: _passwordInvalid, // 根据错误状态设置边框颜色
+                  onChanged: (text) {
+                    setState(() {
+                      _passwordInvalid = false;
+                    });
+                  },
+                ),
+              ),
+              if (_passwordInvalid)
+                const Text(passwordIncorrectError, style: TextStyle(color: redErrorTextColor)),
+
+              const SizedBox(height: 20), // 间距
+
+              // 登录按钮
+              SizedBox(
+                width: screenWidth * buttonWidthFactor,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: buttonBackgroundColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  onPressed: login, // 点击按钮调用登录函数
+                  child: const Text(
+                    loginButtonText, // 从 constants.dart 引用按钮文本
+                    style: TextStyle(
+                      color: whiteTextColor,
+                      fontSize: 15,
                     ),
                   ),
                 ),
               ),
-              // Username Field
-              Positioned(
-                left: 82,
-                top: 324,
-                child: Container(
-                  width: 196,
-                  height: 37,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFEFFFF),
-                  ),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Username',
-                        border: InputBorder.none,
-                      ),
+              const SizedBox(height: 10), // 间距
+
+              // 忘记密码按钮
+              SizedBox(
+                width: screenWidth * buttonWidthFactor,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: buttonBackgroundColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                ),
-              ),
-              // Password Field
-              Positioned(
-                left: 82,
-                top: 375,
-                child: Container(
-                  width: 196,
-                  height: 37,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFEFFFF),
-                  ),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: TextField(
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        hintText: 'Password',
-                        border: InputBorder.none,
-                      ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const PasswordResetChoicePage()),
+                    );
+                  },
+                  child: const Text(
+                    forgetResetPasswordText, // 从 constants.dart 引用按钮文本
+                    style: TextStyle(
+                      color: whiteTextColor,
+                      fontSize: 13,
                     ),
                   ),
                 ),
               ),
-              // LOG IN Button
-              Positioned(
-                left: 135,
-                top: 424,
-                child: SizedBox(
-                  width: 110, // 增加宽度
-                  height: 40, // 增加高度
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF47709B),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20), // 圆角按钮
-                      ),
-                    ),
-                    onPressed: () {
-                      // 在点击按钮时导航到 MyHomePage
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const MyHomePage(title: 'Home Page'),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'LOG IN',
-                      style: TextStyle(
-                        color: Color(0xFFE5E5E5),
-                        fontSize: 15, // 增加字体大小
-                      ),
+              const SizedBox(height: 10), // 间距
+
+              // 创建账户按钮
+              SizedBox(
+                width: screenWidth * buttonWidthFactor,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: buttonBackgroundColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                ),
-              ),
-              // Forget/Reset Password Button
-              Positioned(
-                left: 110,
-                top: 480, // 调整位置，放在 LOG IN 按钮下方
-                child: SizedBox(
-                  width: 150, // 增加宽度
-                  height: 40, // 增加高度
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF47709B),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20), // 圆角按钮
-                      ),
-                    ),
-                    onPressed: () {
-                      // 导航到 security or email 页面
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PasswordResetChoicePage(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'Forget/Reset Password',
-                      style: TextStyle(
-                        color: Color(0xFFE5E5E5),
-                        fontSize: 13, // 保持字体大小一致
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              // Create Account Button
-              Positioned(
-                left: 110,
-                top: 535, // 放置在 Forget/Reset Password 按钮下方
-                child: SizedBox(
-                  width: 150, // 增加宽度
-                  height: 40, // 增加高度
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF47709B),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20), // 圆角按钮
-                      ),
-                    ),
-                    onPressed: () {
-                      // Handle create account action here
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CreateAccount(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'Create Account',
-                      style: TextStyle(
-                        color: Color(0xFFE5E5E5),
-                        fontSize: 13, // 保持字体大小一致
-                      ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CreateAccount()),
+                    );
+                  },
+                  child: const Text(
+                    createAccountButtonText, // 从 constants.dart 引用按钮文本
+                    style: TextStyle(
+                      color: whiteTextColor,
+                      fontSize: 13,
                     ),
                   ),
                 ),
