@@ -1,15 +1,15 @@
+import 'package:foo_my_food_app/utils/constants.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 
 class CreateAccountApiService {
   //static const String apiUrl = 'http://192.168.x.x:8080/create-account'; // 替换为你的后端 URL
-  static const String apiUrl = 'http://127.0.0.1:8080/create-account'; // This is ios localhost
+
+  static const String apiUrl =
+      '$baseApiUrl/create-account'; // This is ios localhost
 
   // static const String apiUrl = 'http://10.0.2.2:8080/create-account'; // This is Android localhost
   // static const String apiUrl = 'http://localhost:8080/create-account';
-
-
-
 
   static Future<http.StreamedResponse> createAccount({
     required String firstName,
