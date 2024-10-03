@@ -24,13 +24,13 @@ class TempDB {
   static List<Map<String, dynamic>> users = [
     {
       "id": 1,
-      "username": "charlie_fang",
-      "email": "charlie@example.com",
+      "username": "fang331",
+      "email": "fang331@purdue.edu",
       "password": "password123",
       "createdAt": DateTime.now(),
       "profileImage": "https://example.com/profile.jpg",
       "emailVerified": true,
-      "phoneNumber": "1234567890"
+      "phoneNumber": "7657670582"
     },
     {
       "id": 2,

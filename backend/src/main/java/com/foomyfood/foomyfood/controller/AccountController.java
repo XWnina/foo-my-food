@@ -72,7 +72,8 @@ public class AccountController {
         System.out.println("Phone: " + user.getPhone());
         System.out.println("Password: " + user.getPassword());  // 在生产环境中避免打印密码
         System.out.println("Image URL: " + user.getImageUrl());
-        System.out.println("Email Verification Token: " + emailVerificationToken);
+        System.out.println("Email Verification Token: " + user.getEmailVerificationToken());
+        System.out.println("Is this user Verified email?" + user.isEmailVerified());
 
 
         // 调用邮件服务发送验证邮件
