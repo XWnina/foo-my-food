@@ -54,5 +54,12 @@
     <key>NSPhotoLibraryAddUsageDescription</key>
     <string>We need access to save images to your photo library.</string>
 
+    <!-- 允许非 HTTPS 请求 -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
+
 </dict>
 </plist>

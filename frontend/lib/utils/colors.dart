@@ -1,4 +1,3 @@
-// defind colors
 import 'package:flutter/material.dart';
 
 const backgroundColor = Color(0xFFD1E7FE); // 页面背景颜色

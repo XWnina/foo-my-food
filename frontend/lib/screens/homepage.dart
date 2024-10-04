@@ -86,7 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           Expanded(
             child: GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 childAspectRatio: 3,
               ),
@@ -94,7 +94,7 @@ class _MyHomePageState extends State<MyHomePage> {
               itemBuilder: (context, index) {
                 final item = foodItems[index];
                 return Card(
-                  margin: EdgeInsets.all(8.0),
+                  margin: const EdgeInsets.all(8.0),
                   // child: ListTile(
                   //   leading: Icon(Icons.fastfood), // Replace with appropriate icons
                   //   title: Text('Food Item ${index + 1}'),
