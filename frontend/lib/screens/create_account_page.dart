@@ -6,6 +6,8 @@ import 'dart:developer' as developer; // 使用 log 函数
 import 'package:foo_my_food_app/utils/helper_function.dart'; // 导入验证函数
 import 'package:foo_my_food_app/utils/constants.dart'; // 导入常量
 import 'package:foo_my_food_app/utils/colors.dart'; // 导入颜色常量
+import 'package:foo_my_food_app/services/account_api_service.dart'; // 导入 Account API 服务
+import 'package:foo_my_food_app/Screens/choose_security_q.dart'; // 导入 Security Question 页面
 import 'components/text_field.dart'; // 自定义输入框组件
 
 class CreateAccount extends StatefulWidget {
@@ -33,9 +35,31 @@ class CreateAccountState extends State<CreateAccount> {
   bool _phoneTaken = false;
   bool _passwordsDoNotMatch = false;
 
-  // 从图库或相机选择图片
+  // 让用户从图库或相机选择图片
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile = await showModalBottomSheet<XFile?>(
+      context: context,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          ListTile(
+            leading: const Icon(Icons.photo_library),
+            title: const Text('Choose from gallery'),
+            onTap: () async {
+              Navigator.pop(context, await ImagePicker().pickImage(source: ImageSource.gallery));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.camera_alt),
+            title: const Text('Take a picture'),
+            onTap: () async {
+              Navigator.pop(context, await ImagePicker().pickImage(source: ImageSource.camera));
+            },
+          ),
+        ],
+      ),
+    );
+
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path); // 更新图片路径
@@ -44,61 +68,45 @@ class CreateAccountState extends State<CreateAccount> {
   }
 
   // 验证用户名字段
-  void _validateUsername() {
+  Future<void> _validateUsername(String username) async {
     setState(() {
-      final validationResults = HelperFunctions.validateInput(
-        username: _usernameController.text,
-        email: _emailController.text,
-        phoneNumber: _phoneController.text,
-        password: _passwordController.text,
-        confirmPassword: _confirmPasswordController.text,
-      );
-      _usernameInvalid = validationResults['usernameInvalid'];
-      _usernameTaken = validationResults['usernameTaken'];
+      _usernameInvalid = !HelperFunctions.checkUsernameFormat(username);
     });
+    if (!_usernameInvalid) {
+      _usernameTaken = !await HelperFunctions.checkUsernameUnique(username);
+      setState(() {}); // 更新状态
+    }
   }
 
   // 验证邮箱字段
-  void _validateEmail() {
+  Future<void> _validateEmail(String email) async {
     setState(() {
-      final validationResults = HelperFunctions.validateInput(
-        username: _usernameController.text,
-        email: _emailController.text,
-        phoneNumber: _phoneController.text,
-        password: _passwordController.text,
-        confirmPassword: _confirmPasswordController.text,
-      );
-      _emailInvalid = validationResults['emailInvalid'];
-      _emailTaken = validationResults['emailTaken'];
+      _emailInvalid = !HelperFunctions.checkEmailFormat(email);
     });
+    if (!_emailInvalid) {
+      _emailTaken = !await HelperFunctions.checkEmailUnique(email);
+      setState(() {}); // 更新状态
+    }
   }
 
   // 验证电话号码字段
-  void _validatePhoneNumber() {
+  Future<void> _validatePhoneNumber(String phoneNumber) async {
     setState(() {
-      final validationResults = HelperFunctions.validateInput(
-        username: _usernameController.text,
-        email: _emailController.text,
-        phoneNumber: _phoneController.text,
-        password: _passwordController.text,
-        confirmPassword: _confirmPasswordController.text,
-      );
-      _phoneInvalid = validationResults['phoneInvalid'];
-      _phoneTaken = validationResults['phoneTaken'];
+      _phoneInvalid = !HelperFunctions.checkPhoneNumberFormat(phoneNumber);
     });
+    if (!_phoneInvalid) {
+      _phoneTaken = !await HelperFunctions.checkPhoneNumberUnique(phoneNumber);
+      setState(() {}); // 更新状态
+    }
   }
 
   // 验证密码字段
   void _validatePasswords() {
     setState(() {
-      final validationResults = HelperFunctions.validateInput(
-        username: _usernameController.text,
-        email: _emailController.text,
-        phoneNumber: _phoneController.text,
-        password: _passwordController.text,
-        confirmPassword: _confirmPasswordController.text,
+      _passwordsDoNotMatch = !HelperFunctions.checkPasswordsMatch(
+        _passwordController.text,
+        _confirmPasswordController.text,
       );
-      _passwordsDoNotMatch = validationResults['passwordsDoNotMatch'];
     });
   }
 
@@ -123,9 +131,9 @@ class CreateAccountState extends State<CreateAccount> {
       var response = await CreateAccountApiService.createAccount(
         firstName: _firstNameController.text,
         lastName: _lastNameController.text,
-        username: _usernameController.text,
-        email: _emailController.text,
-        phone: _phoneController.text,
+        userName: _usernameController.text,  // 改为 userName
+        emailAddress: _emailController.text,  // 改为 emailAddress
+        phoneNumber: _phoneController.text,
         password: _passwordController.text,
         image: _image, // 用户头像
       );
@@ -134,15 +142,43 @@ class CreateAccountState extends State<CreateAccount> {
       if (response.statusCode == 200) {
         developer.log('Account created successfully.', name: 'CreateAccount');
         _showSnackBar('Account created successfully. Please check your email for verification.');
+        _startEmailVerificationPolling(); // 开始轮询邮箱验证状态
       } else {
-        developer.log('Failed to create account.', name: 'CreateAccount');
-        _showSnackBar('Failed to create account.');
+        // 提取响应内容
+        var responseBody = await response.stream.bytesToString();
+        developer.log('Failed to create account. Reason: $responseBody', name: 'CreateAccount');
+        _showSnackBar('Failed to create account. Reason: $responseBody');
       }
     } catch (error) {
       developer.log('Error occurred: $error', name: 'CreateAccount', error: error);
       _showSnackBar('Error occurred: $error');
     }
   }
+
+  // 轮询检查邮箱验证状态
+  // 轮询检查邮箱验证状态
+Future<void> _startEmailVerificationPolling() async {
+  const pollInterval = Duration(seconds: 5); // 每 5 秒检查一次
+  bool isVerified = false;
+
+  while (!isVerified) {  // 只有验证成功后轮询才会终止
+    try {
+      isVerified = await AccountApiService.checkVerificationStatus(_emailController.text);
+      if (isVerified) {
+        _showSnackBar('Your account has been verified!');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SecurityQuestionSelectionPage()), // 跳转到 SecurityQuestionSelectionPage
+        );
+        break; // 停止轮询
+      }
+    } catch (error) {
+      developer.log('Error checking email verification status: $error', name: 'CreateAccount');
+    }
+    await Future.delayed(pollInterval); // 等待 5 秒后再次检查
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -196,7 +232,9 @@ class CreateAccountState extends State<CreateAccount> {
             buildTextInputField(
               label: 'USERNAME',
               controller: _usernameController,
-              onChanged: (value) => _validateUsername(),
+              onChanged: (value) {
+                _validateUsername(value); // 每次输入时验证用户名唯一性
+              },
             ),
             if (_usernameInvalid) const Text(usernameInvalidError, style: TextStyle(color: redErrorTextColor)),
             if (_usernameTaken) const Text(usernameTakenError, style: TextStyle(color: redErrorTextColor)),
@@ -205,7 +243,9 @@ class CreateAccountState extends State<CreateAccount> {
             buildTextInputField(
               label: 'EMAIL ADDRESS',
               controller: _emailController,
-              onChanged: (value) => _validateEmail(),
+              onChanged: (value) {
+                _validateEmail(value); // 每次输入时验证邮箱唯一性
+              },
             ),
             if (_emailInvalid) const Text(emailInvalidError, style: TextStyle(color: redErrorTextColor)),
             if (_emailTaken) const Text(emailTakenError, style: TextStyle(color: redErrorTextColor)),
@@ -214,7 +254,9 @@ class CreateAccountState extends State<CreateAccount> {
             buildTextInputField(
               label: 'PHONE NUMBER',
               controller: _phoneController,
-              onChanged: (value) => _validatePhoneNumber(),
+              onChanged: (value) {
+                _validatePhoneNumber(value); // 每次输入时验证电话号码唯一性
+              },
               keyboardType: TextInputType.phone,
             ),
             if (_phoneInvalid) const Text(phoneInvalidError, style: TextStyle(color: redErrorTextColor)),
@@ -224,15 +266,18 @@ class CreateAccountState extends State<CreateAccount> {
             buildPasswordInputField(
               label: 'PASSWORD',
               controller: _passwordController,
-              onChanged: (value) => _validatePasswords(),
+              onChanged: (value) {
+                _validatePasswords(); // 每次输入时验证密码
+              },
             ),
 
             // Confirm Password 输入框
             buildPasswordInputField(
               label: 'CONFIRM PASSWORD',
               controller: _confirmPasswordController,
-              isError: _passwordsDoNotMatch,
-              onChanged: (value) => _validatePasswords(),
+              onChanged: (value) {
+                _validatePasswords(); // 每次输入时验证密码匹配
+              },
             ),
             if (_passwordsDoNotMatch) const Text(passwordMismatchError, style: TextStyle(color: redErrorTextColor)),
 
