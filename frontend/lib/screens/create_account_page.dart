@@ -46,14 +46,16 @@ class CreateAccountState extends State<CreateAccount> {
             leading: const Icon(Icons.photo_library),
             title: const Text('Choose from gallery'),
             onTap: () async {
-              Navigator.pop(context, await ImagePicker().pickImage(source: ImageSource.gallery));
+              Navigator.pop(context,
+                  await ImagePicker().pickImage(source: ImageSource.gallery));
             },
           ),
           ListTile(
             leading: const Icon(Icons.camera_alt),
             title: const Text('Take a picture'),
             onTap: () async {
-              Navigator.pop(context, await ImagePicker().pickImage(source: ImageSource.camera));
+              Navigator.pop(context,
+                  await ImagePicker().pickImage(source: ImageSource.camera));
             },
           ),
         ],
@@ -131,8 +133,8 @@ class CreateAccountState extends State<CreateAccount> {
       var response = await CreateAccountApiService.createAccount(
         firstName: _firstNameController.text,
         lastName: _lastNameController.text,
-        userName: _usernameController.text,  // 改为 userName
-        emailAddress: _emailController.text,  // 改为 emailAddress
+        userName: _usernameController.text, // 改为 userName
+        emailAddress: _emailController.text, // 改为 emailAddress
         phoneNumber: _phoneController.text,
         password: _passwordController.text,
         image: _image, // 用户头像
@@ -141,44 +143,51 @@ class CreateAccountState extends State<CreateAccount> {
       // 处理响应
       if (response.statusCode == 200) {
         developer.log('Account created successfully.', name: 'CreateAccount');
-        _showSnackBar('Account created successfully. Please check your email for verification.');
+        _showSnackBar(
+            'Account created successfully. Please check your email for verification.');
         _startEmailVerificationPolling(); // 开始轮询邮箱验证状态
       } else {
         // 提取响应内容
         var responseBody = await response.stream.bytesToString();
-        developer.log('Failed to create account. Reason: $responseBody', name: 'CreateAccount');
+        developer.log('Failed to create account. Reason: $responseBody',
+            name: 'CreateAccount');
         _showSnackBar('Failed to create account. Reason: $responseBody');
       }
     } catch (error) {
-      developer.log('Error occurred: $error', name: 'CreateAccount', error: error);
+      developer.log('Error occurred: $error',
+          name: 'CreateAccount', error: error);
       _showSnackBar('Error occurred: $error');
     }
   }
 
   // 轮询检查邮箱验证状态
   // 轮询检查邮箱验证状态
-Future<void> _startEmailVerificationPolling() async {
-  const pollInterval = Duration(seconds: 5); // 每 5 秒检查一次
-  bool isVerified = false;
+  Future<void> _startEmailVerificationPolling() async {
+    const pollInterval = Duration(seconds: 5); // 每 5 秒检查一次
+    bool isVerified = false;
 
-  while (!isVerified) {  // 只有验证成功后轮询才会终止
-    try {
-      isVerified = await AccountApiService.checkVerificationStatus(_emailController.text);
-      if (isVerified) {
-        _showSnackBar('Your account has been verified!');
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const SecurityQuestionSelectionPage()), // 跳转到 SecurityQuestionSelectionPage
-        );
-        break; // 停止轮询
+    while (!isVerified) {
+      // 只有验证成功后轮询才会终止
+      try {
+        isVerified = await AccountApiService.checkVerificationStatus(
+            _emailController.text);
+        if (isVerified) {
+          _showSnackBar('Your account has been verified!');
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    const SecurityQuestionSelectionPage()), // 跳转到 SecurityQuestionSelectionPage
+          );
+          break; // 停止轮询
+        }
+      } catch (error) {
+        developer.log('Error checking email verification status: $error',
+            name: 'CreateAccount');
       }
-    } catch (error) {
-      developer.log('Error checking email verification status: $error', name: 'CreateAccount');
+      await Future.delayed(pollInterval); // 等待 5 秒后再次检查
     }
-    await Future.delayed(pollInterval); // 等待 5 秒后再次检查
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -223,10 +232,12 @@ Future<void> _startEmailVerificationPolling() async {
             const SizedBox(height: 20),
 
             // First Name 输入框
-            buildTextInputField(label: 'FIRST NAME', controller: _firstNameController),
+            buildTextInputField(
+                label: 'FIRST NAME', controller: _firstNameController),
 
             // Last Name 输入框
-            buildTextInputField(label: 'LAST NAME', controller: _lastNameController),
+            buildTextInputField(
+                label: 'LAST NAME', controller: _lastNameController),
 
             // Username 输入框
             buildTextInputField(
@@ -236,8 +247,12 @@ Future<void> _startEmailVerificationPolling() async {
                 _validateUsername(value); // 每次输入时验证用户名唯一性
               },
             ),
-            if (_usernameInvalid) const Text(usernameInvalidError, style: TextStyle(color: redErrorTextColor)),
-            if (_usernameTaken) const Text(usernameTakenError, style: TextStyle(color: redErrorTextColor)),
+            if (_usernameInvalid)
+              const Text(usernameInvalidError,
+                  style: TextStyle(color: redErrorTextColor)),
+            if (_usernameTaken)
+              const Text(usernameTakenError,
+                  style: TextStyle(color: redErrorTextColor)),
 
             // Email 输入框
             buildTextInputField(
@@ -247,8 +262,12 @@ Future<void> _startEmailVerificationPolling() async {
                 _validateEmail(value); // 每次输入时验证邮箱唯一性
               },
             ),
-            if (_emailInvalid) const Text(emailInvalidError, style: TextStyle(color: redErrorTextColor)),
-            if (_emailTaken) const Text(emailTakenError, style: TextStyle(color: redErrorTextColor)),
+            if (_emailInvalid)
+              const Text(emailInvalidError,
+                  style: TextStyle(color: redErrorTextColor)),
+            if (_emailTaken)
+              const Text(emailTakenError,
+                  style: TextStyle(color: redErrorTextColor)),
 
             // Phone Number 输入框
             buildTextInputField(
@@ -259,8 +278,12 @@ Future<void> _startEmailVerificationPolling() async {
               },
               keyboardType: TextInputType.phone,
             ),
-            if (_phoneInvalid) const Text(phoneInvalidError, style: TextStyle(color: redErrorTextColor)),
-            if (_phoneTaken) const Text(phoneTakenError, style: TextStyle(color: redErrorTextColor)),
+            if (_phoneInvalid)
+              const Text(phoneInvalidError,
+                  style: TextStyle(color: redErrorTextColor)),
+            if (_phoneTaken)
+              const Text(phoneTakenError,
+                  style: TextStyle(color: redErrorTextColor)),
 
             // Password 输入框
             buildPasswordInputField(
@@ -279,17 +302,27 @@ Future<void> _startEmailVerificationPolling() async {
                 _validatePasswords(); // 每次输入时验证密码匹配
               },
             ),
-            if (_passwordsDoNotMatch) const Text(passwordMismatchError, style: TextStyle(color: redErrorTextColor)),
+            if (_passwordsDoNotMatch)
+              const Text(passwordMismatchError,
+                  style: TextStyle(color: redErrorTextColor)),
 
             const SizedBox(height: 20), // 增加一些间距
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 50.0, vertical: 15.0),
-                  backgroundColor: buttonBackgroundColor, // 使用 color.dart 中的按钮背景颜色
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 50.0, vertical: 15.0),
+                  backgroundColor:
+                      buttonBackgroundColor, // 使用 color.dart 中的按钮背景颜色
                 ),
                 // 禁用按钮的条件是用户名无效、用户名已被使用、邮箱格式错误、邮箱已被使用、电话号码无效、电话号码已被使用或密码不匹配
-                onPressed: _usernameInvalid || _usernameTaken || _emailInvalid || _emailTaken || _phoneInvalid || _phoneTaken || _passwordsDoNotMatch
+                onPressed: _usernameInvalid ||
+                        _usernameTaken ||
+                        _emailInvalid ||
+                        _emailTaken ||
+                        _phoneInvalid ||
+                        _phoneTaken ||
+                        _passwordsDoNotMatch
                     ? null
                     : () {
                         _submitCreateAccount(); // 发送创建账号的请求

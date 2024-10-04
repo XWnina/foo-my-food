@@ -23,9 +23,9 @@ class LoginPageState extends State<LoginPage> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  bool _emailInvalid = false;  // 是否为无效的邮箱
+  bool _emailInvalid = false; // 是否为无效的邮箱
   bool _usernameNotFound = false; // 是否未找到用户名
-  bool _passwordInvalid = false;  // 是否为无效的密码
+  bool _passwordInvalid = false; // 是否为无效的密码
   String errorMessage = '';
 
   final LoginService loginService = LoginService(); // 实例化 LoginService
@@ -44,7 +44,8 @@ class LoginPageState extends State<LoginPage> {
         // 成功登录后跳转到主页
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Home Page')),
+          MaterialPageRoute(
+              builder: (context) => const MyHomePage(title: 'Home Page')),
         );
       } else if (response.statusCode == 404) {
         // 判断是邮箱错误还是用户名错误
@@ -57,7 +58,7 @@ class LoginPageState extends State<LoginPage> {
             _usernameNotFound = true;
             _emailInvalid = false;
           }
-          _passwordInvalid = false;  // 清除密码错误状态
+          _passwordInvalid = false; // 清除密码错误状态
         });
       } else if (response.statusCode == 401) {
         // 密码错误
@@ -80,30 +81,31 @@ class LoginPageState extends State<LoginPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+Widget build(BuildContext context) {
+  final screenWidth = MediaQuery.of(context).size.width;
+  final screenHeight = MediaQuery.of(context).size.height;
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      body: SafeArea(  // 确保内容不会与系统元素（如状态栏）重叠
+  return Scaffold(
+    backgroundColor: backgroundColor,
+    resizeToAvoidBottomInset: true, // 允许内容在键盘弹出时自动调整
+    body: SafeArea(  // 确保内容不会与系统元素（如状态栏）重叠
+      child: SingleChildScrollView(  // 允许页面滚动
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              SizedBox(height: screenHeight * 0.1), // 保证 logo 和输入框位置在键盘弹出时不被遮挡
               // Logo 区域
               Container(
                 width: screenWidth * 0.6,
-                height: screenHeight * 0.3,
+                height: screenWidth * 0.6, // 保持正方形比例
                 decoration: BoxDecoration(
                   color: whiteFillColor,
                   border: Border.all(width: 1, color: greyBorderColor),
                 ),
-                child: Center(
-                  child: Image.asset(
-                    "image/logo3.png",
-                    fit: BoxFit.contain,
-                  ),
+                child: Image.asset(
+                  "image/logo3.png",
+                  fit: BoxFit.cover,  // 让 logo 充满容器
                 ),
               ),
               const SizedBox(height: 20), // 间距
@@ -124,7 +126,7 @@ class LoginPageState extends State<LoginPage> {
                 child: buildTextInputField(
                   label: 'Email Or Username',
                   controller: usernameController,
-                  isError: _emailInvalid || _usernameNotFound, // 根据错误状态设置边框颜色
+                  isError: _emailInvalid || _usernameNotFound,
                   onChanged: (text) {
                     setState(() {
                       _emailInvalid = false;
@@ -146,7 +148,7 @@ class LoginPageState extends State<LoginPage> {
                 child: buildPasswordInputField(
                   label: 'Password',
                   controller: passwordController,
-                  isError: _passwordInvalid, // 根据错误状态设置边框颜色
+                  isError: _passwordInvalid,
                   onChanged: (text) {
                     setState(() {
                       _passwordInvalid = false;
@@ -170,9 +172,9 @@ class LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  onPressed: login, // 点击按钮调用登录函数
+                  onPressed: login,
                   child: const Text(
-                    loginButtonText, // 从 constants.dart 引用按钮文本
+                    loginButtonText,
                     style: TextStyle(
                       color: whiteTextColor,
                       fontSize: 15,
@@ -200,7 +202,7 @@ class LoginPageState extends State<LoginPage> {
                     );
                   },
                   child: const Text(
-                    forgetResetPasswordText, // 从 constants.dart 引用按钮文本
+                    forgetResetPasswordText,
                     style: TextStyle(
                       color: whiteTextColor,
                       fontSize: 13,
@@ -228,7 +230,7 @@ class LoginPageState extends State<LoginPage> {
                     );
                   },
                   child: const Text(
-                    createAccountButtonText, // 从 constants.dart 引用按钮文本
+                    createAccountButtonText,
                     style: TextStyle(
                       color: whiteTextColor,
                       fontSize: 13,
@@ -236,10 +238,13 @@ class LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 20), // 保证内容不会被键盘完全遮挡
             ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 }
