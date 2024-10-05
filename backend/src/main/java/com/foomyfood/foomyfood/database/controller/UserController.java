@@ -25,7 +25,9 @@ public class UserController {
                 user.getPassword(),
                 user.getImageURL(),
                 user.getEmailVerificationToken(),
-                user.getEmailVerified()
+                user.getEmailVerified(),
+                user.getSecurityQuestion(),
+                user.getSecurityQuestAnswer()
         );
     }
 }

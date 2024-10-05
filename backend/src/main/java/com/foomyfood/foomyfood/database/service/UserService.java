@@ -14,29 +14,29 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    // create a user
-    public User createUser(String firstName, String lastName, String userName, String emailAddress, String phoneNumber, String password, String imageURL, String emailVerificationToken, Boolean emailVerified) {
-        User user = new User(firstName, lastName, userName, emailAddress, phoneNumber, password, imageURL, emailVerificationToken, emailVerified);
+    // Create a new user
+    public User createUser(String firstName, String lastName, String userName, String emailAddress, String phoneNumber, String password, String imageURL, String emailVerificationToken, Boolean emailVerified, String securityQuestion, String securityQuestAnswer) {
+        User user = new User(firstName, lastName, userName, emailAddress, phoneNumber, password, imageURL, emailVerificationToken, emailVerified, securityQuestion, securityQuestAnswer);
         return userRepository.save(user);
     }
 
-    // find the user data row via the table id
+    // Find user by ID
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id);
     }
 
-    // find the user id via unique username
+    // Find user by unique username
     public Optional<User> getUserByUserName(String userName) {
         return userRepository.findByUserName(userName);
     }
 
-    // delete a user
+    // Delete user by ID
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
 
-    // update a user info
-    public User updateUser(Long id, String firstName, String lastName, String userName, String emailAddress, String phoneNumber, String password, String imageURL, String emailVerificationToken, Boolean emailVerified) {
+    // Update an existing user's information
+    public User updateUser(Long id, String firstName, String lastName, String userName, String emailAddress, String phoneNumber, String password, String imageURL, String emailVerificationToken, Boolean emailVerified, String securityQuestion, String securityQuestAnswer) {
         Optional<User> optionalUser = userRepository.findById(id);
         
         if (optionalUser.isPresent()) {
@@ -50,9 +50,11 @@ public class UserService {
             user.setImageURL(imageURL);
             user.setEmailVerificationToken(emailVerificationToken);
             user.setEmailVerified(emailVerified);
+            user.setSecurityQuestion(securityQuestion);
+            user.setSecurityQuestAnswer(securityQuestAnswer);
             return userRepository.save(user); 
         } else {
-            throw new RuntimeException("用户未找到");
+            throw new RuntimeException("User not found");
         }
     }
 }
