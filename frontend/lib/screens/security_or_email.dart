@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'set_password_info_varification.dart';
+import 'one_security_question.dart';
 class PasswordResetChoicePage extends StatelessWidget {
   const PasswordResetChoicePage({super.key});
 
@@ -134,18 +135,6 @@ class PasswordResetChoicePage extends StatelessWidget {
   }
 }
 
-class SecurityQuestionPage extends StatelessWidget {
-  const SecurityQuestionPage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      // Implementation of security question verification UI
-      body: Center(
-        child: Text('Security Question Verification'),
-      ),
-    );
-  }
-}
 
 
