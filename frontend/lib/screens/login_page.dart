@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:foo_my_food_app/screens/components/text_field.dart'; // 导入 text_field.dart
 import 'package:foo_my_food_app/utils/colors.dart'; // 导入 color.dart 文件
-import 'package:foo_my_food_app/services/login_service.dart'; // 导入 login_service.dart 文件
+import 'package:foo_my_food_app/services/login_service.dart'; // 导入 login_service.dart
+import 'package:foo_my_food_app/services/account_api_service.dart'; // 导入 account_api_service.dart
 import 'package:foo_my_food_app/utils/constants.dart'; // 导入 constants.dart 文件
 import 'homepage.dart'; // 导入主页
 import 'create_account_page.dart'; // 导入创建账户页面
 import 'security_or_email.dart'; // 导入密码重置页面
+import 'package:foo_my_food_app/Screens/choose_security_q.dart'; // 导入 Security Question 页面
 import 'package:logging/logging.dart';
 
 final Logger _logger = Logger('LoginPage');
@@ -19,72 +21,132 @@ class LoginPage extends StatefulWidget {
 }
 
 class LoginPageState extends State<LoginPage> {
-  final TextEditingController usernameController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
-  bool _emailInvalid = false; // 是否为无效的邮箱
-  bool _usernameNotFound = false; // 是否未找到用户名
-  bool _passwordInvalid = false; // 是否为无效的密码
   bool _emailNotVerified = false; // 是否邮箱未验证
+  bool _isEmailVerificationSent = false; // 是否已经发送验证邮件
   String errorMessage = '';
 
   final LoginService loginService = LoginService(); // 实例化 LoginService
 
+  // 登录服务方法
   Future<void> login() async {
-    String userInput = usernameController.text;
-    String password = passwordController.text;
+    String userInput = _emailController.text;
+    String password = _passwordController.text;
 
     try {
+      // 调用登录 API
       final response = await loginService.login(userInput, password);
 
       if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
         if (!mounted) return;
 
         // 成功登录后跳转到主页
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-              builder: (context) => const MyHomePage(title: 'Home Page')),
+            builder: (context) => const MyHomePage(title: 'Home Page'),
+          ),
         );
-      } else if (response.statusCode == 404) {
-        // 判断是邮箱错误还是用户名错误
-        String errorMessage = jsonDecode(response.body)['message'];
+      } else if (response.statusCode == 403) {
+        // 邮箱未验证，显示重新发送验证邮件的提示
         setState(() {
-          if (errorMessage.contains("Email")) {
-            _emailInvalid = true;
-            _usernameNotFound = false;
-          } else if (errorMessage.contains("Username")) {
-            _usernameNotFound = true;
-            _emailInvalid = false;
-          }
-          _passwordInvalid = false; // 清除密码错误状态
+          _emailNotVerified = true;
+          _isEmailVerificationSent = true;
+          errorMessage = "Email not verified. Please check your inbox for the verification email.";
+        });
+      } else if (response.statusCode == 404) {
+        // 用户名或邮箱未找到
+        setState(() {
+          errorMessage = jsonDecode(response.body)['message'];
         });
       } else if (response.statusCode == 401) {
         // 密码错误
         setState(() {
-          _passwordInvalid = true;
-          _emailInvalid = false;
-          _usernameNotFound = false;
-        });
-      } else if (response.statusCode == 403) {
-        // 邮箱未验证
-        setState(() {
-          _emailNotVerified = true; // 设置邮箱未验证的状态
-          errorMessage =
-              "Email is not verified. Please verify your email to log in.";
+          errorMessage = jsonDecode(response.body)['message'];
         });
       } else {
         setState(() {
-          errorMessage = "An unexpected error occurred";
+          errorMessage = 'An unexpected error occurred.';
         });
       }
     } catch (e) {
       setState(() {
         errorMessage = "Error occurred during login: $e";
       });
-      _logger.severe("Error occurred during login: $e");
     }
+  }
+
+  // 检查邮箱验证状态
+  Future<void> checkVerificationStatus() async {
+    String userInput = _emailController.text;
+    String password = _passwordController.text;
+
+    try {
+      // 调用登录 API
+      final response = await loginService.login(userInput, password);
+
+      if (response.statusCode == 200) {
+        if (!mounted) return;
+
+        // 成功登录后跳转到主页
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SecurityQuestionSelectionPage()
+          ),
+        );
+      } else if (response.statusCode == 403) {
+        // 邮箱未验证，显示重新发送验证邮件的提示
+        setState(() {
+          _emailNotVerified = true;
+          _isEmailVerificationSent = true;
+          errorMessage = "Email not verified. Please check your inbox for the verification email.";
+        });
+      } else if (response.statusCode == 404) {
+        // 用户名或邮箱未找到
+        setState(() {
+          errorMessage = jsonDecode(response.body)['message'];
+        });
+      } else if (response.statusCode == 401) {
+        // 密码错误
+        setState(() {
+          errorMessage = jsonDecode(response.body)['message'];
+        });
+      } else {
+        setState(() {
+          errorMessage = 'An unexpected error occurred.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "Error occurred during login: $e";
+      });
+    }
+  }
+
+  // 错误提示展示
+  Widget buildErrorMessage() {
+    if (errorMessage.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Text(
+          errorMessage,
+          style: const TextStyle(color: Colors.red),
+        ),
+      );
+    }
+    return const SizedBox(); // 如果没有错误，返回一个空的占位
+  }
+
+  // 清除错误状态
+  void clearErrorState() {
+    setState(() {
+      errorMessage = '';
+      _emailNotVerified = false;
+      _isEmailVerificationSent = false;
+    });
   }
 
   @override
@@ -96,7 +158,7 @@ class LoginPageState extends State<LoginPage> {
       backgroundColor: backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
-          // 允许页面滚动
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, // 拖动时隐藏键盘
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -129,79 +191,79 @@ class LoginPageState extends State<LoginPage> {
 
                 // 用户名或邮箱输入框
                 Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: screenWidth * inputFieldWidthFactor),
+                  padding: EdgeInsets.symmetric(horizontal: screenWidth * inputFieldWidthFactor),
                   child: buildTextInputField(
                     label: 'Email Or Username',
-                    controller: usernameController,
-                    isError: _emailInvalid ||
-                        _usernameNotFound ||
-                        _emailNotVerified, // 根据错误状态设置边框颜色
-                    onChanged: (text) {
-                      setState(() {
-                        _emailInvalid = false;
-                        _usernameNotFound = false;
-                        _emailNotVerified = false; // 清除未验证状态
-                      });
-                    },
+                    controller: _emailController,
+                    isError: _emailNotVerified,
+                    onChanged: (text) => clearErrorState(),
                   ),
                 ),
-                if (_emailInvalid)
-                  const Text(emailInvalidError,
-                      style: TextStyle(color: redErrorTextColor)),
-                if (_usernameNotFound)
-                  const Text(usernameNotRegisteredError,
-                      style: TextStyle(color: redErrorTextColor)),
-                if (_emailNotVerified)
-                  const Text(
-                      "Email is not verified. Please verify your email to log in.",
-                      style: TextStyle(color: redErrorTextColor)),
+
+                // 错误提示
+                buildErrorMessage(),
 
                 const SizedBox(height: 20), // 间距
 
                 // 密码输入框
                 Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: screenWidth * inputFieldWidthFactor),
+                  padding: EdgeInsets.symmetric(horizontal: screenWidth * inputFieldWidthFactor),
                   child: buildPasswordInputField(
                     label: 'Password',
-                    controller: passwordController,
-                    isError: _passwordInvalid,
-                    onChanged: (text) {
-                      setState(() {
-                        _passwordInvalid = false;
-                      });
-                    },
+                    controller: _passwordController,
+                    onChanged: (text) => clearErrorState(),
                   ),
                 ),
-                if (_passwordInvalid)
-                  const Text(passwordIncorrectError,
-                      style: TextStyle(color: redErrorTextColor)),
 
                 const SizedBox(height: 20), // 间距
 
-                // 登录按钮
-                SizedBox(
-                  width: screenWidth * buttonWidthFactor,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: buttonBackgroundColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                // 根据邮箱验证状态显示不同的按钮
+                if (_emailNotVerified && _isEmailVerificationSent)
+                  // "I already verify" 按钮
+                  SizedBox(
+                    width: screenWidth * buttonWidthFactor,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: buttonBackgroundColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      onPressed: checkVerificationStatus, // 点击后检查邮箱验证状态
+                      child: const Text(
+                        'I already verify',
+                        style: TextStyle(
+                          color: whiteTextColor,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
-                    onPressed: login, // 点击按钮调用登录函数
-                    child: const Text(
-                      loginButtonText, // 从 constants.dart 引用按钮文本
-                      style: TextStyle(
-                        color: whiteTextColor,
-                        fontSize: 15,
+                  )
+                else
+                  // 登录按钮
+                  SizedBox(
+                    width: screenWidth * buttonWidthFactor,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: buttonBackgroundColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      onPressed: login, // 点击按钮调用登录函数
+                      child: const Text(
+                        loginButtonText, // 从 constants.dart 引用按钮文本
+                        style: TextStyle(
+                          color: whiteTextColor,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 10), // 间距
+
+                const SizedBox(height: 20), // 间距
 
                 // 忘记密码按钮
                 SizedBox(
@@ -217,9 +279,7 @@ class LoginPageState extends State<LoginPage> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                const PasswordResetChoicePage()),
+                        MaterialPageRoute(builder: (context) => const PasswordResetChoicePage()),
                       );
                     },
                     child: const Text(
@@ -247,8 +307,7 @@ class LoginPageState extends State<LoginPage> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (context) => const CreateAccount()),
+                        MaterialPageRoute(builder: (context) => const CreateAccount()),
                       );
                     },
                     child: const Text(

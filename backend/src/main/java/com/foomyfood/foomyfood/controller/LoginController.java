@@ -5,9 +5,10 @@ import com.foomyfood.foomyfood.database.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.foomyfood.foomyfood.service.CreateAccountEmailService;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 @RestController
@@ -16,6 +17,10 @@ public class LoginController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private CreateAccountEmailService emailService;
+
 
     // 邮箱正则表达式，用于判断输入是邮箱还是用户名
     private static final Pattern emailPattern = Pattern.compile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9]+\\.[a-zA-Z]+$");
@@ -59,20 +64,41 @@ public class LoginController {
         }
 
         // 检查邮箱是否验证
-        if (Boolean.FALSE.equals(user.get().getEmailVerified())) {
-            return ResponseEntity.status(403).body(Map.of(
-                    "status", "error",
-                    "message", "Email is not verified. Please verify your email to log in."
-            ));
+        if (!user.get().getEmailVerified()) {
+            try {
+                System.out.println("Attempting to send verification email...");
+                String emailVerificationToken = UUID.randomUUID().toString();
+                System.out.println(user.get().getEmailAddress());
+                emailService.sendVerificationEmail(user.get().getEmailAddress(), user.get().getUserName(), emailVerificationToken);
+                User updatedUser = user.get();
+                updatedUser.setEmailVerificationToken(emailVerificationToken);
+                userRepository.save(updatedUser);  // 显式使用 User 类型
+                // 保存 token 到数据库
+                return ResponseEntity.status(403).body(Map.of(
+                        "status", "error",
+                        "message", "Email not verified. A new verification email has been sent."
+                ));
+            } catch (Exception e) {
+                System.out.println("Error sending email: " + e.getMessage());
+                return ResponseEntity.status(500).body(Map.of(
+                        "status", "error",
+                        "message", "Failed to send verification email. Please try again later."
+                ));
+            }
         }
 
-        // 如果邮箱或用户名和密码都匹配，返回登录成功
+
+        // 登录成功后更新 logInStatus 为 true
+        User loggedInUser = user.get();
+        loggedInUser.setLogInStatus(true);
+        userRepository.save(loggedInUser);  // 更新用户状态
+
+        // 返回登录成功信息
         return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "message", "Login successful",
-                "userId", user.get().getId().toString(),
-                "username", user.get().getUserName()
+                "userId", loggedInUser.getId().toString(),
+                "username", loggedInUser.getUserName()
         ));
     }
-
 }
