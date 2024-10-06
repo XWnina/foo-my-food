@@ -48,11 +48,14 @@ public class User {
     @Column(name = "answer_of_security_question")
     private String securityQuestAnswer;
 
+    @Column(name = "log_in_status")
+    private Boolean logInStatus;
+
     // Constructors
     public User() {
     }
 
-    public User(String firstName, String lastName, String userName, String emailAddress, String phoneNumber, String password, String imageURL, String emailVerificationToken, Boolean emailVerified, String securityQuestion, String securityQuestAnswer) {
+    public User(String firstName, String lastName, String userName, String emailAddress, String phoneNumber, String password, String imageURL, String emailVerificationToken, Boolean emailVerified, String securityQuestion, String securityQuestAnswer, Boolean logInStatus) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.userName = userName;
@@ -64,6 +67,7 @@ public class User {
         this.emailVerified = emailVerified;
         this.securityQuestion = securityQuestion;
         this.securityQuestAnswer = securityQuestAnswer;
+        this.logInStatus = logInStatus;
     }
 
     // Getters and Setters
@@ -162,5 +166,12 @@ public class User {
     public void setSecurityQuestAnswer(String securityQuestAnswer) {
         this.securityQuestAnswer = securityQuestAnswer;
     }
-}
 
+    public Boolean getLogInStatus() {
+        return logInStatus;
+    }
+
+    public void setLogInStatus(Boolean logInStatus) {
+        this.logInStatus = logInStatus;
+    }
+}

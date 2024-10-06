@@ -1,10 +1,11 @@
 package com.foomyfood.foomyfood.database.repository;
 
-import com.foomyfood.foomyfood.database.User;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import com.foomyfood.foomyfood.database.User;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -15,6 +16,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByPhoneNumber(String phoneNumber);
 
-    // 根据 emailVerificationToken 查找用户
     Optional<User> findByEmailVerificationToken(String emailVerificationToken);
 }
