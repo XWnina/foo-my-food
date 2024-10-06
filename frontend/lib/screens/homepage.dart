@@ -47,7 +47,7 @@ class _MyHomePageState extends State<MyHomePage> {
       // 如果选择了用户信息页面，进行导航
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const UserInfoPage()),
+        MaterialPageRoute(builder: (context) => UserProfile()),
       );
     }
   }
