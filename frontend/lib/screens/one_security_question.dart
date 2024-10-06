@@ -28,7 +28,7 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
                   // Navigate to ChangePasswordPage
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ChangePasswordPage()),
+                    MaterialPageRoute(builder: (context) => const SetPasswordPage()),
                   );
                 },
                 child: const Text('OK'),
