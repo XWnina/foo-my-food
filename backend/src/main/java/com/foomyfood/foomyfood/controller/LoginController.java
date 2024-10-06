@@ -58,6 +58,14 @@ public class LoginController {
             ));
         }
 
+        // 检查邮箱是否验证
+        if (Boolean.FALSE.equals(user.get().getEmailVerified())) {
+            return ResponseEntity.status(403).body(Map.of(
+                    "status", "error",
+                    "message", "Email is not verified. Please verify your email to log in."
+            ));
+        }
+
         // 如果邮箱或用户名和密码都匹配，返回登录成功
         return ResponseEntity.ok(Map.of(
                 "status", "success",
@@ -66,4 +74,5 @@ public class LoginController {
                 "username", user.get().getUserName()
         ));
     }
+
 }

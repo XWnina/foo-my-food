@@ -9,7 +9,7 @@ const redErrorTextColor = Colors.red; // 错误提示的红色文字
 final greyBackgroundColor = Colors.grey.shade300; // 灰色背景（头像的默认背景）
 final greyIconColor = Colors.grey.shade700; // 灰色图标颜色（上传图标）
 
-const whiteFillColor = Colors.white;  // 输入框填充背景色
-const blueBorderColor = Colors.blue;  // 蓝色边框颜色
-const greyBorderColor = Colors.grey;  // 灰色边框颜色
+const whiteFillColor = Colors.white; // 输入框填充背景色
+const blueBorderColor = Colors.blue; // 蓝色边框颜色
+const greyBorderColor = Colors.grey; // 灰色边框颜色
 const redErrorBorderColor = Colors.red;  // 错误提示的红色边框颜色

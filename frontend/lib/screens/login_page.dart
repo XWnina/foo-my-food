@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:foo_my_food_app/screens/components/text_field.dart'; // 导入 text_field.dart
 import 'package:foo_my_food_app/utils/colors.dart'; // 导入 color.dart 文件
@@ -26,6 +25,7 @@ class LoginPageState extends State<LoginPage> {
   bool _emailInvalid = false; // 是否为无效的邮箱
   bool _usernameNotFound = false; // 是否未找到用户名
   bool _passwordInvalid = false; // 是否为无效的密码
+  bool _emailNotVerified = false; // 是否邮箱未验证
   String errorMessage = '';
 
   final LoginService loginService = LoginService(); // 实例化 LoginService
@@ -67,6 +67,13 @@ class LoginPageState extends State<LoginPage> {
           _emailInvalid = false;
           _usernameNotFound = false;
         });
+      } else if (response.statusCode == 403) {
+        // 邮箱未验证
+        setState(() {
+          _emailNotVerified = true; // 设置邮箱未验证的状态
+          errorMessage =
+              "Email is not verified. Please verify your email to log in.";
+        });
       } else {
         setState(() {
           errorMessage = "An unexpected error occurred";
@@ -81,170 +88,184 @@ class LoginPageState extends State<LoginPage> {
   }
 
   @override
-Widget build(BuildContext context) {
-  final screenWidth = MediaQuery.of(context).size.width;
-  final screenHeight = MediaQuery.of(context).size.height;
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
-  return Scaffold(
-    backgroundColor: backgroundColor,
-    resizeToAvoidBottomInset: true, // 允许内容在键盘弹出时自动调整
-    body: SafeArea(  // 确保内容不会与系统元素（如状态栏）重叠
-      child: SingleChildScrollView(  // 允许页面滚动
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(height: screenHeight * 0.1), // 保证 logo 和输入框位置在键盘弹出时不被遮挡
-              // Logo 区域
-              Container(
-                width: screenWidth * 0.6,
-                height: screenWidth * 0.6, // 保持正方形比例
-                decoration: BoxDecoration(
-                  color: whiteFillColor,
-                  border: Border.all(width: 1, color: greyBorderColor),
-                ),
-                child: Image.asset(
-                  "image/logo3.png",
-                  fit: BoxFit.cover,  // 让 logo 充满容器
-                ),
-              ),
-              const SizedBox(height: 20), // 间距
-              // App 名字
-              Text(
-                '-FOO MY FOOD-',
-                style: TextStyle(
-                  fontSize: screenWidth * 0.05,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
-              ),
-              const SizedBox(height: 20), // 间距
-
-              // 用户名或邮箱输入框
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: screenWidth * inputFieldWidthFactor),
-                child: buildTextInputField(
-                  label: 'Email Or Username',
-                  controller: usernameController,
-                  isError: _emailInvalid || _usernameNotFound,
-                  onChanged: (text) {
-                    setState(() {
-                      _emailInvalid = false;
-                      _usernameNotFound = false;
-                    });
-                  },
-                ),
-              ),
-              if (_emailInvalid)
-                const Text(emailInvalidError, style: TextStyle(color: redErrorTextColor)),
-              if (_usernameNotFound)
-                const Text(usernameNotRegisteredError, style: TextStyle(color: redErrorTextColor)),
-
-              const SizedBox(height: 20), // 间距
-
-              // 密码输入框
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: screenWidth * inputFieldWidthFactor),
-                child: buildPasswordInputField(
-                  label: 'Password',
-                  controller: passwordController,
-                  isError: _passwordInvalid,
-                  onChanged: (text) {
-                    setState(() {
-                      _passwordInvalid = false;
-                    });
-                  },
-                ),
-              ),
-              if (_passwordInvalid)
-                const Text(passwordIncorrectError, style: TextStyle(color: redErrorTextColor)),
-
-              const SizedBox(height: 20), // 间距
-
-              // 登录按钮
-              SizedBox(
-                width: screenWidth * buttonWidthFactor,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: buttonBackgroundColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          // 允许页面滚动
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(height: screenHeight * 0.1), // 留出顶部空间避免被键盘遮挡
+                // Logo 区域
+                Container(
+                  width: screenWidth * 0.6,
+                  height: screenWidth * 0.6,
+                  decoration: BoxDecoration(
+                    color: whiteFillColor,
+                    border: Border.all(width: 1, color: greyBorderColor),
                   ),
-                  onPressed: login,
-                  child: const Text(
-                    loginButtonText,
-                    style: TextStyle(
-                      color: whiteTextColor,
-                      fontSize: 15,
-                    ),
+                  child: Image.asset(
+                    "image/logo3.png",
+                    fit: BoxFit.cover,
                   ),
                 ),
-              ),
-              const SizedBox(height: 10), // 间距
-
-              // 忘记密码按钮
-              SizedBox(
-                width: screenWidth * buttonWidthFactor,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: buttonBackgroundColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+                const SizedBox(height: 20), // 间距
+                // App 名字
+                Text(
+                  '-FOO MY FOOD-',
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.05,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
                   ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const PasswordResetChoicePage()),
-                    );
-                  },
-                  child: const Text(
-                    forgetResetPasswordText,
-                    style: TextStyle(
-                      color: whiteTextColor,
-                      fontSize: 13,
+                ),
+                const SizedBox(height: 20), // 间距
+
+                // 用户名或邮箱输入框
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * inputFieldWidthFactor),
+                  child: buildTextInputField(
+                    label: 'Email Or Username',
+                    controller: usernameController,
+                    isError: _emailInvalid ||
+                        _usernameNotFound ||
+                        _emailNotVerified, // 根据错误状态设置边框颜色
+                    onChanged: (text) {
+                      setState(() {
+                        _emailInvalid = false;
+                        _usernameNotFound = false;
+                        _emailNotVerified = false; // 清除未验证状态
+                      });
+                    },
+                  ),
+                ),
+                if (_emailInvalid)
+                  const Text(emailInvalidError,
+                      style: TextStyle(color: redErrorTextColor)),
+                if (_usernameNotFound)
+                  const Text(usernameNotRegisteredError,
+                      style: TextStyle(color: redErrorTextColor)),
+                if (_emailNotVerified)
+                  const Text(
+                      "Email is not verified. Please verify your email to log in.",
+                      style: TextStyle(color: redErrorTextColor)),
+
+                const SizedBox(height: 20), // 间距
+
+                // 密码输入框
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * inputFieldWidthFactor),
+                  child: buildPasswordInputField(
+                    label: 'Password',
+                    controller: passwordController,
+                    isError: _passwordInvalid,
+                    onChanged: (text) {
+                      setState(() {
+                        _passwordInvalid = false;
+                      });
+                    },
+                  ),
+                ),
+                if (_passwordInvalid)
+                  const Text(passwordIncorrectError,
+                      style: TextStyle(color: redErrorTextColor)),
+
+                const SizedBox(height: 20), // 间距
+
+                // 登录按钮
+                SizedBox(
+                  width: screenWidth * buttonWidthFactor,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: buttonBackgroundColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    onPressed: login, // 点击按钮调用登录函数
+                    child: const Text(
+                      loginButtonText, // 从 constants.dart 引用按钮文本
+                      style: TextStyle(
+                        color: whiteTextColor,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10), // 间距
+                const SizedBox(height: 10), // 间距
 
-              // 创建账户按钮
-              SizedBox(
-                width: screenWidth * buttonWidthFactor,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: buttonBackgroundColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                // 忘记密码按钮
+                SizedBox(
+                  width: screenWidth * buttonWidthFactor,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: buttonBackgroundColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                     ),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const CreateAccount()),
-                    );
-                  },
-                  child: const Text(
-                    createAccountButtonText,
-                    style: TextStyle(
-                      color: whiteTextColor,
-                      fontSize: 13,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                const PasswordResetChoicePage()),
+                      );
+                    },
+                    child: const Text(
+                      forgetResetPasswordText, // 从 constants.dart 引用按钮文本
+                      style: TextStyle(
+                        color: whiteTextColor,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20), // 保证内容不会被键盘完全遮挡
-            ],
+                const SizedBox(height: 10), // 间距
+
+                // 创建账户按钮
+                SizedBox(
+                  width: screenWidth * buttonWidthFactor,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: buttonBackgroundColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const CreateAccount()),
+                      );
+                    },
+                    child: const Text(
+                      createAccountButtonText, // 从 constants.dart 引用按钮文本
+                      style: TextStyle(
+                        color: whiteTextColor,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20), // 保证内容不会被键盘完全遮挡
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 }
