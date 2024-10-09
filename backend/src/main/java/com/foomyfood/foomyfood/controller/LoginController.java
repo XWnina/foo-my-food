@@ -40,7 +40,7 @@ public class LoginController {
                 // 如果邮箱不存在
                 return ResponseEntity.status(404).body(Map.of(
                         "status", "error",
-                        "message", "Email not found"
+                        "message", "Email not found, please try again or create account."
                 ));
             }
         } else {
@@ -50,7 +50,7 @@ public class LoginController {
                 // 如果用户名不存在
                 return ResponseEntity.status(404).body(Map.of(
                         "status", "error",
-                        "message", "Username not found"
+                        "message", "Username not found, please try again or create account."
                 ));
             }
         }
@@ -59,7 +59,7 @@ public class LoginController {
         if (!user.get().getPassword().equals(password)) {
             return ResponseEntity.status(401).body(Map.of(
                     "status", "error",
-                    "message", "Incorrect password"
+                    "message", "Incorrect password, please try again."
             ));
         }
 

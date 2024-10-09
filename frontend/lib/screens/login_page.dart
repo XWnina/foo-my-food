@@ -27,12 +27,16 @@ class LoginPageState extends State<LoginPage> {
 
   bool _emailNotVerified = false; // 是否邮箱未验证
   bool _isEmailVerificationSent = false; // 是否已经发送验证邮件
+  bool _isProcessing = false; // 防止重复提交标记
   String errorMessage = '';
 
   final LoginService loginService = LoginService(); // 实例化 LoginService
 
   // 登录服务方法
   Future<void> login() async {
+    if (_isProcessing) return; // 防止重复点击
+    _isProcessing = true;
+
     String userInput = _emailController.text;
     String password = _passwordController.text;
 
@@ -82,6 +86,8 @@ class LoginPageState extends State<LoginPage> {
       setState(() {
         errorMessage = "Error occurred during login: $e";
       });
+    } finally {
+      _isProcessing = false; // 重置防抖状态
     }
   }
 
@@ -94,6 +100,9 @@ class LoginPageState extends State<LoginPage> {
 
   // 检查邮箱验证状态
   Future<void> checkVerificationStatus() async {
+    if (_isProcessing) return; // 防止重复点击
+    _isProcessing = true;
+
     String userInput = _emailController.text;
     String password = _passwordController.text;
 
@@ -137,6 +146,8 @@ class LoginPageState extends State<LoginPage> {
       setState(() {
         errorMessage = "Error occurred during login: $e";
       });
+    } finally {
+      _isProcessing = false; // 重置防抖状态
     }
   }
 
