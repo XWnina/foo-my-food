@@ -1,50 +1,57 @@
 import 'package:flutter/material.dart';
 import 'user_info_page.dart';
 import 'add_ingredient_manually.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:foo_my_food_app/datasource/temp_db.dart';
 import 'ingredient_detail.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+  const MyHomePage({super.key, required this.title, required this.userId}); // 更新构造函数
 
   final String title;
+  final String userId; // 添加 userId 字段
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
   int _selectedIndex = 0;
-  List <Map<String,dynamic>> foodItems=[];
+  List<UserIngredient> foodItems = [];
+
   @override
   void initState() {
     super.initState();
-    foodItems = TempDB.getAllFoodItems();
+    _fetchUserIngredients(); // Fetch ingredients on initialization
   }
-  // Remove the increment function and replace it with navigation to the ingredient page
+
+  Future<void> _fetchUserIngredients() async {
+    final response = await http.get(Uri.parse('http://your-api-url/api/user-ingredients/${widget.userId}')); // 使用传入的 userId
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      setState(() {
+        foodItems = data.map((item) => UserIngredient.fromJson(item)).toList();
+      });
+    } else {
+      throw Exception('Failed to load ingredients');
+    }
+  }
+
   void _navigateToAddIngredient() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AddIngredientPage()), // Navigate to Add Ingredient Page
-    );
+      MaterialPageRoute(builder: (context) => AddIngredientPage()),
+    ).then((_) {
+      _fetchUserIngredients(); // Refresh the list after adding an ingredient
+    });
   }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
-    // 判断选中的tab
     if (index == 2) {
-      // 如果选择了用户信息页面，进行导航
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => UserProfile()),
@@ -54,23 +61,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
- body: Column(
+      body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -90,33 +86,23 @@ class _MyHomePageState extends State<MyHomePage> {
                 crossAxisCount: 2,
                 childAspectRatio: 3,
               ),
-              itemCount: foodItems.length, // 10 Adjust the number of items as needed
+              itemCount: foodItems.length,
               itemBuilder: (context, index) {
                 final item = foodItems[index];
                 return Card(
                   margin: const EdgeInsets.all(8.0),
-                  // child: ListTile(
-                  //   leading: Icon(Icons.fastfood), // Replace with appropriate icons
-                  //   title: Text('Food Item ${index + 1}'),
-                  // ),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundImage: NetworkImage(item['imageUrl']),
+                      backgroundImage: NetworkImage(item.imageUrl),
                     ),
-                    title: Text(item['name']),
-                    subtitle: Text('Expires: ${item['expirationDate'].toString().split(' ')[0]}'),
+                    title: Text(item.name),
+                    subtitle: Text('Expires: ${item.expirationDate.split(' ')[0]}'),
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => FoodItemDetailPage(
-                            name: item['name'],
-                            imageUrl: item['imageUrl'],
-                            expirationDate: item['expirationDate'],
-                            nutritionInfo: item['nutritionInfo'],
-                            category: item['category'],
-                            storageMethod: item['storageMethod'],
-                            quantity: item['quantity'],
+                            ingredient: item, // 传递整个 UserIngredient 对象
                           ),
                         ),
                       );
@@ -128,42 +114,11 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-      // body: Center(
-      //   // Center is a layout widget. It takes a single child and positions it
-      //   // in the middle of the parent.
-      //   child: Column(
-      //     // Column is also a layout widget. It takes a list of children and
-      //     // arranges them vertically. By default, it sizes itself to fit its
-      //     // children horizontally, and tries to be as tall as its parent.
-      //     //
-      //     // Column has various properties to control how it sizes itself and
-      //     // how it positions its children. Here we use mainAxisAlignment to
-      //     // center the children vertically; the main axis here is the vertical
-      //     // axis because Columns are vertical (the cross axis would be
-      //     // horizontal).
-      //     //
-      //     // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-      //     // action in the IDE, or press "p" in the console), to see the
-      //     // wireframe for each widget.
-      //     mainAxisAlignment: MainAxisAlignment.center,
-      //     children: <Widget>[
-      //       const Text(
-      //         'You have pushed the button this many times:',
-      //       ),
-      //       Text(
-      //         '$_counter',
-      //         style: Theme.of(context).textTheme.headlineMedium,
-      //       ),
-      //     ],
-      //   ),
-      // ),
-
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToAddIngredient,
-        tooltip: 'Increment',
+        tooltip: 'Add Ingredient',
         child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-      // Adding bottomNavigationBar
+      ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -172,7 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.receipt_rounded),
-            label: 'recipe',
+            label: 'Recipes',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_balance_rounded),
@@ -183,7 +138,39 @@ class _MyHomePageState extends State<MyHomePage> {
         selectedItemColor: Colors.blue,
         onTap: _onItemTapped,
       ),
+    );
+  }
+}
 
+// Model class for UserIngredient
+class UserIngredient {
+  final String name;
+  final String imageUrl;
+  final String expirationDate;
+  final Map<String, String> nutritionInfo; // 修改为 Map 类型
+  final String category;
+  final String storageMethod;
+  final int quantity;
+
+  UserIngredient({
+    required this.name,
+    required this.imageUrl,
+    required this.expirationDate,
+    required this.nutritionInfo,
+    required this.category,
+    required this.storageMethod,
+    required this.quantity,
+  });
+
+  factory UserIngredient.fromJson(Map<String, dynamic> json) {
+    return UserIngredient(
+      name: json['name'],
+      imageUrl: json['imageUrl'],
+      expirationDate: json['expirationDate'],
+      nutritionInfo: Map<String, String>.from(json['nutritionInfo']),
+      category: json['category'],
+      storageMethod: json['storageMethod'],
+      quantity: json['quantity'],
     );
   }
 }
