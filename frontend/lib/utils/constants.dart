@@ -39,3 +39,4 @@ const double buttonWidthFactor = 0.5;
 const String baseApiUrl = 'http://localhost:8081/api'; // For iOS and Chrome
 // const String baseApiUrl = 'http://127.0.0.1:8081/api'; // For iOS only
 // const String baseApiUrl = 'http://10.0.2.2:8081/api'; // For Android Emulator
+const String resetPasswordUrl = '$baseApiUrl/password-reset/reset';  // 重置密码的完整 URL
