@@ -11,16 +11,16 @@ const String phoneNumberRegexPattern = r'^\d{10}$';
 
 // 错误提示信息
 const String usernameTakenError = 'Username already taken';
-const String emailInvalidError = 'Invalid email format';
+const String emailInvalidError = 'Invalid email format,';
 const String emailTakenError = 'Email already taken';
 const String phoneInvalidError = 'Phone number must be 10 digits';
 const String phoneTakenError = 'Phone number already taken';
 const String passwordMismatchError = 'Passwords do not match';
 const String usernameInvalidError =
-    'Username can only contain letters, numbers, periods, and underscores, and must be 1-30 characters long.';
+    'Username can only contain letters, numbers, periods, and underscores, and must be 1-30 characters long. And Cannot be empty';
 const String usernameNotRegisteredError =
     'This username or email is not registered';
-const String passwordIncorrectError = 'Incorrect password';
+const String passwordIncorrectError = 'Incorrect password,please try again.';
 const String emailNotVerifiedError =
     'Email not verified. Please check your verification email.';
 const String unexpectedError =

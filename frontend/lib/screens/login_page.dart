@@ -9,6 +9,7 @@ import 'homepage.dart'; // 导入主页
 import 'create_account_page.dart'; // 导入创建账户页面
 import 'security_or_email.dart'; // 导入密码重置页面
 import 'package:foo_my_food_app/Screens/choose_security_q.dart'; // 导入 Security Question 页面
+import 'package:shared_preferences/shared_preferences.dart'; // 导入 SharedPreferences
 import 'package:logging/logging.dart';
 
 final Logger _logger = Logger('LoginPage');
@@ -26,12 +27,16 @@ class LoginPageState extends State<LoginPage> {
 
   bool _emailNotVerified = false; // 是否邮箱未验证
   bool _isEmailVerificationSent = false; // 是否已经发送验证邮件
+  bool _isProcessing = false; // 防止重复提交标记
   String errorMessage = '';
 
   final LoginService loginService = LoginService(); // 实例化 LoginService
 
   // 登录服务方法
   Future<void> login() async {
+    if (_isProcessing) return; // 防止重复点击
+    _isProcessing = true;
+
     String userInput = _emailController.text;
     String password = _passwordController.text;
 
@@ -40,6 +45,12 @@ class LoginPageState extends State<LoginPage> {
       final response = await loginService.login(userInput, password);
 
       if (response.statusCode == 200) {
+        var jsonResponse = jsonDecode(response.body);
+        String userId = jsonResponse['userId']; // 从响应中获取 userId
+
+        // 保存 userId 到 SharedPreferences
+        await saveUserId(userId);
+
         if (!mounted) return;
 
         // 成功登录后跳转到主页
@@ -75,11 +86,23 @@ class LoginPageState extends State<LoginPage> {
       setState(() {
         errorMessage = "Error occurred during login: $e";
       });
+    } finally {
+      _isProcessing = false; // 重置防抖状态
     }
+  }
+
+  // 保存 userId 到 SharedPreferences
+  Future<void> saveUserId(String userId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userId', userId);
+    print('保存的 userId: $userId');
   }
 
   // 检查邮箱验证状态
   Future<void> checkVerificationStatus() async {
+    if (_isProcessing) return; // 防止重复点击
+    _isProcessing = true;
+
     String userInput = _emailController.text;
     String password = _passwordController.text;
 
@@ -90,11 +113,11 @@ class LoginPageState extends State<LoginPage> {
       if (response.statusCode == 200) {
         if (!mounted) return;
 
-        // 成功登录后跳转到主页
+        // 成功登录后跳转到安全问题选择页面
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const SecurityQuestionSelectionPage()
+            builder: (context) => const SecurityQuestionSelectionPage(),
           ),
         );
       } else if (response.statusCode == 403) {
@@ -123,6 +146,8 @@ class LoginPageState extends State<LoginPage> {
       setState(() {
         errorMessage = "Error occurred during login: $e";
       });
+    } finally {
+      _isProcessing = false; // 重置防抖状态
     }
   }
 
