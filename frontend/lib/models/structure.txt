@@ -1,0 +1,26 @@
+Users
+├── user_id (PK)
+├── username (唯一)
+├── email (唯一)
+└── password_hash
+
+Ingredients
+├── ingredient_id (PK)
+├── name (唯一)
+├── category 
+├── base_quantity
+├── unit
+├── expiration_date
+├── is_user_created
+├── created_by (FK to Users)
+├── calories (整数)
+├── protein (浮点数)
+├── fat (浮点数)
+├── carbohydrates (浮点数)
+└── fiber (浮点数)
+
+User_Ingredients
+├── user_ingredient_id (PK)
+├── user_id (FK to Users)
+├── ingredient_id (FK to Ingredients)
+├── user_quantity
