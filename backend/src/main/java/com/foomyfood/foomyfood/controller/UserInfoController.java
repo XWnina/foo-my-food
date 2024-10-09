@@ -57,6 +57,11 @@ public class UserInfoController {
 
                 // 如果有上传头像，处理头像
                 if (avatar != null && !avatar.isEmpty()) {
+                    // 检查是否已有头像URL
+                    if (user.getImageURL() != null && !user.getImageURL().isEmpty()) {
+                        // 删除之前的头像
+                        googleCloudStorageService.deleteFile(user.getImageURL());
+                    }
                     String avatarUrl = googleCloudStorageService.uploadFile(avatar);
                     user.setImageURL(avatarUrl); // 更新用户头像URL
                 }

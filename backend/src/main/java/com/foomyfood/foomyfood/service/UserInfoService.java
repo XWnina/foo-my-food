@@ -31,6 +31,7 @@ public class UserInfoService {
 
         // 如果有上传头像，保存头像
         if (avatar != null && !avatar.isEmpty()) {
+
             String avatarUrl = saveAvatar(avatar);
             user.setImageURL(avatarUrl);
         }
