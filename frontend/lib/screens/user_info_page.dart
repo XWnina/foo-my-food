@@ -1,8 +1,12 @@
 import 'dart:convert';
-import 'dart:io'; // 使用 dart:io 中的 HttpClient
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:foo_my_food_app/services/userid_api_service.dart'; // 导入 api.dart 文件，用于获取 userId
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:foo_my_food_app/utils/constants.dart';
+import 'package:foo_my_food_app/utils/helper_function.dart';
+import 'package:foo_my_food_app/utils/colors.dart';
 
 class UserProfile extends StatefulWidget {
   @override
@@ -10,7 +14,8 @@ class UserProfile extends StatefulWidget {
 }
 
 class _UserProfileState extends State<UserProfile> {
-  File? _image; // 用户头像
+  File? _image;
+  String? _avatarUrl;
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _usernameController = TextEditingController();
@@ -20,57 +25,41 @@ class _UserProfileState extends State<UserProfile> {
   @override
   void initState() {
     super.initState();
-    // 从后端加载用户数据，并填充到控制器
     _loadUserData();
   }
 
   Future<void> _loadUserData() async {
-    final userId = Api.getUserId();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
 
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('User ID not found. Please login.')));
+          SnackBar(content: Text('User ID not found. Please log in again.')));
       return;
     }
 
-    final url = 'http://localhost:8081/api/user/$userId'; // 替换为正确的后端API
+    final url = '$baseApiUrl/user/$userId';
 
     try {
-      final uri = Uri.parse(url);
-      final HttpClient client = HttpClient();
-      final HttpClientRequest request = await client.getUrl(uri);
-
-      // 添加 Accept 头部，指定接受 JSON 响应
-      request.headers.set(HttpHeaders.acceptHeader, "application/json");
-
-      final HttpClientResponse response = await request.close();
+      final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
-        final responseBody = await response.transform(utf8.decoder).join();
-        final userData = jsonDecode(responseBody);
-
-        print(userData); // 打印返回的数据以进行调试
+        final userData = jsonDecode(response.body);
 
         if (userData.isNotEmpty) {
           setState(() {
-            _firstNameController.text = userData["firstName"] ?? ''; // 防止为 null
+            _firstNameController.text = userData["firstName"] ?? '';
             _lastNameController.text = userData["lastName"] ?? '';
-            _usernameController.text = userData["username"] ?? '';
-            _emailController.text = userData["email"] ?? '';
+            _usernameController.text = userData["userName"] ?? '';
+            _emailController.text = userData["emailAddress"] ?? '';
             _phoneController.text = userData["phoneNumber"] ?? '';
-
-            // 如果用户有头像
-            if (userData["avatarUrl"] != null &&
-                userData["avatarUrl"].isNotEmpty) {
-              _image = File(userData["avatarUrl"]!); // 确保 avatarUrl 不是 null
-            }
+            _avatarUrl = userData["imageURL"];
           });
         } else {
           throw Exception('User data is empty.');
         }
       } else {
-        throw Exception(
-            'Failed to load user data. Status code: ${response.statusCode}');
+        throw Exception('Failed to retrieve user data, status code: ${response.statusCode}');
       }
     } catch (e) {
       print('Error: $e');
@@ -90,15 +79,71 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   Future<void> _saveProfile() async {
-    // 调用API更新用户数据
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      _showError('User ID not found');
+      return;
+    }
+
+    final url = '$baseApiUrl/user/$userId';
+
+    // 先从后端获取当前用户的原始数据
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode != 200) {
+      _showError('Failed to retrieve user data');
+      return;
+    }
+
+    final originalUserData = jsonDecode(response.body);
+    bool isPhoneChanged = originalUserData['phoneNumber'] != _phoneController.text;
+    bool isEmailChanged = originalUserData['emailAddress'] != _emailController.text;
+    bool isUsernameChanged = originalUserData['userName'] != _usernameController.text;
+
+    // 验证并更新信息
+    if (isUsernameChanged && !HelperFunctions.checkUsernameFormat(_usernameController.text)) {
+      _showError('Invalid username');
+      return;
+    }
+
+    // 如果验证通过，提交更新数据
+    final updateUrl = '$baseApiUrl/user/$userId/update';
+    final request = http.MultipartRequest('POST', Uri.parse(updateUrl));
+
+    request.fields['firstName'] = _firstNameController.text;
+    request.fields['lastName'] = _lastNameController.text;
+    request.fields['userName'] = _usernameController.text;
+    request.fields['emailAddress'] = _emailController.text;
+    request.fields['phoneNumber'] = _phoneController.text;
+
+    if (_image != null) {
+      request.files.add(await http.MultipartFile.fromPath('avatar', _image!.path));
+    }
+
+    final updateResponse = await request.send();
+
+    if (updateResponse.statusCode == 200) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Profile updated successfully")));
+    } else {
+      _showError('Update failed');
+    }
+  }
+
+  void _showError(String message) {
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("Profile updated successfully")));
+        .showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: redErrorTextColor))));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("User Profile")),
+      appBar: AppBar(
+        title: Text("User Profile"),
+        backgroundColor: appBarColor,
+      ),
+      backgroundColor: backgroundColor,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
@@ -108,10 +153,12 @@ class _UserProfileState extends State<UserProfile> {
                 onTap: _pickImage,
                 child: CircleAvatar(
                   radius: 50.0,
-                  backgroundColor: Colors.grey[200],
-                  backgroundImage: _image != null ? FileImage(_image!) : null,
-                  child: _image == null
-                      ? Icon(Icons.camera_alt, size: 30, color: Colors.grey)
+                  backgroundColor: greyBackgroundColor,
+                  backgroundImage: _image != null
+                      ? FileImage(_image!)
+                      : (_avatarUrl != null ? NetworkImage(_avatarUrl!) : null),
+                  child: _image == null && _avatarUrl == null
+                      ? Icon(Icons.camera_alt, size: 30, color: greyIconColor)
                       : null,
                 ),
               ),
@@ -119,27 +166,85 @@ class _UserProfileState extends State<UserProfile> {
             SizedBox(height: 20),
             TextField(
               controller: _firstNameController,
-              decoration: InputDecoration(labelText: 'First Name'),
+              decoration: InputDecoration(
+                labelText: 'First Name',
+                filled: true,
+                fillColor: whiteFillColor,
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: greyBorderColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: blueBorderColor),
+                ),
+              ),
             ),
+            SizedBox(height: 20),
             TextField(
               controller: _lastNameController,
-              decoration: InputDecoration(labelText: 'Last Name'),
+              decoration: InputDecoration(
+                labelText: 'Last Name',
+                filled: true,
+                fillColor: whiteFillColor,
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: greyBorderColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: blueBorderColor),
+                ),
+              ),
             ),
+            SizedBox(height: 20),
             TextField(
               controller: _usernameController,
-              decoration: InputDecoration(labelText: 'Username'),
+              decoration: InputDecoration(
+                labelText: 'Username',
+                filled: true,
+                fillColor: whiteFillColor,
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: greyBorderColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: blueBorderColor),
+                ),
+              ),
             ),
+            SizedBox(height: 20),
             TextField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(
+                labelText: 'Email',
+                filled: true,
+                fillColor: whiteFillColor,
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: greyBorderColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: blueBorderColor),
+                ),
+              ),
             ),
+            SizedBox(height: 20),
             TextField(
               controller: _phoneController,
-              decoration: InputDecoration(labelText: 'Phone Number'),
+              decoration: InputDecoration(
+                labelText: 'Phone Number',
+                filled: true,
+                fillColor: whiteFillColor,
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: greyBorderColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: blueBorderColor),
+                ),
+              ),
             ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _saveProfile,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: buttonBackgroundColor,
+                foregroundColor: whiteTextColor,
+              ),
               child: Text("Save"),
             ),
           ],
