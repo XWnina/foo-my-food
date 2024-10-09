@@ -27,7 +27,8 @@ public class UserController {
                 user.getEmailVerificationToken(),
                 user.getEmailVerified(),
                 user.getSecurityQuestion(),
-                user.getSecurityQuestAnswer()
+                user.getSecurityQuestAnswer(),
+                user.getLogInStatus()
         );
     }
 }

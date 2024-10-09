@@ -21,19 +21,21 @@ const String usernameInvalidError =
 const String usernameNotRegisteredError =
     'This username or email is not registered';
 const String passwordIncorrectError = 'Incorrect password';
+const String emailNotVerifiedError =
+    'Email not verified. Please check your verification email.';
 const String unexpectedError =
     'An unexpected error occurred. Please try again.';
-// 其他常量
+// 按钮文本和标题
 const String createAccountTitle = 'CREATE ACCOUNT';
 const String loginButtonText = 'LOG IN';
 const String forgetResetPasswordText = 'Forget/Reset Password';
 const String createAccountButtonText = 'Create Account';
 
-// 页面常量
+// 页面布局常量
 const double inputFieldWidthFactor = 0.1;
 const double buttonWidthFactor = 0.5;
 
 // 定义基础 API URL
- const String baseApiUrl = 'http://localhost:8081/api';// for ios and chrome
- //const String baseApiUrl = 'http://127.0.0.1:8081/api'; // just for ios
-// const String baseApiUrl = 'http://10.0.2.2:8081/api';
+const String baseApiUrl = 'http://localhost:8081/api'; // For iOS and Chrome
+// const String baseApiUrl = 'http://127.0.0.1:8081/api'; // For iOS only
+// const String baseApiUrl = 'http://10.0.2.2:8081/api'; // For Android Emulator

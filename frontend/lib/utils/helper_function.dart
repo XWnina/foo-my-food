@@ -10,7 +10,8 @@ class HelperFunctions {
 
   // 检查用户名格式是否符合规则 (使用 constants.dart 中定义的正则表达式)
   static bool checkUsernameFormat(String username) {
-    final usernameRegex = RegExp(instagramUsernameRegexPattern); // 使用 Instagram 用户名的正则表达式
+    final usernameRegex =
+        RegExp(instagramUsernameRegexPattern); // 使用 Instagram 用户名的正则表达式
     return usernameRegex.hasMatch(username);
   }
 
@@ -93,8 +94,10 @@ class HelperFunctions {
       bool emailInvalid = !checkEmailFormat(email); // 检查邮箱格式是否正确
       bool emailTaken = !await checkEmailUnique(email); // 从后端检查邮箱是否唯一
       bool phoneInvalid = !checkPhoneNumberFormat(phoneNumber); // 检查电话号码格式
-      bool phoneTaken = !await checkPhoneNumberUnique(phoneNumber); // 从后端检查电话号码是否唯一
-      bool passwordsDoNotMatch = !checkPasswordsMatch(password, confirmPassword); // 检查两次密码是否匹配
+      bool phoneTaken =
+          !await checkPhoneNumberUnique(phoneNumber); // 从后端检查电话号码是否唯一
+      bool passwordsDoNotMatch =
+          !checkPasswordsMatch(password, confirmPassword); // 检查两次密码是否匹配
 
       return {
         'usernameInvalid': usernameInvalid,

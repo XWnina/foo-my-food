@@ -17,6 +17,7 @@ public class VerificationController {
     @Autowired
     private UserRepository userRepository;
 
+
     @GetMapping("/verify")
     public ResponseEntity<String> verifyAccount(@RequestParam("token") String token) {
         // 根据 emailVerificationToken 查找用户

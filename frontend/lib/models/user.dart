@@ -7,7 +7,7 @@ class User {
   final String email;
   final String phone;
   final String password;
-  final File? image;  // 可选的图片字段
+  final File? image; // 可选的图片字段
 
   User({
     required this.firstName,

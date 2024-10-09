@@ -15,8 +15,8 @@ public class UserService {
     private UserRepository userRepository;
 
     // Create a new user
-    public User createUser(String firstName, String lastName, String userName, String emailAddress, String phoneNumber, String password, String imageURL, String emailVerificationToken, Boolean emailVerified, String securityQuestion, String securityQuestAnswer) {
-        User user = new User(firstName, lastName, userName, emailAddress, phoneNumber, password, imageURL, emailVerificationToken, emailVerified, securityQuestion, securityQuestAnswer);
+    public User createUser(String firstName, String lastName, String userName, String emailAddress, String phoneNumber, String password, String imageURL, String emailVerificationToken, Boolean emailVerified, String securityQuestion, String securityQuestAnswer, Boolean logInStatus) {
+        User user = new User(firstName, lastName, userName, emailAddress, phoneNumber, password, imageURL, emailVerificationToken, emailVerified, securityQuestion, securityQuestAnswer, logInStatus);
         return userRepository.save(user);
     }
 
