@@ -60,7 +60,8 @@ class _UserProfileState extends State<UserProfile> {
           throw Exception('User data is empty.');
         }
       } else {
-        throw Exception('Failed to retrieve user data, status code: ${response.statusCode}');
+        throw Exception(
+            'Failed to retrieve user data, status code: ${response.statusCode}');
       }
     } catch (e) {
       print('Error: $e');
@@ -98,12 +99,16 @@ class _UserProfileState extends State<UserProfile> {
     }
 
     final originalUserData = jsonDecode(response.body);
-    bool isPhoneChanged = originalUserData['phoneNumber'] != _phoneController.text;
-    bool isEmailChanged = originalUserData['emailAddress'] != _emailController.text;
-    bool isUsernameChanged = originalUserData['userName'] != _usernameController.text;
+    bool isPhoneChanged =
+        originalUserData['phoneNumber'] != _phoneController.text;
+    bool isEmailChanged =
+        originalUserData['emailAddress'] != _emailController.text;
+    bool isUsernameChanged =
+        originalUserData['userName'] != _usernameController.text;
 
     // 验证并更新信息
-    if (isUsernameChanged && !HelperFunctions.checkUsernameFormat(_usernameController.text)) {
+    if (isUsernameChanged &&
+        !HelperFunctions.checkUsernameFormat(_usernameController.text)) {
       _showError('Invalid username');
       return;
     }
@@ -119,23 +124,25 @@ class _UserProfileState extends State<UserProfile> {
     request.fields['phoneNumber'] = _phoneController.text;
 
     if (_image != null) {
-      request.files.add(await http.MultipartFile.fromPath('avatar', _image!.path));
+      request.files
+          .add(await http.MultipartFile.fromPath('avatar', _image!.path));
     }
 
     final updateResponse = await request.send();
 
     if (updateResponse.statusCode == 200) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Profile updated successfully")));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Profile updated successfully")));
     } else {
       _showError('Update failed');
     }
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: redErrorTextColor))));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(message, style: TextStyle(color: redErrorTextColor))));
   }
+
   Future<void> _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear(); // Clear all stored data
@@ -143,11 +150,12 @@ class _UserProfileState extends State<UserProfile> {
     // TODO: Add any additional logout logic here, such as API calls to invalidate tokens
 
     // Navigate to the login screen and remove all previous routes
-     Navigator.push(
+    Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => LoginPage()),
-    );  
+    );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
