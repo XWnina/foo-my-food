@@ -1,4 +1,4 @@
-package com.foomyfood.foomyfood.database.test_controller;
+package com.foomyfood.foomyfood.database.db_controller;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.foomyfood.foomyfood.database.UserIngredient;
-import com.foomyfood.foomyfood.database.test_service.UserIngredientService;
+import com.foomyfood.foomyfood.database.db_service.UserIngredientService;
 
 @RestController
 @RequestMapping("/api/user-ingredients")

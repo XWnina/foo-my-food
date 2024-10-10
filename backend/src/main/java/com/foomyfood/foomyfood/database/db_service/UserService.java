@@ -1,4 +1,4 @@
-package com.foomyfood.foomyfood.database.test_service;
+package com.foomyfood.foomyfood.database.db_service;
 
 import java.util.Optional;
 
@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.foomyfood.foomyfood.database.User;
-import com.foomyfood.foomyfood.database.repository.UserRepository;
+import com.foomyfood.foomyfood.database.db_repository.UserRepository;
 
 @Service
 public class UserService {
