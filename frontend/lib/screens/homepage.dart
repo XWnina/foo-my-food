@@ -1,15 +1,17 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'user_info_page.dart';
+import 'package:foo_my_food_app/screens/login_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'add_ingredient_manually.dart';
 import 'ingredient_detail.dart';
+import 'user_info_page.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:foo_my_food_app/utils/constants.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title, required this.userId}); // 更新构造函数
+  const MyHomePage({super.key, required this.title});
 
   final String title;
-  final String userId; // 添加 userId 字段
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -18,22 +20,42 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
   List<UserIngredient> foodItems = [];
+  String userId = ''; // 添加 userId 字段
 
   @override
   void initState() {
     super.initState();
-    _fetchUserIngredients(); // Fetch ingredients on initialization
+    _loadUserId(); // 加载 userId
+  }
+
+  Future<void> _loadUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? savedUserId = prefs.getString('userId'); // 读取 userId
+
+    if (savedUserId != null) {
+      setState(() {
+        userId = savedUserId; // 将 userId 存储在状态中
+      });
+      _fetchUserIngredients(); // 获取食材
+    } else {
+      // 处理未找到 userId 的情况，如重定向到登录页面
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+    }
   }
 
   Future<void> _fetchUserIngredients() async {
-    final response = await http.get(Uri.parse('http://your-api-url/api/user-ingredients/${widget.userId}')); // 使用传入的 userId
+    final response = await http.get(Uri.parse('$baseApiUrl/user_ingredients/$userId')); // 使用 userId 获取食材
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200) { 
       final List<dynamic> data = json.decode(response.body);
       setState(() {
         foodItems = data.map((item) => UserIngredient.fromJson(item)).toList();
       });
     } else {
+      // 处理错误情况
       throw Exception('Failed to load ingredients');
     }
   }
@@ -43,7 +65,7 @@ class _MyHomePageState extends State<MyHomePage> {
       context,
       MaterialPageRoute(builder: (context) => AddIngredientPage()),
     ).then((_) {
-      _fetchUserIngredients(); // Refresh the list after adding an ingredient
+      _fetchUserIngredients(); // 重新获取食材
     });
   }
 
@@ -63,23 +85,22 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
       body: Column(
         children: [
+          // 搜索框
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Food name',
+                hintText: 'Search for food',
                 prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
               ),
             ),
           ),
+          // 食材列表
           Expanded(
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -92,9 +113,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 return Card(
                   margin: const EdgeInsets.all(8.0),
                   child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: NetworkImage(item.imageUrl),
-                    ),
+                    leading: CircleAvatar(backgroundImage: NetworkImage(item.imageUrl)),
                     title: Text(item.name),
                     subtitle: Text('Expires: ${item.expirationDate.split(' ')[0]}'),
                     onTap: () {
@@ -102,7 +121,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => FoodItemDetailPage(
-                            ingredient: item, // 传递整个 UserIngredient 对象
+                           ingredient: item, userId: userId
                           ),
                         ),
                       );
@@ -121,18 +140,9 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_rounded),
-            label: 'Recipes',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_rounded),
-            label: 'My Account',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.receipt_rounded), label: 'Recipes'),
+          BottomNavigationBarItem(icon: Icon(Icons.account_balance_rounded), label: 'My Account'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue,
@@ -142,12 +152,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-// Model class for UserIngredient
+// 食材模型类
 class UserIngredient {
   final String name;
   final String imageUrl;
   final String expirationDate;
-  final Map<String, String> nutritionInfo; // 修改为 Map 类型
+  final Map<String, String> nutritionInfo;
   final String category;
   final String storageMethod;
   final int quantity;
