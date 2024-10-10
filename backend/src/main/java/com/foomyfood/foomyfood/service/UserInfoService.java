@@ -1,14 +1,15 @@
 package com.foomyfood.foomyfood.service;
 
-import com.foomyfood.foomyfood.database.User;
-import com.foomyfood.foomyfood.database.repository.UserRepository;
-import com.foomyfood.foomyfood.dto.UserDTO;
+import java.io.File;
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
+import com.foomyfood.foomyfood.database.User;
+import com.foomyfood.foomyfood.database.db_repository.UserRepository;
+import com.foomyfood.foomyfood.dto.UserDTO;
 
 @Service
 public class UserInfoService {
@@ -31,6 +32,7 @@ public class UserInfoService {
 
         // 如果有上传头像，保存头像
         if (avatar != null && !avatar.isEmpty()) {
+
             String avatarUrl = saveAvatar(avatar);
             user.setImageURL(avatarUrl);
         }

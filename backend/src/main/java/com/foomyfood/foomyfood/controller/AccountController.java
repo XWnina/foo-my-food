@@ -1,9 +1,10 @@
 package com.foomyfood.foomyfood.controller;
 
-import com.foomyfood.foomyfood.database.User;
-import com.foomyfood.foomyfood.database.repository.UserRepository;
-import com.foomyfood.foomyfood.service.CreateAccountEmailService;
-import com.foomyfood.foomyfood.service.GoogleCloudStorageService;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import com.foomyfood.foomyfood.database.User;
+import com.foomyfood.foomyfood.database.db_repository.UserRepository;
+import com.foomyfood.foomyfood.service.CreateAccountEmailService;
+import com.foomyfood.foomyfood.service.GoogleCloudStorageService;
 
 @RestController
 @RequestMapping("/api")
