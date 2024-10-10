@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:foo_my_food_app/datasource/temp_db.dart'; // For food categories and storage methods
-
+import 'package:foo_my_food_app/utils/constants.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:foo_my_food_app/utils/helper_function.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 class AddIngredientPage extends StatefulWidget {
   @override
   _AddIngredientPageState createState() => _AddIngredientPageState();
@@ -41,7 +45,92 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
       });
     }
   }
+  void _showError(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: redErrorTextColor))));
+  }
+Future<void> _addIngredient() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  final userId = prefs.getString('userId');
 
+  if (userId == null) {
+    _showError('User ID not found');
+    return;
+  }
+
+  if (_ingredientName.isEmpty || _selectedCategory == null || _selectedStorageMethod == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please fill in all required fields')),
+    );
+    return;
+  }
+
+  // Step 1: Create the ingredient using the Ingredient Controller
+  const String ingredientApiUrl = '$baseApiUrl/ingredients';
+
+  final ingredientData = {
+    'name': _ingredientName,
+    'category': _selectedCategory,
+    'isUserCreated': true,
+    'createdBy':userId,
+    //'imageURL': _image?.path, // You might need to handle image URL appropriately
+    'storageMethod': _selectedStorageMethod,
+    'baseQuantity': _quantity,
+    // Add other required fields if necessary
+  };
+
+  try {
+    final ingredientResponse = await http.post(
+      Uri.parse(ingredientApiUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(ingredientData),
+    );
+
+    if (ingredientResponse.statusCode == 201) {
+      final createdIngredient = jsonDecode(ingredientResponse.body);
+      final ingredientId = createdIngredient['ingredientId']; // Extract the ID of the created ingredient
+
+      // Step 2: Add to User Ingredients using the UserIngredientController
+      const String userIngredientApiUrl = '$baseApiUrl/user_ingredients';
+
+      final userIngredientData = {
+        'userId': userId,
+        'ingredientId': ingredientId,
+        'userQuantity': _quantity,
+        // Add other required fields if necessary
+      };
+
+      final userIngredientResponse = await http.post(
+        Uri.parse(userIngredientApiUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(userIngredientData),
+      );
+
+      if (userIngredientResponse.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ingredient added successfully!')),
+        );
+        // Clear form or navigate back
+        setState(() {
+          _ingredientName = '';
+          _image = null; // Handle image if needed
+          _selectedCategory = null;
+          _selectedStorageMethod = null;
+          _quantity = 1;
+          _expirationDate = DateTime.now();
+        });
+      } else {
+        throw Exception('Failed to add ingredient to user ingredients');
+      }
+    } else {
+      throw Exception('Failed to create ingredient');
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: ${e.toString()}')),
+    );
+  }
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -188,18 +277,7 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
 
             // Add button
             ElevatedButton(
-              onPressed: () {
-                // Display a Snackbar message when the button is pressed
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Ingredient added successfully!'),
-                    duration: Duration(
-                        seconds: 2), // You can adjust the display duration
-                  ),
-                );
-
-                // Code to handle the "Add" button logic, such as saving the data
-              },
+               onPressed: _addIngredient,
               child: Text('Add'),
             ),
           ],
