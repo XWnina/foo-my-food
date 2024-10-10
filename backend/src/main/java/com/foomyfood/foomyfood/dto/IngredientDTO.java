@@ -1,85 +1,76 @@
-package com.foomyfood.foomyfood.database;
+package com.foomyfood.foomyfood.dto;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.foomyfood.foomyfood.database.Ingredient;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@Entity
-@Table(name = "ingredients")
-public class Ingredient {
+public class IngredientDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty("ingredientId")
     private Long ingredientId;
 
-    @Column(name = "name")
+    @JsonProperty("name")
     private String name;
 
-    @Column(name = "category")
+    @JsonProperty("category")
     private String category;
 
-    @Column(name = "imageURL")
+    @JsonProperty("imageURL")
     private String imageURL;
 
-    @Column(name = "StorageMethod")
+    @JsonProperty("StorageMethod")
     private String StorageMethod;
 
-    @Column(name = "base_quantity")
+    @JsonProperty("baseQuantity")
     private int baseQuantity;
 
-    @Column(name = "unit")
+    @JsonProperty("unit")
     private String unit;
 
-    @Column(name = "expiration_date")
+    @JsonProperty("expirationDate")
     private String expirationDate;
 
-    @Column(name = "is_user_created")
+    @JsonProperty("isUserCreated")
     private Boolean isUserCreated;
 
-    @Column(name = "created_by")
+    @JsonProperty("createdBy")
+    private Long createdBy; // FK to Users
 
-    private Long createdBy;
-
-    @Column(name = "calories")
+    @JsonProperty("calories")
     private int calories;
 
-    @Column(name = "protein")
+    @JsonProperty("protein")
     private float protein;
 
-    @Column(name = "fat")
+    @JsonProperty("fat")
     private float fat;
 
-    @Column(name = "carbohydrates")
+    @JsonProperty("carbohydrates")
     private float carbohydrates;
 
-    @Column(name = "fiber")
+    @JsonProperty("fiber")
     private float fiber;
 
-    // Constructors
-    public Ingredient() {
+    // Constructor that accepts an Ingredient entity
+    public IngredientDTO(Ingredient ingredient) {
+        this.ingredientId = ingredient.getIngredientId();
+        this.name = ingredient.getName();
+        this.category = ingredient.getCategory();
+        this.imageURL = ingredient.getImageURL();
+        this.StorageMethod = ingredient.getStorageMethod();
+        this.baseQuantity = ingredient.getBaseQuantity();
+        this.unit = ingredient.getUnit();
+        this.expirationDate = ingredient.getExpirationDate();
+        this.isUserCreated = ingredient.getIsUserCreated();
+        this.createdBy = ingredient.getCreatedBy();
+        this.calories = ingredient.getCalories();
+        this.protein = ingredient.getProtein();
+        this.fat = ingredient.getFat();
+        this.carbohydrates = ingredient.getCarbohydrates();
+        this.fiber = ingredient.getFiber();
     }
 
-    public Ingredient(String name, String category, String imageURL, String StorageMethod, int baseQuantity, String unit, String expirationDate, Boolean isUserCreated, Long createdBy, int calories, float protein, float fat, float carbohydrates, float fiber) {
-        this.name = name;
-        this.category = category;
-        this.imageURL = imageURL;
-        this.StorageMethod = StorageMethod;
-        this.baseQuantity = baseQuantity;
-        this.unit = unit;
-        this.expirationDate = expirationDate;
-        this.isUserCreated = isUserCreated;
-        this.createdBy = createdBy;
-        this.calories = calories;
-        this.protein = protein;
-        this.fat = fat;
-        this.carbohydrates = carbohydrates;
-        this.fiber = fiber;
-    }
+    // Getters and Setters
 
-    // Getter and setter
     public Long getIngredientId() {
         return ingredientId;
     }
@@ -198,5 +189,4 @@ public class Ingredient {
     public void setFiber(float fiber) {
         this.fiber = fiber;
     }
-
 }
