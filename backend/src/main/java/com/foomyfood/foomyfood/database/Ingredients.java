@@ -8,8 +8,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "vegetables")
-public class Vegetable {
+@Table(name = "ingredients")
+public class Ingredients {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,9 +28,9 @@ public class Vegetable {
     private String storageType;
 
     // Constructors
-    public Vegetable() {}
+    public Ingredients() {}
 
-    public Vegetable(String name, String category, String shelfLife, String storageType) {
+    public Ingredients(String name, String category, String shelfLife, String storageType) {
         this.name = name;
         this.category = category;
         this.shelfLife = shelfLife;

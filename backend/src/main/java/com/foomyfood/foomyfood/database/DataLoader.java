@@ -6,13 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import com.foomyfood.foomyfood.database.service.VegetableService;
+import com.foomyfood.foomyfood.database.test_service.IngredientsService;
 
 @Component
 public class DataLoader implements CommandLineRunner {
 
     @Autowired
-    private VegetableService vegetableService;
+    private IngredientsService IngredientsService;
 
     @Override
     public void run(String... args) throws Exception {
@@ -23,7 +23,7 @@ public class DataLoader implements CommandLineRunner {
         System.out.println("name,category,shelfLife,storageType");
 
         for (int i = 1; i <= lineCount; i++) {
-            System.out.println("Enter data for vegetable " + i + ": ");
+            System.out.println("Enter data for ingredient " + i + ": ");
             String input = scanner.nextLine();
             String[] data = input.split(",");
 
@@ -33,16 +33,16 @@ public class DataLoader implements CommandLineRunner {
                 String shelfLife = data[2];
                 String storageType = data[3];
 
-                vegetableService.createVegetable(name, category, shelfLife, storageType);
+                IngredientsService.createIngredients(name, category, shelfLife, storageType);
 
-                System.out.println("Vegetable " + i + " created successfully!");
+                System.out.println("Ingredient " + i + " created successfully!");
             } else {
                 System.out.println("Invalid input format. Please provide 4 comma-separated values.");
                 i--; 
             }
         }
 
-        System.out.println(lineCount + " vegetables added to the database.");
+        System.out.println(lineCount + " Ingredients added to the database.");
         scanner.close();
     }
 }
