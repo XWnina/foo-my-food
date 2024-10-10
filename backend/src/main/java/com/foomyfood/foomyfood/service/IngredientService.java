@@ -2,8 +2,6 @@ package com.foomyfood.foomyfood.service;
 
 import com.foomyfood.foomyfood.database.Ingredient;
 import com.foomyfood.foomyfood.database.repository.IngredientRepository;
-//import com.foomyfood.foomyfood.dto.IngredientDTO;
-import com.foomyfood.foomyfood.dto.IngredientDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;

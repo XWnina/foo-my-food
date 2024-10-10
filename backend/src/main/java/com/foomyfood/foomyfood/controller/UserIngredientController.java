@@ -21,6 +21,8 @@ public class UserIngredientController {
     @GetMapping("/{userId}")
     public ResponseEntity<List<UserIngredient>> getAllUserIngredients(@PathVariable Long userId) {
         List<UserIngredient> userIngredients = userIngredientService.getAllUserIngredients(userId);
+        System.out.println(userId);
+        System.out.println(userIngredients);
         return ResponseEntity.ok(userIngredients);
     }
 
