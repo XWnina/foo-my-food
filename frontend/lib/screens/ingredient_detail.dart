@@ -1,11 +1,14 @@
+// food_item_detail.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'homepage.dart';
+import 'package:foo_my_food_app/models/ingredient.dart';
+import 'ingredient_detail.dart'; // Import the Ingredient model
 import 'package:foo_my_food_app/utils/constants.dart';
+
 class FoodItemDetailPage extends StatefulWidget {
-  final UserIngredient ingredient; // 更新为 UserIngredient
+  final Ingredient ingredient;
   final String userId;
 
   const FoodItemDetailPage({
@@ -23,18 +26,17 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
   late TextEditingController _nameController;
   late TextEditingController _expirationDateController;
   late TextEditingController _quantityController;
-  late Map<String, TextEditingController> _nutritionControllers;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.ingredient.name);
     _expirationDateController = TextEditingController(text: widget.ingredient.expirationDate);
-    _quantityController = TextEditingController(text: widget.ingredient.quantity.toString());
-    _nutritionControllers = widget.ingredient.nutritionInfo.map((key, value) => MapEntry(key, TextEditingController(text: value)));
+    _quantityController = TextEditingController(text: widget.ingredient.baseQuantity.toString());
   }
 
   Future<void> _saveChanges() async {
+    
     final String apiUrl = '$baseApiUrl/user_ingredients/${widget.userId}/${widget.ingredient.name}';
 
     final response = await http.put(
@@ -44,9 +46,9 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
       },
       body: jsonEncode({
         'name': _nameController.text,
-        'expirationDate': _expirationDateController.text,
-        'quantity': int.parse(_quantityController.text),
-        'nutritionInfo': _nutritionControllers.map((key, controller) => MapEntry(key, controller.text)),
+        'expiration_date': _expirationDateController.text,
+        'base_quantity': int.parse(_quantityController.text),
+        // Add other fields as necessary
       }),
     );
 
@@ -89,7 +91,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Image.network(
-                widget.ingredient.imageUrl,
+                widget.ingredient.imageURL,
                 height: 200,
                 width: double.infinity,
                 fit: BoxFit.cover,
@@ -140,29 +142,17 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                       controller: _quantityController,
                       decoration: const InputDecoration(labelText: 'Quantity', border: OutlineInputBorder()),
                     )
-                  : Text('Quantity: ${widget.ingredient.quantity}'),
+                  : Text('Quantity: ${widget.ingredient.baseQuantity} ${widget.ingredient.unit}'),
               const SizedBox(height: 24),
               const Text('Nutrition Information', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              ...widget.ingredient.nutritionInfo.keys.map(
-                (key) => Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(key),
-                    _isEditing
-                        ? SizedBox(
-                            width: 100,
-                            child: TextField(
-                              controller: _nutritionControllers[key],
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          )
-                        : Text(widget.ingredient.nutritionInfo[key]!),
-                  ],
-                ),
-              ),
+              // Display other nutritional information as needed
+              // Example:
+              Text('Calories: ${widget.ingredient.calories} kcal'),
+              Text('Protein: ${widget.ingredient.protein} g'),
+              Text('Fat: ${widget.ingredient.fat} g'),
+              Text('Carbohydrates: ${widget.ingredient.carbohydrates} g'),
+              Text('Fiber: ${widget.ingredient.fiber} g'),
             ],
           ),
         ),

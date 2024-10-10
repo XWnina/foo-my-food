@@ -1,12 +1,13 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:foo_my_food_app/screens/login_page.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'add_ingredient_manually.dart';
-import 'ingredient_detail.dart';
-import 'user_info_page.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:foo_my_food_app/models/ingredient.dart'; // Import the Ingredient model
+import 'ingredient_detail.dart'; // Import the detail page
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foo_my_food_app/utils/constants.dart';
+import 'login_page.dart';
+import 'add_ingredient_manually.dart';
+import 'user_info_page.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -19,26 +20,25 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
-  List<UserIngredient> foodItems = [];
-  String userId = ''; // 添加 userId 字段
+  List<Ingredient> ingredients = [];
+  String userId = '';
 
   @override
   void initState() {
     super.initState();
-    _loadUserId(); // 加载 userId
+    _loadUserId();
   }
 
   Future<void> _loadUserId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? savedUserId = prefs.getString('userId'); // 读取 userId
-
+    String? savedUserId = prefs.getString('userId');
     if (savedUserId != null) {
       setState(() {
-        userId = savedUserId; // 将 userId 存储在状态中
+        userId = savedUserId;
       });
-      _fetchUserIngredients(); // 获取食材
+      _fetchUserIngredients();
     } else {
-      // 处理未找到 userId 的情况，如重定向到登录页面
+      // Redirect to login if userId is not found
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -47,16 +47,44 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _fetchUserIngredients() async {
-    final response = await http.get(Uri.parse('$baseApiUrl/user_ingredients/$userId')); // 使用 userId 获取食材
+    try {
+      // Get user ingredients
+      final response = await http.get(Uri.parse('$baseApiUrl/user_ingredients/$userId'));
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> userIngredientsData = json.decode(response.body);
+        print('User Ingredients: $userIngredientsData');
 
-    if (response.statusCode == 200) { 
-      final List<dynamic> data = json.decode(response.body);
-      setState(() {
-        foodItems = data.map((item) => UserIngredient.fromJson(item)).toList();
-      });
-    } else {
-      // 处理错误情况
-      throw Exception('Failed to load ingredients');
+        // Create a list to store ingredient information
+        List<Ingredient> ingredients = [];
+
+        // Iterate through user ingredients data
+        for (var item in userIngredientsData) {
+          int ingredientId = item['ingredientId'];
+          int userQuantity = item['userQuantity'];
+          // Fetch ingredient details
+          final ingredientResponse = await http.get(Uri.parse('$baseApiUrl/ingredients/$ingredientId'));
+          
+          if (ingredientResponse.statusCode == 200) {
+            final ingredientData = json.decode(ingredientResponse.body);
+            print('Ingredient: $ingredientData');
+
+            // Convert the ingredient data to an Ingredient object
+            ingredients.add(Ingredient.fromJson(ingredientData));
+          } else {
+            print('Failed to load ingredient with ID $ingredientId');
+          }
+        }
+
+        // Update state
+        setState(() {
+          this.ingredients = ingredients;
+        });
+      } else {
+        throw Exception('Failed to load user ingredients');
+      }
+    } catch (e) {
+      print('Error: $e');
     }
   }
 
@@ -89,40 +117,27 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Column(
         children: [
-          // 搜索框
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search for food',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-              ),
-            ),
-          ),
-          // 食材列表
+          // Search box (optional)
           Expanded(
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 childAspectRatio: 3,
               ),
-              itemCount: foodItems.length,
+              itemCount: ingredients.length,
               itemBuilder: (context, index) {
-                final item = foodItems[index];
+                final ingredient = ingredients[index];
                 return Card(
                   margin: const EdgeInsets.all(8.0),
                   child: ListTile(
-                    leading: CircleAvatar(backgroundImage: NetworkImage(item.imageUrl)),
-                    title: Text(item.name),
-                    subtitle: Text('Expires: ${item.expirationDate.split(' ')[0]}'),
+                    leading: CircleAvatar(backgroundImage: NetworkImage(ingredient.imageURL)),
+                    title: Text(ingredient.name),
+                    subtitle: Text('Expires: ${ingredient.expirationDate}'),
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => FoodItemDetailPage(
-                           ingredient: item, userId: userId
-                          ),
+                          builder: (context) => FoodItemDetailPage(ingredient: ingredient, userId: userId),
                         ),
                       );
                     },
@@ -148,39 +163,6 @@ class _MyHomePageState extends State<MyHomePage> {
         selectedItemColor: Colors.blue,
         onTap: _onItemTapped,
       ),
-    );
-  }
-}
-
-// 食材模型类
-class UserIngredient {
-  final String name;
-  final String imageUrl;
-  final String expirationDate;
-  final Map<String, String> nutritionInfo;
-  final String category;
-  final String storageMethod;
-  final int quantity;
-
-  UserIngredient({
-    required this.name,
-    required this.imageUrl,
-    required this.expirationDate,
-    required this.nutritionInfo,
-    required this.category,
-    required this.storageMethod,
-    required this.quantity,
-  });
-
-  factory UserIngredient.fromJson(Map<String, dynamic> json) {
-    return UserIngredient(
-      name: json['name'],
-      imageUrl: json['imageUrl'],
-      expirationDate: json['expirationDate'],
-      nutritionInfo: Map<String, String>.from(json['nutritionInfo']),
-      category: json['category'],
-      storageMethod: json['storageMethod'],
-      quantity: json['quantity'],
     );
   }
 }

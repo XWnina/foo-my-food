@@ -19,7 +19,7 @@ import com.foomyfood.foomyfood.database.UserIngredient;
 import com.foomyfood.foomyfood.database.db_service.UserIngredientService;
 
 @RestController
-@RequestMapping("/api/user-ingredients")
+@RequestMapping("/api/user_ingredients")
 public class UserIngredientController {
 
     @Autowired
@@ -28,6 +28,7 @@ public class UserIngredientController {
     @GetMapping("/{userId}")
     public ResponseEntity<List<UserIngredient>> getAllUserIngredients(@PathVariable Long userId) {
         List<UserIngredient> userIngredients = userIngredientService.getAllUserIngredients(userId);
+        System.out.println(userId);
         return ResponseEntity.ok(userIngredients);
     }
 
