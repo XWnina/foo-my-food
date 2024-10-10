@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/user-ingredients")
+@RequestMapping("/api/user_ingredients")
 public class UserIngredientController {
 
     @Autowired
