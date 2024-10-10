@@ -139,7 +139,6 @@ class PasswordResetChoicePage extends StatelessWidget {
   }
 }
 
-// 新增 EmailInputPage 文件
 class EmailInputPage extends StatefulWidget {
   const EmailInputPage({super.key});
 
@@ -153,7 +152,7 @@ class _EmailInputPageState extends State<EmailInputPage> {
 
   void _validateAndProceed() {
     String email = _emailController.text.trim();
-    
+
     if (!HelperFunctions.checkEmailFormat(email)) {
       setState(() {
         _errorMessage = emailInvalidError;
@@ -173,11 +172,11 @@ class _EmailInputPageState extends State<EmailInputPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: appBarColor, // 使用自定义的 appBar 颜色
+        backgroundColor: appBarColor,
         centerTitle: true,
         title: const Text('Enter Your Email', style: TextStyle(color: whiteTextColor)),
       ),
-      backgroundColor: backgroundColor, // 背景颜色
+      backgroundColor: backgroundColor,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -194,15 +193,15 @@ class _EmailInputPageState extends State<EmailInputPage> {
               decoration: InputDecoration(
                 labelText: 'Email',
                 filled: true,
-                fillColor: whiteFillColor, // 文本框填充颜色
+                fillColor: whiteFillColor,
                 border: OutlineInputBorder(
-                  borderSide: BorderSide(color: blueBorderColor), // 边框颜色
+                  borderSide: BorderSide(color: blueBorderColor),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: greyBorderColor, width: 2.0), // 未聚焦时的边框颜色
+                  borderSide: BorderSide(color: greyBorderColor, width: 2.0),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: blueBorderColor, width: 2.0), // 聚焦时的边框颜色
+                  borderSide: BorderSide(color: blueBorderColor, width: 2.0),
                 ),
                 errorText: _errorMessage,
               ),
@@ -210,13 +209,13 @@ class _EmailInputPageState extends State<EmailInputPage> {
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              height: 50, // 高度与按钮保持一致
+              height: 50,
               child: ElevatedButton(
                 onPressed: _validateAndProceed,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: buttonBackgroundColor, // 按钮背景颜色
+                  backgroundColor: buttonBackgroundColor,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20), // 圆角边框
+                    borderRadius: BorderRadius.circular(20),
                   ),
                 ),
                 child: const Text(
