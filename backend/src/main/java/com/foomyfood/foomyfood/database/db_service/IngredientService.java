@@ -1,4 +1,4 @@
-package com.foomyfood.foomyfood.database.test_service;
+package com.foomyfood.foomyfood.database.db_service;
 
 import java.util.List;
 import java.util.Optional;
@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.foomyfood.foomyfood.database.Ingredient;
-import com.foomyfood.foomyfood.database.repository.IngredientRepository;
+import com.foomyfood.foomyfood.database.db_repository.IngredientRepository;
 
 @Service
 public class IngredientService {

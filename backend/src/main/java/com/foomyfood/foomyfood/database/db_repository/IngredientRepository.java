@@ -1,4 +1,4 @@
-package com.foomyfood.foomyfood.database.repository;
+package com.foomyfood.foomyfood.database.db_repository;
 
 import java.util.List;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package com.foomyfood.foomyfood.database.test_controller;
+package com.foomyfood.foomyfood.database.db_controller;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.foomyfood.foomyfood.database.Ingredient;
-import com.foomyfood.foomyfood.database.test_service.IngredientService;
+import com.foomyfood.foomyfood.database.db_service.IngredientService;
 
 @RestController
 public class IngredientController {
