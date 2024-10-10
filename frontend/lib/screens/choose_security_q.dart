@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:foo_my_food_app/services/security_api_service.dart'; // 引入 API 服务
+import 'login_page.dart'; // 引入登录页面
 
 class SecurityQuestionSelectionPage extends StatefulWidget {
   final String email;
@@ -17,9 +18,9 @@ class _SecurityQuestionSelectionPageState
   final TextEditingController _answerController = TextEditingController();
 
   final List<String> _securityQuestions = [
-    '你最喜欢的老师的firstname是什么？',
-    '你的爱好是什么？',
-    '你使用的第一台电脑是什么系统？',
+    'What is your favorite color?',
+    'What is your hobby?',
+    'What is your favorite number?',
   ];
 
   void _submitSecurityQuestion() async {
@@ -31,13 +32,40 @@ class _SecurityQuestionSelectionPageState
       );
 
       if (response.statusCode == 200) {
-        Navigator.pushReplacementNamed(context, '/home'); // 成功后跳转
+        _showSuccessMessage(); // 显示成功提示
       } else {
         _showSnackBar('Failed to submit security question.');
       }
     } else {
       _showSnackBar('Please select a question and provide an answer.');
     }
+  }
+
+  void _showSuccessMessage() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Success'),
+          content:
+              const Text('Your security question has been set successfully.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoginPage(), // 跳转到登录页面
+                  ),
+                );
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showSnackBar(String message) {
@@ -74,27 +102,17 @@ class _SecurityQuestionSelectionPageState
                 ),
               ),
               Positioned(
-                left: 10,
-                top: 10,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ),
-              Positioned(
-                left: 40,
+                left: 20, // 调整位置
                 top: 150,
                 child: Container(
-                  width: 280,
+                  width: 320, // 增加宽度以容纳完整文字
                   decoration: BoxDecoration(
                     color: const Color(0xFFFEFFFF),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
-                      isExpanded: true,
+                      isExpanded: true, // 保证下拉框全宽度显示
                       hint: const Padding(
                         padding: EdgeInsets.all(8.0),
                         child: Text(

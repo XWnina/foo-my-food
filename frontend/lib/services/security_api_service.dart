@@ -4,13 +4,14 @@ import 'package:foo_my_food_app/utils/constants.dart'; // 使用 constants.dart 
 
 class SecurityApiService {
   // 提交安全问题
+   // 提交安全问题
   static Future<http.Response> submitSecurityQuestion({
     required String email,
     required String securityQuestion,
     required String securityAnswer,
   }) async {
     final response = await http.post(
-      Uri.parse('$baseApiUrl/user/submit-security-question'), // 使用 baseApiUrl
+      Uri.parse('$baseApiUrl/password-reset/submit-security-question'), // 注意此处的 URL
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
