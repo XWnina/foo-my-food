@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/services/security_api_service.dart'; // 引入 API 服务
+import 'login_page.dart'; // 引入登录页面
 
 class SecurityQuestionSelectionPage extends StatefulWidget {
-  final String email; // 接收 email 参数
+  final String email;
 
-  const SecurityQuestionSelectionPage({super.key, required this.email}); // 构造函数接收 email
+  const SecurityQuestionSelectionPage({super.key, required this.email});
 
   @override
   _SecurityQuestionSelectionPageState createState() =>
@@ -16,16 +18,59 @@ class _SecurityQuestionSelectionPageState
   final TextEditingController _answerController = TextEditingController();
 
   final List<String> _securityQuestions = [
-    '你最喜欢的老师的firstname是什么？',
-    '你的爱好是什么？',
-    '你使用的第一台电脑是什么系统？',
+    'What is your favorite color?',
+    'What is your hobby?',
+    'What is your favorite number?',
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    // 打印接收到的 email
-    print('Received email: ${widget.email}');
+  void _submitSecurityQuestion() async {
+    if (_selectedQuestion != null && _answerController.text.isNotEmpty) {
+      var response = await SecurityApiService.submitSecurityQuestion(
+        email: widget.email,
+        securityQuestion: _selectedQuestion!,
+        securityAnswer: _answerController.text.trim(),
+      );
+
+      if (response.statusCode == 200) {
+        _showSuccessMessage(); // 显示成功提示
+      } else {
+        _showSnackBar('Failed to submit security question.');
+      }
+    } else {
+      _showSnackBar('Please select a question and provide an answer.');
+    }
+  }
+
+  void _showSuccessMessage() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Success'),
+          content:
+              const Text('Your security question has been set successfully.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoginPage(), // 跳转到登录页面
+                  ),
+                );
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSnackBar(String message) {
+    final snackBar = SnackBar(content: Text(message));
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   @override
@@ -42,7 +87,6 @@ class _SecurityQuestionSelectionPageState
           ),
           child: Stack(
             children: [
-              // Title
               const Positioned(
                 top: 50,
                 left: 50,
@@ -57,30 +101,18 @@ class _SecurityQuestionSelectionPageState
                   ),
                 ),
               ),
-              // Back Button
               Positioned(
-                left: 10,
-                top: 10,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ),
-              // Security Question Dropdown
-              Positioned(
-                left: 40, // Expanded width
+                left: 20, // 调整位置
                 top: 150,
                 child: Container(
-                  width: 280, // Increased width to show full question
+                  width: 320, // 增加宽度以容纳完整文字
                   decoration: BoxDecoration(
                     color: const Color(0xFFFEFFFF),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
-                      isExpanded: true, // Ensure dropdown uses the full width
+                      isExpanded: true, // 保证下拉框全宽度显示
                       hint: const Padding(
                         padding: EdgeInsets.all(8.0),
                         child: Text(
@@ -96,10 +128,8 @@ class _SecurityQuestionSelectionPageState
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
                               question,
-                              style: const TextStyle(
-                                fontSize: 14,
-                              ),
-                              softWrap: true, // Allow text to wrap within the button
+                              style: const TextStyle(fontSize: 14),
+                              softWrap: true,
                             ),
                           ),
                         );
@@ -113,7 +143,6 @@ class _SecurityQuestionSelectionPageState
                   ),
                 ),
               ),
-              // Answer Input Field
               Positioned(
                 left: 80,
                 top: 230,
@@ -136,7 +165,6 @@ class _SecurityQuestionSelectionPageState
                   ),
                 ),
               ),
-              // Submit Button
               Positioned(
                 left: 110,
                 top: 320,
@@ -150,32 +178,7 @@ class _SecurityQuestionSelectionPageState
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    onPressed: () {
-                      if (_selectedQuestion != null &&
-                          _answerController.text.isNotEmpty) {
-                        // Handle submission of the selected question and answer
-                        Navigator.pop(context);
-                        // Perform the validation or saving of the answer here
-                      } else {
-                        // Show an alert if no question is selected or answer is empty
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Incomplete'),
-                            content: const Text(
-                                'Please select a question and provide an answer.'),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('OK'),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                    },
+                    onPressed: _submitSecurityQuestion,
                     child: const Text(
                       'Submit',
                       style: TextStyle(

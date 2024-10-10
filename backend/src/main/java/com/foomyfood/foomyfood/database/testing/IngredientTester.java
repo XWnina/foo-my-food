@@ -1,11 +1,13 @@
 package com.foomyfood.foomyfood.database.testing;
 
-import java.util.Scanner;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-
+import org.springframework.stereotype.Component;
+import com.foomyfood.foomyfood.database.Ingredient;
 import com.foomyfood.foomyfood.database.db_service.IngredientService;
+
+import java.util.List;
+import java.util.Optional;
 
 // @Component
 public class IngredientTester implements CommandLineRunner {
@@ -15,53 +17,78 @@ public class IngredientTester implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        Scanner scanner = new Scanner(System.in);
+        // Test creating ingredients
+        System.out.println("\n--- Testing Ingredient Creation ---");
+        createTestIngredients();
 
-        System.out.println("Please enter multiple lines of vegetable data in the following format:");
-        System.out.println("name,category,imageURL,storageMethod,baseQuantity,unit,expirationDate,isUserCreated,createdBy,calories,protein,fat,carbohydrates,fiber");
-        System.out.println("Enter an empty line to finish input.");
+        // Test retrieving all ingredients
+        System.out.println("\n--- Testing Retrieving All Ingredients ---");
+        getAllIngredients();
 
-        StringBuilder inputBuilder = new StringBuilder();
-        while (true) {
-            String line = scanner.nextLine();
-            if (line.isEmpty()) {
-                break; // Exit the loop when the user enters an empty line
-            }
-            inputBuilder.append(line).append("\n");
+        // Test retrieving a specific ingredient by ID
+        System.out.println("\n--- Testing Retrieving Ingredient by ID ---");
+        getIngredientById(1L);
+
+        // Test updating an ingredient
+        System.out.println("\n--- Testing Ingredient Update ---");
+        updateIngredient(1L);
+
+        // Test retrieving updated ingredient by ID
+        System.out.println("\n--- Testing Retrieving Updated Ingredient by ID ---");
+        getIngredientById(1L);
+
+        // Test deleting an ingredient
+        System.out.println("\n--- Testing Ingredient Deletion ---");
+        deleteIngredient(2L);
+
+        // Test retrieving all ingredients after deletion
+        System.out.println("\n--- Retrieving All Ingredients After Deletion ---");
+        getAllIngredients();
+    }
+
+    // Function to create test ingredients
+    private void createTestIngredients() {
+        ingredientService.createIngredient("Tomato", "Vegetable", "tomato.jpg", "Refrigerate", 100, "kg",
+                "2024-10-20", false, 21L, 20, 1.0f, 0.5f, 3.0f, 0.2f);
+        ingredientService.createIngredient("Cucumber", "Vegetable", "cucumber.jpg", "Refrigerate", 50, "kg",
+                "2024-10-15", false, 21L, 15, 0.8f, 0.3f, 2.5f, 0.4f);
+        ingredientService.createIngredient("Apple", "Fruit", "apple.jpg", "Store at room temperature", 200, "kg",
+                "2024-11-05", false, 21L, 95, 0.4f, 0.2f, 13.0f, 2.0f);
+        ingredientService.createIngredient("Banana", "Fruit", "banana.jpg", "Store at room temperature", 150, "kg",
+                "2024-10-25", false, 21L, 89, 1.1f, 0.3f, 22.8f, 2.6f);
+        System.out.println("Test ingredients created successfully!");
+    }
+
+    // Function to retrieve all ingredients
+    private void getAllIngredients() {
+        List<Ingredient> ingredients = ingredientService.getAllIngredients();
+        if (ingredients.isEmpty()) {
+            System.out.println("No ingredients found.");
+        } else {
+            ingredients.forEach(ingredient -> System.out.println(ingredient));
         }
+    }
 
-        // Split the input by lines
-        String[] lines = inputBuilder.toString().split("\n");
-
-        for (String line : lines) {
-            String[] data = line.split(",");
-            if (data.length == 14) {
-                String name = data[0];
-                String category = data[1];
-                String imageURL = data[2];
-                String storageMethod = data[3];
-                int baseQuantity = Integer.parseInt(data[4]);
-                String unit = data[5];
-                String expirationDate = data[6];
-                boolean isUserCreated = Boolean.parseBoolean(data[7]);
-                long createdBy = Long.parseLong(data[8]);
-                int calories = Integer.parseInt(data[9]);
-                float protein = Float.parseFloat(data[10]);
-                float fat = Float.parseFloat(data[11]);
-                float carbohydrates = Float.parseFloat(data[12]);
-                float fiber = Float.parseFloat(data[13]);
-
-                ingredientService.createIngredient(
-                    name, category, imageURL, storageMethod, baseQuantity, unit, expirationDate, isUserCreated, createdBy, 
-                    calories, protein, fat, carbohydrates, fiber
-                );
-
-                System.out.println("Ingredient '" + name + "' created successfully!");
-            } else {
-                System.out.println("Invalid input format for: " + line);
-            }
+    // Function to retrieve a specific ingredient by ID
+    private void getIngredientById(Long ingredientId) {
+        Optional<Ingredient> ingredient = ingredientService.getIngredientById(ingredientId);
+        if (ingredient.isPresent()) {
+            System.out.println("Found Ingredient: " + ingredient.get());
+        } else {
+            System.out.println("No ingredient found with ID: " + ingredientId);
         }
+    }
 
-        scanner.close();
+    // Function to update an ingredient by ID
+    private void updateIngredient(Long ingredientId) {
+        Ingredient updatedIngredient = ingredientService.updateIngredient(ingredientId, "Tomato", "Fruit", "tomato_updated.jpg", 
+                "Store in a cool place", 150, "kg", "2024-11-01", false, 21L, 25, 1.5f, 0.6f, 5.0f, 0.3f);
+        System.out.println("Updated Ingredient: " + updatedIngredient);
+    }
+
+    // Function to delete an ingredient by ID
+    private void deleteIngredient(Long ingredientId) {
+        ingredientService.deleteIngredient(ingredientId);
+        System.out.println("Ingredient with ID " + ingredientId + " deleted successfully!");
     }
 }

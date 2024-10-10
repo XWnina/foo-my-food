@@ -1,7 +1,10 @@
 package com.foomyfood.foomyfood.controller;
 
+import java.util.Map;
 import java.util.Optional;
 
+import com.foomyfood.foomyfood.dto.SecurityAnswerRequest;
+import com.foomyfood.foomyfood.dto.SecurityQuestionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -77,7 +80,50 @@ public class PasswordResetController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
         }
     }
+    // 提交用户的安全问题和答案
+    @PostMapping("/submit-security-question")
+    public ResponseEntity<String> submitSecurityQuestion(@RequestBody SecurityQuestionRequest request) {
+        Optional<User> userOptional = userRepository.findByEmailAddress(request.getEmail());
 
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setSecurityQuestion(request.getSecurityQuestion());
+            user.setSecurityQuestAnswer(request.getSecurityAnswer());
+            userRepository.save(user);
+            return ResponseEntity.ok("Security question submitted successfully.");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+        }
+    }
+    // 获取用户的安全问题
+    @GetMapping("/get-security-question")
+    public ResponseEntity<?> getSecurityQuestion(@RequestParam("email") String email) {
+        Optional<User> userOptional = userRepository.findByEmailAddress(email);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            return ResponseEntity.ok(Map.of("securityQuestion", user.getSecurityQuestion()));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+        }
+    }
+
+    // 验证用户的安全问题答案
+    @PostMapping("/verify-security-answer")
+    public ResponseEntity<String> verifySecurityAnswer(@RequestBody SecurityAnswerRequest request) {
+        Optional<User> userOptional = userRepository.findByEmailAddress(request.getEmail());
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            if (user.getSecurityQuestAnswer().equalsIgnoreCase(request.getAnswer())) {
+                return ResponseEntity.ok("Answer is correct.");
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect answer.");
+            }
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+        }
+    }
     // 重置密码
     @PostMapping("/reset")
     public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {

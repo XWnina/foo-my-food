@@ -2,7 +2,6 @@ package com.foomyfood.foomyfood.database.testing;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
 
 import com.foomyfood.foomyfood.database.db_service.UserIngredientService;
 

@@ -17,10 +17,20 @@ class SetPasswordPage extends StatefulWidget {
 class _SetPasswordPageState extends State<SetPasswordPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  String _errorMessage = '';  // 用于显示错误信息
 
   Future<void> _resetPassword() async {
     String password = _passwordController.text;
     String confirmPassword = _confirmPasswordController.text;
+
+    // 检查密码格式是否符合要求
+    final passwordRegex = RegExp(passwordRegexPsttern);
+    if (!passwordRegex.hasMatch(password)) {
+      setState(() {
+        _errorMessage = 'Password must be at least 5 characters long and contain a special character.';
+      });
+      return;
+    }
 
     if (password == confirmPassword) {
       try {
@@ -45,7 +55,9 @@ class _SetPasswordPageState extends State<SetPasswordPage> {
         _showDialog('Error', 'An error occurred: $error', false);
       }
     } else {
-      _showDialog('Error', 'Passwords do not match.', false);
+      setState(() {
+        _errorMessage = 'Passwords do not match.';
+      });
     }
   }
 
@@ -118,6 +130,12 @@ class _SetPasswordPageState extends State<SetPasswordPage> {
               ),
               obscureText: true,
             ),
+            const SizedBox(height: 10),
+            if (_errorMessage.isNotEmpty)
+              Text(
+                _errorMessage,
+                style: const TextStyle(color: Colors.red),
+              ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _resetPassword,
