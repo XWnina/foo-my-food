@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class SecurityQuestionSelectionPage extends StatefulWidget {
-  const SecurityQuestionSelectionPage({super.key});
+  final String email; // 接收 email 参数
+
+  const SecurityQuestionSelectionPage({super.key, required this.email}); // 构造函数接收 email
 
   @override
   _SecurityQuestionSelectionPageState createState() =>
@@ -18,6 +20,13 @@ class _SecurityQuestionSelectionPageState
     '你的爱好是什么？',
     '你使用的第一台电脑是什么系统？',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // 打印接收到的 email
+    print('Received email: ${widget.email}');
+  }
 
   @override
   Widget build(BuildContext context) {
