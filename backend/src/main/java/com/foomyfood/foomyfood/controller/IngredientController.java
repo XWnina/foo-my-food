@@ -1,4 +1,3 @@
-
 package com.foomyfood.foomyfood.controller;
 
 import com.foomyfood.foomyfood.database.Ingredient;
@@ -99,4 +98,3 @@ public class IngredientController {
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 }
-

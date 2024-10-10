@@ -8,7 +8,6 @@ const String instagramUsernameRegexPattern = r'^[a-zA-Z0-9._]{1,30}$';
 const String emailRegexPattern =
     r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9]+\.[a-zA-Z]+$";
 const String phoneNumberRegexPattern = r'^\d{10}$';
-const String passwordRegexPsttern = r'^(?=.*[!@#$%^&*(),.?":{}|<>]).{5,}$';
 
 // 错误提示信息
 const String usernameTakenError = 'Username already taken';
@@ -40,5 +39,3 @@ const double buttonWidthFactor = 0.5;
 const String baseApiUrl = 'http://localhost:8081/api'; // For iOS and Chrome
 // const String baseApiUrl = 'http://127.0.0.1:8081/api'; // For iOS only
 // const String baseApiUrl = 'http://10.0.2.2:8081/api'; // For Android Emulator
-const String resetPasswordUrl =
-    '$baseApiUrl/password-reset/reset';  // 重置密码的完整 URL

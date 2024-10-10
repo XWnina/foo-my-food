@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
-import 'package:foo_my_food_app/services/password_reset_api_service.dart';
-import 'components/text_field.dart';
-import 'set_password.dart';
-import 'package:foo_my_food_app/utils/constants.dart';  // 引入 constants.dart 文件
-import 'package:foo_my_food_app/utils/helper_function.dart';
+import 'package:foo_my_food_app/services/password_reset_api_service.dart'; // 引入 API 服务
+import 'components/text_field.dart'; // 导入通用输入框函数
+import 'set_password.dart'; // 引入密码重置页面
 
 class PasswordResetPage extends StatefulWidget {
   const PasswordResetPage({super.key});
@@ -14,9 +12,9 @@ class PasswordResetPage extends StatefulWidget {
 }
 
 class PasswordResetPageState extends State<PasswordResetPage> {
+  // 创建 TextEditingController
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _usernameController = TextEditingController(); // 新增用户名输入框
-  late bool _isPolling;
+  late bool _isPolling; // 轮询状态
 
   @override
   void initState() {
@@ -24,32 +22,22 @@ class PasswordResetPageState extends State<PasswordResetPage> {
     _isPolling = false;
   }
 
-  // 发送重置链接到用户邮箱并验证用户名
+  // 发送重置密码请求
   Future<void> _sendResetLink() async {
     String email = _emailController.text;
-    String username = _usernameController.text;
 
-    // 检查邮箱格式
-    if (!HelperFunctions.checkEmailFormat(email)) {
-      _showDialog('Error', 'Invalid email format.');
-      return;
-    }
-
-    // 调用后端 API 验证用户名和邮箱
     try {
-      final response = await PasswordResetApiService.sendResetLink(
-        emailAddress: email,
-        userName: username,  // 传递用户名到 API
-      );
+      final response = await PasswordResetApiService.sendResetLink(emailAddress: email);
 
       if (response.statusCode == 200) {
+        // 显示成功提示，并开始轮询状态
         _showDialog('Success', 'A verification link has been sent to your email.');
-        _startPolling(email); // 开始轮询检测邮箱验证状态
+        _startPolling(email); // 开始轮询以检测邮件链接点击后的验证状态
       } else if (response.statusCode == 404) {
-        _showDialog('Error', 'The email or username is not registered.');
-      } else if (response.statusCode == 409) {
-        _showSnackBar('Username and email do not match.'); // 弹出用户名和邮箱不匹配的提示
+        // 用户不存在，显示错误提示
+        _showDialog('Error', 'The email is not registered.');
       } else {
+        // 显示其他错误提示
         _showDialog('Error', 'Failed to send reset link.');
       }
     } catch (error) {
@@ -57,13 +45,7 @@ class PasswordResetPageState extends State<PasswordResetPage> {
     }
   }
 
-  // 显示 SnackBar
-  void _showSnackBar(String message) {
-    final snackBar = SnackBar(content: Text(message));
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-  }
-
-  // 轮询以检测用户是否点击了验证链接
+  // 开始轮询验证状态
   Future<void> _startPolling(String email) async {
     _isPolling = true;
     const duration = Duration(seconds: 5); // 每 5 秒轮询一次
@@ -71,18 +53,18 @@ class PasswordResetPageState extends State<PasswordResetPage> {
     while (_isPolling) {
       await Future.delayed(duration);
 
+      // 检查后端 API 是否验证成功
       final response = await PasswordResetApiService.checkVerificationStatus(emailAddress: email);
 
       if (response.statusCode == 200) {
-        // 验证成功，跳转到重置密码页面，并传递邮箱
+        // 停止轮询，并跳转到密码重置页面
         _isPolling = false;
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => SetPasswordPage(email: email),  // 传递邮箱到 SetPasswordPage
-          ),
+          MaterialPageRoute(builder: (context) => const SetPasswordPage()),
         );
-      } else {
+      } else if (response.statusCode == 400) {
+        // 如果发生错误或未验证，继续轮询
         print("Verification still pending...");
       }
     }
@@ -111,7 +93,7 @@ class PasswordResetPageState extends State<PasswordResetPage> {
 
   @override
   void dispose() {
-    _isPolling = false;
+    _isPolling = false; // 停止轮询
     super.dispose();
   }
 
@@ -132,26 +114,21 @@ class PasswordResetPageState extends State<PasswordResetPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'Enter your email and username to reset your password',
+              'Enter your email to reset your password',
               style: TextStyle(fontSize: 18, color: blackTextColor),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            // 用户名输入框
-            buildTextInputField(
-              label: 'USERNAME',
-              controller: _usernameController,
-            ),
-            const SizedBox(height: 20),
+
             // 邮箱输入框
             buildTextInputField(
               label: 'EMAIL',
               controller: _emailController,
             ),
+
             const SizedBox(height: 20),
-            // 发送重置链接按钮
             ElevatedButton(
-              onPressed: _sendResetLink, // 点击按钮发送重置链接
+              onPressed: _sendResetLink, // 调用发送请求的方法
               style: ElevatedButton.styleFrom(
                 backgroundColor: buttonBackgroundColor,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),

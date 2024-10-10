@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'set_password.dart';
-
 class SecurityQuestionPage extends StatefulWidget {
-  final String email; // 接收从之前页面传来的 email
-
-  const SecurityQuestionPage({super.key, required this.email});
+  const SecurityQuestionPage({super.key});
 
   @override
   State<SecurityQuestionPage> createState() => _SecurityQuestionPageState();
@@ -17,7 +14,7 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
 
   void _verifyAnswer() {
     if (_answerController.text.trim().toLowerCase() == _correctAnswer.toLowerCase()) {
-      // 显示成功提示框并导航到 ChangePasswordPage，同时传递 email
+      // Show success dialog and navigate to ChangePasswordPage
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -28,12 +25,10 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  // Navigate to SetPasswordPage and pass the email
+                  // Navigate to ChangePasswordPage
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => SetPasswordPage(email: widget.email), // 使用传递的 email
-                    ),
+                    MaterialPageRoute(builder: (context) => const SetPasswordPage()),
                   );
                 },
                 child: const Text('OK'),
@@ -43,7 +38,7 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
         },
       );
     } else {
-      // 显示失败提示框
+      // Show error dialog
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -81,7 +76,7 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context); // 返回到前一个页面
+            Navigator.pop(context); // Navigate back to the previous page
           },
         ),
       ),
@@ -90,8 +85,8 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
         child: Container(
           width: 360,
           height: 640,
-          decoration: const BoxDecoration(
-            color: Color(0xFFD1E7FE),
+          decoration: BoxDecoration(
+            color: const Color(0xFFD1E7FE),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -152,3 +147,5 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
     );
   }
 }
+
+

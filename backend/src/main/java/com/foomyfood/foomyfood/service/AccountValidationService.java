@@ -1,11 +1,10 @@
 package com.foomyfood.foomyfood.service;
 
-import java.util.Optional;
-
+import com.foomyfood.foomyfood.database.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.foomyfood.foomyfood.database.db_repository.UserRepository;
+import java.util.Optional;
 
 @Service
 public class AccountValidationService {

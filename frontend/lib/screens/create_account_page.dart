@@ -34,8 +34,7 @@ class CreateAccountState extends State<CreateAccount> {
   bool _phoneInvalid = false;
   bool _phoneTaken = false;
   bool _passwordsDoNotMatch = false;
-  bool _passwordInvalid = false; // 新增密码复杂度验证
-  bool _isSubmitting = false; // 标志位，防止重复提交
+  bool _isSubmitting = false; // 新增的标志位，防止重复提交
 
   // 让用户从图库或相机选择图片
   Future<void> _pickImage() async {
@@ -111,8 +110,6 @@ class CreateAccountState extends State<CreateAccount> {
         _passwordController.text,
         _confirmPasswordController.text,
       );
-      // 新增密码复杂度验证
-      _passwordInvalid = !HelperFunctions.checkPasswordRequirements(_passwordController.text);
     });
   }
 
@@ -130,12 +127,12 @@ class CreateAccountState extends State<CreateAccount> {
       _isSubmitting = true; // 设置为提交状态
     });
 
-    // 检查密码匹配和复杂度
-    if (_passwordsDoNotMatch || _passwordInvalid) {
+    if (_passwordController.text != _confirmPasswordController.text) {
       setState(() {
+        _passwordsDoNotMatch = true;
         _isSubmitting = false; // 重置提交状态
       });
-      _showSnackBar('Password does not meet the requirements or passwords do not match.');
+      _showSnackBar('Passwords do not match.');
       return;
     }
 
@@ -158,6 +155,7 @@ class CreateAccountState extends State<CreateAccount> {
             'Account created successfully. Please check your email for verification.');
         _startEmailVerificationPolling(); // 开始轮询邮箱验证状态
       } else {
+        // 提取响应内容
         var responseBody = await response.stream.bytesToString();
         developer.log('Failed to create account. Reason: $responseBody',
             name: 'CreateAccount');
@@ -306,10 +304,6 @@ class CreateAccountState extends State<CreateAccount> {
                 _validatePasswords(); // 每次输入时验证密码
               },
             ),
-            if (_passwordInvalid)
-              const Text(
-                  'Password must be at least 5 characters and contain one special character',
-                  style: TextStyle(color: redErrorTextColor)),
 
             // Confirm Password 输入框
             buildPasswordInputField(
@@ -339,8 +333,7 @@ class CreateAccountState extends State<CreateAccount> {
                         _emailTaken ||
                         _phoneInvalid ||
                         _phoneTaken ||
-                        _passwordsDoNotMatch ||
-                        _passwordInvalid
+                        _passwordsDoNotMatch
                     ? null
                     : () {
                         _submitCreateAccount(); // 发送创建账号的请求
