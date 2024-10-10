@@ -1,13 +1,9 @@
-Users
-├── user_id (PK)
-├── username (唯一)
-├── email (唯一)
-└── password_hash
-
 Ingredients
 ├── ingredient_id (PK)
-├── name (唯一)
+├── name (唯一) 
 ├── category 
+├── imageURL
+├── storeage
 ├── base_quantity
 ├── unit
 ├── expiration_date
