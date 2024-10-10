@@ -1,4 +1,4 @@
-package com.foomyfood.foomyfood.database.service;
+package com.foomyfood.foomyfood.database.test_service;
 
 import java.util.Optional;
 
