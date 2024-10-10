@@ -67,3 +67,5 @@ public class UserIngredient {
         this.userQuantity = userQuantity;
     }
 }
+
+

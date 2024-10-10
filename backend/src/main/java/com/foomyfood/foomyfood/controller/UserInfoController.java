@@ -1,16 +1,22 @@
 package com.foomyfood.foomyfood.controller;
 
-import com.foomyfood.foomyfood.database.User;
-import com.foomyfood.foomyfood.database.repository.UserRepository;
-import com.foomyfood.foomyfood.service.GoogleCloudStorageService;
+import java.io.IOException;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.Optional;
+import com.foomyfood.foomyfood.database.User;
+import com.foomyfood.foomyfood.database.db_repository.UserRepository;
+import com.foomyfood.foomyfood.service.GoogleCloudStorageService;
 
 @RestController
 @RequestMapping("/api/user")
@@ -57,6 +63,11 @@ public class UserInfoController {
 
                 // 如果有上传头像，处理头像
                 if (avatar != null && !avatar.isEmpty()) {
+                    // 检查是否已有头像URL
+                    if (user.getImageURL() != null && !user.getImageURL().isEmpty()) {
+                        // 删除之前的头像
+                        googleCloudStorageService.deleteFile(user.getImageURL());
+                    }
                     String avatarUrl = googleCloudStorageService.uploadFile(avatar);
                     user.setImageURL(avatarUrl); // 更新用户头像URL
                 }

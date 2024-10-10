@@ -1,16 +1,22 @@
 package com.foomyfood.foomyfood.dto;
 
 public class ResetPasswordRequest {
-    private String token;
+    private String email;  // 添加 email 字段以便查找用户
     private String newPassword;
 
-    public String getToken() {
-        return this.token = token;
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getNewPassword() {
-        return this.newPassword = newPassword;
+        return newPassword;
     }
 
-    // Getters and setters
+    public void setNewPassword(String newPassword) {
+        this.newPassword = newPassword;
+    }
 }

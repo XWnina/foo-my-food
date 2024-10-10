@@ -15,7 +15,7 @@ public class Ingredient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long ingredientId;
 
-    @Column(name = "name", unique = true)
+    @Column(name = "name")
     private String name;
 
     @Column(name = "category")
@@ -40,7 +40,8 @@ public class Ingredient {
     private Boolean isUserCreated;
 
     @Column(name = "created_by")
-    private Long createdBy; // FK to Users table
+
+    private Long createdBy;
 
     @Column(name = "calories")
     private int calories;
@@ -78,6 +79,7 @@ public class Ingredient {
         this.fiber = fiber;
     }
 
+    // Getter and setter
     public Long getIngredientId() {
         return ingredientId;
     }
