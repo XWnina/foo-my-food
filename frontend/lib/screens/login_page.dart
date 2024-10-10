@@ -117,8 +117,7 @@ class LoginPageState extends State<LoginPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const SecurityQuestionSelectionPage(),
-          ),
+            builder: (context) => SecurityQuestionSelectionPage(email: _emailController.text)),
         );
       } else if (response.statusCode == 403) {
         // 邮箱未验证，显示重新发送验证邮件的提示

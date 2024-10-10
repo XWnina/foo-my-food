@@ -88,6 +88,7 @@ public class AccountController {
             user.setImageURL(imageUrl);
             user.setEmailVerificationToken(emailVerificationToken);
             user.setEmailVerified(false); // 设置邮箱验证状态为 false
+            user.setLogInStatus(false);
 
             // 保存用户到数据库
             userRepository.save(user);

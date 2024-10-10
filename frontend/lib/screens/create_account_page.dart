@@ -190,7 +190,7 @@ class CreateAccountState extends State<CreateAccount> {
             context,
             MaterialPageRoute(
                 builder: (context) =>
-                    const SecurityQuestionSelectionPage()), // 跳转到 SecurityQuestionSelectionPage
+                    SecurityQuestionSelectionPage(email: _emailController.text)), // 跳转到 SecurityQuestionSelectionPage
           );
           break; // 停止轮询
         }
