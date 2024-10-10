@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/screens/login_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -135,13 +136,55 @@ class _UserProfileState extends State<UserProfile> {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: redErrorTextColor))));
   }
+  Future<void> _logout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // Clear all stored data
 
+    // TODO: Add any additional logout logic here, such as API calls to invalidate tokens
+
+    // Navigate to the login screen and remove all previous routes
+     Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => LoginPage()),
+    );  
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("User Profile"),
         backgroundColor: appBarColor,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text("Logout"),
+                    content: Text("Are you sure you want to logout?"),
+                    actions: [
+                      TextButton(
+                        child: Text("Cancel"),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: Text("Logout"),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _logout();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
       backgroundColor: backgroundColor,
       body: Padding(
@@ -246,6 +289,40 @@ class _UserProfileState extends State<UserProfile> {
                 foregroundColor: whiteTextColor,
               ),
               child: Text("Save"),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text("Logout"),
+                      content: Text("Are you sure you want to logout?"),
+                      actions: [
+                        TextButton(
+                          child: Text("Cancel"),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                        TextButton(
+                          child: Text("Logout"),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _logout();
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: whiteTextColor,
+              ),
+              child: Text("Logout"),
             ),
           ],
         ),
