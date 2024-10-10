@@ -60,9 +60,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
         // Iterate through user ingredients data
         for (var item in userIngredientsData) {
-          int ingredientId = item['ingredientId'];
+          int? ingredientId = item['ingredientId']; 
           int userQuantity = item['userQuantity'];
           // Fetch ingredient details
+          if (ingredientId == null) {
+          print('Skipping ingredient with null ID');
+          continue; // Skip to the next iteration if ingredientId is null
+        }
           final ingredientResponse = await http.get(Uri.parse('$baseApiUrl/ingredients/$ingredientId'));
           
           if (ingredientResponse.statusCode == 200) {
