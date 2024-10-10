@@ -3,9 +3,10 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'homepage.dart';
+import 'package:foo_my_food_app/utils/constants.dart';
 class FoodItemDetailPage extends StatefulWidget {
   final UserIngredient ingredient; // 更新为 UserIngredient
-  final int userId;
+  final String userId;
 
   const FoodItemDetailPage({
     Key? key,
@@ -34,7 +35,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
   }
 
   Future<void> _saveChanges() async {
-    final String apiUrl = 'http://your-api-url/api/user-ingredients/${widget.userId}/${widget.ingredient.name}';
+    final String apiUrl = '$baseApiUrl/user_ingredients/${widget.userId}/${widget.ingredient.name}';
 
     final response = await http.put(
       Uri.parse(apiUrl),
