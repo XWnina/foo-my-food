@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "ingredients")
-public class Ingredients {
+public class Ingredient {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,10 +58,10 @@ public class Ingredients {
     private float fiber;
 
     // Constructors
-    public Ingredients() {
+    public Ingredient() {
     }
 
-    public Ingredients(String name, String category, String imageURL, String StorageMethod, int baseQuantity, String unit, String expirationDate, Boolean isUserCreated, Long createdBy, int calories, float protein, float fat, float carbohydrates, float fiber) {
+    public Ingredient(String name, String category, String imageURL, String StorageMethod, int baseQuantity, String unit, String expirationDate, Boolean isUserCreated, Long createdBy, int calories, float protein, float fat, float carbohydrates, float fiber) {
         this.name = name;
         this.category = category;
         this.imageURL = imageURL;
