@@ -54,6 +54,24 @@ public class UserInfoController {
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
 
+                // 检查用户名是否唯一
+                Optional<User> existingUserByUsername = userRepository.findByUserName(userName);
+                if (existingUserByUsername.isPresent() && !existingUserByUsername.get().getId().equals(userId)) {
+                    return new ResponseEntity<>("Username already taken", HttpStatus.CONFLICT);
+                }
+
+                // 检查邮箱是否唯一
+                Optional<User> existingUserByEmail = userRepository.findByEmailAddress(emailAddress);
+                if (existingUserByEmail.isPresent() && !existingUserByEmail.get().getId().equals(userId)) {
+                    return new ResponseEntity<>("Email address already taken", HttpStatus.CONFLICT);
+                }
+
+                // 检查电话号码是否唯一
+                Optional<User> existingUserByPhone = userRepository.findByPhoneNumber(phoneNumber);
+                if (existingUserByPhone.isPresent() && !existingUserByPhone.get().getId().equals(userId)) {
+                    return new ResponseEntity<>("Phone number already taken", HttpStatus.CONFLICT);
+                }
+
                 // 更新用户信息
                 user.setFirstName(firstName);
                 user.setLastName(lastName);

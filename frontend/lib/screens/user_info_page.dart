@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:foo_my_food_app/screens/login_page.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:image_picker/image_picker.dart'; // 导入用于选择图片的包
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:foo_my_food_app/utils/constants.dart';
@@ -22,6 +22,14 @@ class _UserProfileState extends State<UserProfile> {
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+
+  // 错误状态
+  String? _usernameError;
+  String? _emailError;
+  String? _phoneError;
+
+  // Save按钮是否可点击
+  bool _isSaveButtonEnabled = false;
 
   @override
   void initState() {
@@ -60,7 +68,8 @@ class _UserProfileState extends State<UserProfile> {
           throw Exception('User data is empty.');
         }
       } else {
-        throw Exception('Failed to retrieve user data, status code: ${response.statusCode}');
+        throw Exception(
+            'Failed to retrieve user data, status code: ${response.statusCode}');
       }
     } catch (e) {
       print('Error: $e');
@@ -69,9 +78,9 @@ class _UserProfileState extends State<UserProfile> {
     }
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+  // 选择图片（相机或图库）
+  Future<void> _pickImage(ImageSource source) async {
+    final pickedFile = await ImagePicker().pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
@@ -79,7 +88,91 @@ class _UserProfileState extends State<UserProfile> {
     }
   }
 
+  // 打开底部菜单让用户选择图片来源
+  Future<void> _showImageSourceSelection() async {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.camera),
+                title: Text('Take a photo'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.camera); // 使用相机拍照
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library),
+                title: Text('Choose from gallery'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.gallery); // 从图库选择
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // 验证用户名
+  void _validateUsername(String username) {
+    setState(() {
+      if (!RegExp(instagramUsernameRegexPattern).hasMatch(username)) {
+        _usernameError = 'Invalid username';
+      } else {
+        _usernameError = null; // 验证通过，清空错误
+      }
+      _checkIfFormIsValid();
+    });
+  }
+
+  // 验证邮箱
+  void _validateEmail(String email) {
+    setState(() {
+      if (!RegExp(emailRegexPattern).hasMatch(email)) {
+        _emailError = 'Invalid email format';
+      } else {
+        _emailError = null; // 验证通过，清空错误
+      }
+      _checkIfFormIsValid();
+    });
+  }
+
+  // 验证电话号码
+  void _validatePhoneNumber(String phoneNumber) {
+    setState(() {
+      if (!RegExp(phoneNumberRegexPattern).hasMatch(phoneNumber)) {
+        _phoneError = 'Phone number must be 10 digits';
+      } else {
+        _phoneError = null; // 验证通过，清空错误
+      }
+      _checkIfFormIsValid();
+    });
+  }
+
+  // 检查所有表单是否有效
+  void _checkIfFormIsValid() {
+    if (_usernameError == null &&
+        _emailError == null &&
+        _phoneError == null &&
+        _usernameController.text.isNotEmpty &&
+        _emailController.text.isNotEmpty &&
+        _phoneController.text.isNotEmpty) {
+      _isSaveButtonEnabled = true;
+    } else {
+      _isSaveButtonEnabled = false;
+    }
+  }
+
   Future<void> _saveProfile() async {
+    if (!_isSaveButtonEnabled) return;
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
 
@@ -90,7 +183,7 @@ class _UserProfileState extends State<UserProfile> {
 
     final url = '$baseApiUrl/user/$userId';
 
-    // 先从后端获取当前用户的原始数据
+    // 获取用户的原始数据
     final response = await http.get(Uri.parse(url));
     if (response.statusCode != 200) {
       _showError('Failed to retrieve user data');
@@ -98,17 +191,21 @@ class _UserProfileState extends State<UserProfile> {
     }
 
     final originalUserData = jsonDecode(response.body);
-    bool isPhoneChanged = originalUserData['phoneNumber'] != _phoneController.text;
-    bool isEmailChanged = originalUserData['emailAddress'] != _emailController.text;
-    bool isUsernameChanged = originalUserData['userName'] != _usernameController.text;
+    bool isPhoneChanged =
+        originalUserData['phoneNumber'] != _phoneController.text;
+    bool isEmailChanged =
+        originalUserData['emailAddress'] != _emailController.text;
+    bool isUsernameChanged =
+        originalUserData['userName'] != _usernameController.text;
 
-    // 验证并更新信息
-    if (isUsernameChanged && !HelperFunctions.checkUsernameFormat(_usernameController.text)) {
+    // 验证信息
+    if (isUsernameChanged &&
+        !HelperFunctions.checkUsernameFormat(_usernameController.text)) {
       _showError('Invalid username');
       return;
     }
 
-    // 如果验证通过，提交更新数据
+    // 提交更新数据
     final updateUrl = '$baseApiUrl/user/$userId/update';
     final request = http.MultipartRequest('POST', Uri.parse(updateUrl));
 
@@ -122,32 +219,76 @@ class _UserProfileState extends State<UserProfile> {
       request.files.add(await http.MultipartFile.fromPath('avatar', _image!.path));
     }
 
-    final updateResponse = await request.send();
+    try {
+      final updateResponse = await request.send();
 
-    if (updateResponse.statusCode == 200) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Profile updated successfully")));
-    } else {
-      _showError('Update failed');
+      if (updateResponse.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Profile updated successfully")));
+      } else if (updateResponse.statusCode == 409) {
+        // 处理冲突：读取服务器返回的错误信息
+        final responseBody = await updateResponse.stream.bytesToString();
+        if (responseBody.contains('Username already taken')) {
+          setState(() {
+            _usernameError = 'Username already taken';
+          });
+        } else if (responseBody.contains('Email address already taken')) {
+          setState(() {
+            _emailError = 'Email address already taken';
+          });
+        } else if (responseBody.contains('Phone number already taken')) {
+          setState(() {
+            _phoneError = 'Phone number already taken';
+          });
+        } else {
+          _showError('Conflict occurred while updating profile');
+        }
+      } else {
+        _showError('Update failed');
+      }
+    } catch (e) {
+      _showError('An error occurred: $e');
+    }
+  }
+
+  Future<void> _logout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      _showError('User ID not found');
+      return;
+    }
+
+    final url = '$baseApiUrl/logout';
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'userId': userId}),
+      );
+
+      if (response.statusCode == 200) {
+        await prefs.clear();
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+          (route) => false,
+        );
+      } else {
+        _showError('Logout failed: ${response.body}');
+      }
+    } catch (e) {
+      _showError('An error occurred: $e');
     }
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: redErrorTextColor))));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(message, style: TextStyle(color: redErrorTextColor))));
   }
-  Future<void> _logout() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Clear all stored data
 
-    // TODO: Add any additional logout logic here, such as API calls to invalidate tokens
-
-    // Navigate to the login screen and remove all previous routes
-     Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => LoginPage()),
-    );  
-  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -193,7 +334,7 @@ class _UserProfileState extends State<UserProfile> {
           children: [
             Center(
               child: GestureDetector(
-                onTap: _pickImage,
+                onTap: _showImageSourceSelection, // 打开图片来源选择
                 child: CircleAvatar(
                   radius: 50.0,
                   backgroundColor: greyBackgroundColor,
@@ -207,6 +348,7 @@ class _UserProfileState extends State<UserProfile> {
               ),
             ),
             SizedBox(height: 20),
+            // First Name Input Field
             TextField(
               controller: _firstNameController,
               decoration: InputDecoration(
@@ -222,6 +364,7 @@ class _UserProfileState extends State<UserProfile> {
               ),
             ),
             SizedBox(height: 20),
+            // Last Name Input Field
             TextField(
               controller: _lastNameController,
               decoration: InputDecoration(
@@ -237,55 +380,64 @@ class _UserProfileState extends State<UserProfile> {
               ),
             ),
             SizedBox(height: 20),
+            // Username Input Field
             TextField(
               controller: _usernameController,
+              onChanged: (value) => _validateUsername(value),
               decoration: InputDecoration(
                 labelText: 'Username',
+                errorText: _usernameError,
                 filled: true,
                 fillColor: whiteFillColor,
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: greyBorderColor),
+                  borderSide: BorderSide(color: _usernameError == null ? greyBorderColor : Colors.red),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: blueBorderColor),
+                  borderSide: BorderSide(color: _usernameError == null ? blueBorderColor : Colors.red),
                 ),
               ),
             ),
             SizedBox(height: 20),
+            // Email Input Field
             TextField(
               controller: _emailController,
+              onChanged: (value) => _validateEmail(value),
               decoration: InputDecoration(
                 labelText: 'Email',
+                errorText: _emailError,
                 filled: true,
                 fillColor: whiteFillColor,
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: greyBorderColor),
+                  borderSide: BorderSide(color: _emailError == null ? greyBorderColor : Colors.red),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: blueBorderColor),
+                  borderSide: BorderSide(color: _emailError == null ? blueBorderColor : Colors.red),
                 ),
               ),
             ),
             SizedBox(height: 20),
+            // Phone Number Input Field
             TextField(
               controller: _phoneController,
+              onChanged: (value) => _validatePhoneNumber(value),
               decoration: InputDecoration(
                 labelText: 'Phone Number',
+                errorText: _phoneError,
                 filled: true,
                 fillColor: whiteFillColor,
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: greyBorderColor),
+                  borderSide: BorderSide(color: _phoneError == null ? greyBorderColor : Colors.red),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: blueBorderColor),
+                  borderSide: BorderSide(color: _phoneError == null ? blueBorderColor : Colors.red),
                 ),
               ),
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _saveProfile,
+              onPressed: _isSaveButtonEnabled ? _saveProfile : null, // 按钮是否可点击
               style: ElevatedButton.styleFrom(
-                backgroundColor: buttonBackgroundColor,
+                backgroundColor: _isSaveButtonEnabled ? buttonBackgroundColor : Colors.grey, // 动态设置颜色
                 foregroundColor: whiteTextColor,
               ),
               child: Text("Save"),
