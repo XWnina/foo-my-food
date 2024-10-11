@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
@@ -10,7 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:foo_my_food_app/providers/ingredient_provider.dart';
-import 'package:image_picker/image_picker.dart'; // Import image_picker
+import 'package:image_picker/image_picker.dart';
 
 class FoodItemDetailPage extends StatefulWidget {
   final Ingredient ingredient;
@@ -39,8 +38,8 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
   late TextEditingController _carbohydratesController;
   late TextEditingController _fiberController;
   late TextEditingController _unitController;
-  
-  String? _newImageUrl; // To hold the new image URL
+
+  String? _newImageUrl; // 用来保存后端返回的新图片 URL
 
   @override
   void initState() {
@@ -57,7 +56,9 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: redErrorTextColor))));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message, style: TextStyle(color: redErrorTextColor))),
+    );
   }
 
   Future<void> _saveChanges() async {
@@ -71,7 +72,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
 
     final apiUrl = '$baseApiUrl/ingredients/${widget.ingredient.ingredientId}';
 
-    // Submit updated data
+    // 提交更新的数据
     final updateResponse = await http.put(
       Uri.parse(apiUrl),
       headers: <String, String>{
@@ -83,18 +84,18 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
         'userQuantity': int.parse(_quantityController.text),
         'name': _nameController.text,
         'expirationDate': _expirationDateController.text,
-        'calories': int.parse(_caloriesController.text),
-        'protein': int.parse(_proteinController.text),
-        'fat': int.parse(_fatController.text),
-        'carbohydrates': int.parse(_carbohydratesController.text),
-        'fiber': int.parse(_fiberController.text),
+        'calories': double.parse(_caloriesController.text),
+        'protein': double.parse(_proteinController.text),
+        'fat': double.parse(_fatController.text),
+        'carbohydrates': double.parse(_carbohydratesController.text),
+        'fiber': double.parse(_fiberController.text),
         'unit': _unitController.text,
-        'imageURL': _newImageUrl ?? widget.ingredient.imageURL, // Use new image if available
+        'imageURL': _newImageUrl ?? widget.ingredient.imageURL, // 如果有新图片则使用新 URL
       }),
     );
 
     if (updateResponse.statusCode == 200) {
-      // Update the ingredient in the provider
+      // 更新 provider 中的 ingredient
       Provider.of<IngredientProvider>(context, listen: false).updateIngredient(
         widget.index,
         Ingredient(
@@ -107,7 +108,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
           carbohydrates: double.parse(_carbohydratesController.text),
           fiber: double.parse(_fiberController.text),
           ingredientId: widget.ingredient.ingredientId,
-          imageURL: _newImageUrl ?? widget.ingredient.imageURL, // Use the updated image
+          imageURL: _newImageUrl ?? widget.ingredient.imageURL, // 使用更新后的图片 URL
           unit: _unitController.text,
         ),
       );
@@ -121,15 +122,44 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.getImage(source: ImageSource.gallery); // Pick image from gallery
+  final picker = ImagePicker();
+  final pickedFile = await picker.getImage(source: ImageSource.gallery); // 从图库中选择图片
 
-    if (pickedFile != null) {
+  if (pickedFile != null) {
+    final file = File(pickedFile.path);
+
+    // 获取文件大小（单位：字节）
+    final int fileSizeInBytes = await file.length();
+    final double fileSizeInMB = fileSizeInBytes / (1024 * 1024); // 转换为 MB
+
+    // 检查文件大小是否超过 1MB
+    if (fileSizeInMB > 1) {
+      _showError('File size exceeds 1MB. Please choose a smaller image.');
+      return; // 不继续上传
+    }
+
+    // 如果文件大小符合要求，则继续上传
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseApiUrl/ingredients/upload_image'),
+    );
+    request.files.add(await http.MultipartFile.fromPath('file', file.path));
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final responseData = await http.Response.fromStream(response);
+      final responseBody = json.decode(responseData.body);
       setState(() {
-        _newImageUrl = pickedFile.path; // Store the new image path
+        _newImageUrl = responseBody['imageUrl']; // 使用上传的图片 URL
+        print('Uploaded image URL: $_newImageUrl'); // 打印调试信息
       });
+    } else {
+      _showError('Failed to upload image');
     }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -141,10 +171,10 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
             icon: Icon(_isEditing ? Icons.save : Icons.edit),
             onPressed: () {
               if (_isEditing) {
-                _saveChanges();
+                _saveChanges(); // 保存更新
               } else {
                 setState(() {
-                  _isEditing = true;
+                  _isEditing = true; // 进入编辑模式
                 });
               }
             },
@@ -158,7 +188,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               GestureDetector(
-                onTap: _isEditing ? _pickImage : null, // Allow image picking in edit mode
+                onTap: _isEditing ? _pickImage : null, // 编辑模式下允许选择图片
                 child: Container(
                   height: 200,
                   width: double.infinity,
@@ -167,11 +197,11 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                     borderRadius: BorderRadius.circular(8),
                     image: _isEditing && _newImageUrl != null
                         ? DecorationImage(
-                            image: FileImage(File(_newImageUrl!)),
+                            image: NetworkImage(_newImageUrl!), // 使用新上传的图片 URL
                             fit: BoxFit.cover,
                           )
                         : DecorationImage(
-                            image: NetworkImage(widget.ingredient.imageURL),
+                            image: NetworkImage(widget.ingredient.imageURL), // 使用已有的图片 URL
                             fit: BoxFit.cover,
                           ),
                   ),

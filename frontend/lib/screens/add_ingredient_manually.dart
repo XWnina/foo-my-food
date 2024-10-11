@@ -34,13 +34,22 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
   double _fiber = 0; // Fiber
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+  final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+  if (pickedFile != null) {
+    File imageFile = File(pickedFile.path);
+    int imageSize = imageFile.lengthSync();
+
+    if (imageSize > 1048576) {
+      // 如果图片大小超过1MB，显示错误提示
+      _showError('Image size exceeds 1MB. Please select a smaller image.');
+    } else {
       setState(() {
-        _image = File(pickedFile.path); // Update image file
+        _image = imageFile; // 图片符合大小要求，更新 image 文件
       });
     }
   }
+}
+
 
   Future<void> _selectExpirationDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
