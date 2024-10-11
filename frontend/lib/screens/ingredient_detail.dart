@@ -40,24 +40,33 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
   late TextEditingController _unitController;
 
   String? _newImageUrl; // 用来保存后端返回的新图片 URL
+  String? _expirationDateError; // 用来保存日期输入的错误信息
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.ingredient.name);
-    _expirationDateController = TextEditingController(text: widget.ingredient.expirationDate);
-    _quantityController = TextEditingController(text: widget.ingredient.baseQuantity.toString());
-    _caloriesController = TextEditingController(text: widget.ingredient.calories.toString());
-    _proteinController = TextEditingController(text: widget.ingredient.protein.toString());
-    _fatController = TextEditingController(text: widget.ingredient.fat.toString());
-    _carbohydratesController = TextEditingController(text: widget.ingredient.carbohydrates.toString());
-    _fiberController = TextEditingController(text: widget.ingredient.fiber.toString());
+    _expirationDateController =
+        TextEditingController(text: widget.ingredient.expirationDate);
+    _quantityController =
+        TextEditingController(text: widget.ingredient.baseQuantity.toString());
+    _caloriesController =
+        TextEditingController(text: widget.ingredient.calories.toString());
+    _proteinController =
+        TextEditingController(text: widget.ingredient.protein.toString());
+    _fatController =
+        TextEditingController(text: widget.ingredient.fat.toString());
+    _carbohydratesController =
+        TextEditingController(text: widget.ingredient.carbohydrates.toString());
+    _fiberController =
+        TextEditingController(text: widget.ingredient.fiber.toString());
     _unitController = TextEditingController(text: widget.ingredient.unit);
   }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message, style: TextStyle(color: redErrorTextColor))),
+      SnackBar(
+          content: Text(message, style: TextStyle(color: redErrorTextColor))),
     );
   }
 
@@ -90,7 +99,8 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
         'carbohydrates': double.parse(_carbohydratesController.text),
         'fiber': double.parse(_fiberController.text),
         'unit': _unitController.text,
-        'imageURL': _newImageUrl ?? widget.ingredient.imageURL, // 如果有新图片则使用新 URL
+        'imageURL':
+            _newImageUrl ?? widget.ingredient.imageURL, // 如果有新图片则使用新 URL
       }),
     );
 
@@ -122,50 +132,73 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
   }
 
   Future<void> _pickImage() async {
-  final picker = ImagePicker();
-  final pickedFile = await picker.getImage(source: ImageSource.gallery); // 从图库中选择图片
+    final picker = ImagePicker();
+    final pickedFile =
+        await picker.getImage(source: ImageSource.gallery); // 从图库中选择图片
 
-  if (pickedFile != null) {
-    final file = File(pickedFile.path);
+    if (pickedFile != null) {
+      final file = File(pickedFile.path);
 
-    // 获取文件大小（单位：字节）
-    final int fileSizeInBytes = await file.length();
-    final double fileSizeInMB = fileSizeInBytes / (1024 * 1024); // 转换为 MB
+      // 获取文件大小（单位：字节）
+      final int fileSizeInBytes = await file.length();
+      final double fileSizeInMB = fileSizeInBytes / (1024 * 1024); // 转换为 MB
 
-    // 检查文件大小是否超过 1MB
-    if (fileSizeInMB > 1) {
-      _showError('File size exceeds 1MB. Please choose a smaller image.');
-      return; // 不继续上传
-    }
+      // 检查文件大小是否超过 1MB
+      if (fileSizeInMB > 1) {
+        _showError('File size exceeds 1MB. Please choose a smaller image.');
+        return; // 不继续上传
+      }
 
-    // 如果文件大小符合要求，则继续上传
-    final request = http.MultipartRequest(
-      'POST',
-      Uri.parse('$baseApiUrl/ingredients/upload_image'),
-    );
-    request.files.add(await http.MultipartFile.fromPath('file', file.path));
+      // 如果文件大小符合要求，则继续上传
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseApiUrl/ingredients/upload_image'),
+      );
+      request.files.add(await http.MultipartFile.fromPath('file', file.path));
 
-    final response = await request.send();
+      final response = await request.send();
 
-    if (response.statusCode == 200) {
-      final responseData = await http.Response.fromStream(response);
-      final responseBody = json.decode(responseData.body);
-      setState(() {
-        _newImageUrl = responseBody['imageUrl']; // 使用上传的图片 URL
-        print('Uploaded image URL: $_newImageUrl'); // 打印调试信息
-      });
-    } else {
-      _showError('Failed to upload image');
+      if (response.statusCode == 200) {
+        final responseData = await http.Response.fromStream(response);
+        final responseBody = json.decode(responseData.body);
+        setState(() {
+          _newImageUrl = responseBody['imageUrl']; // 使用上传的图片 URL
+        });
+      } else {
+        _showError('Failed to upload image');
+      }
     }
   }
-}
 
+  // 检查输入的日期是否符合格式，并且是否在今天之后
+  bool _isValidExpirationDate(String date) {
+    try {
+      final inputDate = DateFormat('yyyy-MM-dd').parseStrict(date);
+      final today = DateTime.now();
+      if (inputDate.isBefore(today)) {
+        return false; // 输入的日期不能是今天或今天之前的日期
+      }
+      return true;
+    } catch (e) {
+      return false; // 格式不正确
+    }
+  }
+
+  // 检查输入是否为大于 0 的有效数字
+  bool _isValidPositiveNumber(String value) {
+    final number = double.tryParse(value);
+    return number != null && number > 0;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.ingredient.name),
+        title: Text(widget.ingredient.name,
+            style: const TextStyle(
+              color: Color.fromARGB(255, 255, 255, 255),
+            )),
+        backgroundColor: appBarColor,
         actions: [
           IconButton(
             icon: Icon(_isEditing ? Icons.save : Icons.edit),
@@ -193,7 +226,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                   height: 200,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
+                    border: Border.all(color: greyBorderColor),
                     borderRadius: BorderRadius.circular(8),
                     image: _isEditing && _newImageUrl != null
                         ? DecorationImage(
@@ -201,12 +234,15 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                             fit: BoxFit.cover,
                           )
                         : DecorationImage(
-                            image: NetworkImage(widget.ingredient.imageURL), // 使用已有的图片 URL
+                            image: NetworkImage(
+                                widget.ingredient.imageURL), // 使用已有的图片 URL
                             fit: BoxFit.cover,
                           ),
                   ),
                   child: _isEditing && _newImageUrl == null
-                      ? const Center(child: Text('Tap to change image', style: TextStyle(color: Colors.grey)))
+                      ? Center(
+                          child: Text('Tap to change image',
+                              style: TextStyle(color: greyIconColor)))
                       : null,
                 ),
               ),
@@ -214,41 +250,74 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
               _isEditing
                   ? TextField(
                       controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Name', border: OutlineInputBorder()),
                     )
                   : Text(
                       widget.ingredient.name,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold),
                     ),
               const SizedBox(height: 16),
               _isEditing
-                  ? GestureDetector(
-                      onTap: () async {
-                        DateTime? pickedDate = await showDatePicker(
-                          context: context,
-                          initialDate: DateFormat('yyyy-MM-dd').parse(widget.ingredient.expirationDate),
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2101),
-                        );
-                        if (pickedDate != null) {
-                          setState(() {
-                            _expirationDateController.text = DateFormat('yyyy-MM-dd').format(pickedDate);
-                          });
-                        }
-                      },
-                      child: AbsorbPointer(
-                        child: TextField(
-                          controller: _expirationDateController,
-                          decoration: const InputDecoration(labelText: 'Expiration Date', border: OutlineInputBorder()),
+                  ? Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _expirationDateController,
+                            decoration: InputDecoration(
+                              labelText: 'Expiration Date',
+                              filled: true,
+                              fillColor: whiteFillColor,
+                              border: OutlineInputBorder(
+                                borderSide: BorderSide(color: greyBorderColor),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: blueBorderColor),
+                              ),
+                              errorText: _expirationDateError,
+                              suffixIcon: IconButton(
+                                icon: Icon(Icons.calendar_today,
+                                    color: greyIconColor),
+                                onPressed: () async {
+                                  DateTime? pickedDate = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime.now(), // 禁止选择今天之前的日期
+                                    lastDate: DateTime(2101),
+                                  );
+                                  if (pickedDate != null) {
+                                    setState(() {
+                                      _expirationDateController.text =
+                                          DateFormat('yyyy-MM-dd')
+                                              .format(pickedDate);
+                                      _expirationDateError = null; // 清除错误提示
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                if (_isValidExpirationDate(value)) {
+                                  _expirationDateError = null; // 日期合法，清除错误提示
+                                } else {
+                                  _expirationDateError =
+                                      'The date format must be yyyy-MM-DD or past date'; // 日期非法或是今天之前
+                                }
+                              });
+                            },
+                          ),
                         ),
-                      ),
+                      ],
                     )
                   : Text('Expires on: ${widget.ingredient.expirationDate}'),
               const SizedBox(height: 16),
               _isEditing
                   ? TextField(
                       controller: _quantityController,
-                      decoration: const InputDecoration(labelText: 'Quantity', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Quantity', border: OutlineInputBorder()),
                       keyboardType: TextInputType.number,
                     )
                   : Text('Quantity: ${widget.ingredient.baseQuantity}'),
@@ -256,47 +325,101 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
               _isEditing
                   ? TextField(
                       controller: _unitController,
-                      decoration: const InputDecoration(labelText: 'Unit', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Unit', border: OutlineInputBorder()),
                     )
                   : Text('Unit: ${widget.ingredient.unit}'),
               const SizedBox(height: 16),
               _isEditing
                   ? TextField(
                       controller: _caloriesController,
-                      decoration: const InputDecoration(labelText: 'Calories', border: OutlineInputBorder()),
-                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Calories',
+                        border: const OutlineInputBorder(),
+                        errorText:
+                            _isValidPositiveNumber(_caloriesController.text)
+                                ? null
+                                : 'Must be a positive number',
+                      ),
+                      keyboardType:
+                          TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (value) {
+                        setState(() {}); // 监听输入变化并触发状态更新
+                      },
                     )
                   : Text('Calories: ${widget.ingredient.calories} kcal'),
               const SizedBox(height: 16),
               _isEditing
                   ? TextField(
                       controller: _proteinController,
-                      decoration: const InputDecoration(labelText: 'Protein', border: OutlineInputBorder()),
-                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Protein',
+                        border: const OutlineInputBorder(),
+                        errorText:
+                            _isValidPositiveNumber(_proteinController.text)
+                                ? null
+                                : 'Must be a positive number',
+                      ),
+                      keyboardType:
+                          TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (value) {
+                        setState(() {}); // 监听输入变化并触发状态更新
+                      },
                     )
                   : Text('Protein: ${widget.ingredient.protein} g'),
               const SizedBox(height: 16),
               _isEditing
                   ? TextField(
                       controller: _fatController,
-                      decoration: const InputDecoration(labelText: 'Fat', border: OutlineInputBorder()),
-                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Fat',
+                        border: const OutlineInputBorder(),
+                        errorText: _isValidPositiveNumber(_fatController.text)
+                            ? null
+                            : 'Must be a positive number',
+                      ),
+                      keyboardType:
+                          TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (value) {
+                        setState(() {}); // 监听输入变化并触发状态更新
+                      },
                     )
                   : Text('Fat: ${widget.ingredient.fat} g'),
               const SizedBox(height: 16),
               _isEditing
                   ? TextField(
                       controller: _carbohydratesController,
-                      decoration: const InputDecoration(labelText: 'Carbohydrates', border: OutlineInputBorder()),
-                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Carbohydrates',
+                        border: const OutlineInputBorder(),
+                        errorText: _isValidPositiveNumber(
+                                _carbohydratesController.text)
+                            ? null
+                            : 'Must be a positive number',
+                      ),
+                      keyboardType:
+                          TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (value) {
+                        setState(() {}); // 监听输入变化并触发状态更新
+                      },
                     )
                   : Text('Carbohydrates: ${widget.ingredient.carbohydrates} g'),
               const SizedBox(height: 16),
               _isEditing
                   ? TextField(
                       controller: _fiberController,
-                      decoration: const InputDecoration(labelText: 'Fiber', border: OutlineInputBorder()),
-                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Fiber',
+                        border: const OutlineInputBorder(),
+                        errorText: _isValidPositiveNumber(_fiberController.text)
+                            ? null
+                            : 'Must be a positive number',
+                      ),
+                      keyboardType:
+                          TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (value) {
+                        setState(() {}); // 监听输入变化并触发状态更新
+                      },
                     )
                   : Text('Fiber: ${widget.ingredient.fiber} g'),
               const SizedBox(height: 24),

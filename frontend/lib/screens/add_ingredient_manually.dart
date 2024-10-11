@@ -192,7 +192,9 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text('Add food'),
+        title: const Text('Add food',
+        style: TextStyle(color: Colors.white),),
+
         backgroundColor: appBarColor,
       ),
       body: SingleChildScrollView( // Added for scrolling

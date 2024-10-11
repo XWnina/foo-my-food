@@ -150,7 +150,7 @@ class MyFoodPage extends StatelessWidget {
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  childAspectRatio: 0.8,
+                  childAspectRatio: 1,
                 ),
                 itemCount: provider.ingredients.length,
                 itemBuilder: (context, index) {
@@ -177,12 +177,15 @@ class MyFoodPage extends StatelessWidget {
                           CircleAvatar(
                             backgroundColor: greyBackgroundColor,
                             backgroundImage: NetworkImage(ingredient.imageURL),
-                            radius: 30,
+                            radius: 40,
                           ),
                           const SizedBox(height: 10),
                           Text(
                             ingredient.name,
-                            style: TextStyle(color: blackTextColor),
+                            style: const TextStyle(color: blackTextColor,
+                            fontSize: 18, // 增加字体大小
+                              fontWeight: FontWeight.bold, // 让字体加粗
+                              ),
                             textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,
                           ),

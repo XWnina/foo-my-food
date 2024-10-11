@@ -38,38 +38,49 @@ class CreateAccountState extends State<CreateAccount> {
   bool _isSubmitting = false; // 标志位，防止重复提交
 
   // 让用户从图库或相机选择图片
-  Future<void> _pickImage() async {
-    final pickedFile = await showModalBottomSheet<XFile?>(
-      context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          ListTile(
-            leading: const Icon(Icons.photo_library),
-            title: const Text('Choose from gallery'),
-            onTap: () async {
-              Navigator.pop(context,
-                  await ImagePicker().pickImage(source: ImageSource.gallery));
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.camera_alt),
-            title: const Text('Take a picture'),
-            onTap: () async {
-              Navigator.pop(context,
-                  await ImagePicker().pickImage(source: ImageSource.camera));
-            },
-          ),
-        ],
-      ),
-    );
+  // 选择图片并检测大小
+Future<void> _pickImage() async {
+  final pickedFile = await showModalBottomSheet<XFile?>(
+    context: context,
+    builder: (context) => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        ListTile(
+          leading: const Icon(Icons.photo_library),
+          title: const Text('Choose from gallery'),
+          onTap: () async {
+            Navigator.pop(context, await ImagePicker().pickImage(source: ImageSource.gallery));
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.camera_alt),
+          title: const Text('Take a picture'),
+          onTap: () async {
+            Navigator.pop(context, await ImagePicker().pickImage(source: ImageSource.camera));
+          },
+        ),
+      ],
+    ),
+  );
 
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path); // 更新图片路径
-      });
+  if (pickedFile != null) {
+    final imageFile = File(pickedFile.path);
+
+    // 获取图片大小，单位为字节
+    final int imageSize = imageFile.lengthSync();
+
+    // 1MB = 1,048,576 字节
+    if (imageSize > 1048576) {
+      _showSnackBar('The selected image exceeds 1MB. Please choose a smaller image.');
+      return; // 如果图片大小超出限制，直接返回
     }
+
+    setState(() {
+      _image = imageFile; // 更新图片文件
+    });
   }
+}
+
 
   // 验证用户名字段
   Future<void> _validateUsername(String username) async {
