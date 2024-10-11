@@ -1,8 +1,12 @@
 package com.foomyfood.foomyfood.database.db_controller;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import com.foomyfood.foomyfood.service.GoogleCloudStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.foomyfood.foomyfood.database.Ingredient;
 import com.foomyfood.foomyfood.database.db_service.IngredientService;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/ingredients")
@@ -17,6 +22,9 @@ public class IngredientController {
 
     @Autowired
     private IngredientService ingredientService;
+
+    @Autowired
+    private GoogleCloudStorageService googleCloudStorageService;
 
     // Get all ingredients
     @GetMapping
@@ -97,5 +105,18 @@ public class IngredientController {
         return ingredientOptional
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    // 上传图片到Google Cloud Storage
+    @PostMapping("/upload_image")
+    public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) {
+        try {
+            String imageUrl = googleCloudStorageService.uploadFile(file);
+            Map<String, String> response = new HashMap<>();
+            response.put("imageUrl", imageUrl);
+            return ResponseEntity.ok(response);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 }

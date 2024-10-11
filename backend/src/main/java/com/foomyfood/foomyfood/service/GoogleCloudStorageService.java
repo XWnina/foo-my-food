@@ -22,15 +22,26 @@ public class GoogleCloudStorageService {
 
     // 上传文件到Google Cloud Storage
     public String uploadFile(MultipartFile file) throws IOException {
+//        // 生成唯一文件名
+//        String fileName = UUID.randomUUID().toString() + "-" + file.getOriginalFilename();
+//        Bucket bucket = storage.get(bucketName);
+//
+//        // 上传文件到Google Cloud Storage
+//        Blob blob = bucket.create(fileName, file.getBytes(), file.getContentType());
+//
+//        // 返回文件的URL
+//        return String.format("https://storage.googleapis.com/%s/%s", bucketName, fileName);
         // 生成唯一文件名
         String fileName = UUID.randomUUID().toString() + "-" + file.getOriginalFilename();
-        Bucket bucket = storage.get(bucketName);
-
-        // 上传文件到Google Cloud Storage
-        Blob blob = bucket.create(fileName, file.getBytes(), file.getContentType());
-
-        // 返回文件的URL
-        return String.format("https://storage.googleapis.com/%s/%s", bucketName, fileName);
+        try {
+            Bucket bucket = storage.get(bucketName);
+            Blob blob = bucket.create(fileName, file.getBytes(), file.getContentType());
+            return String.format("https://storage.googleapis.com/%s/%s", bucketName, fileName);
+        } catch (Exception e) {
+            // 打印更多错误信息到日志
+            System.err.println("Failed to upload file to Google Cloud: " + e.getMessage());
+            throw new IOException("Failed to upload file", e);
+        }
     }
 
     // 删除Google Cloud Storage中的文件
