@@ -335,7 +335,8 @@ class _UserProfileState extends State<UserProfile> {
         backgroundColor: appBarColor,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout,
+            color: Colors.white,),
             onPressed: () {
               showDialog(
                 context: context,

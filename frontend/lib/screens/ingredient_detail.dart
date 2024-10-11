@@ -156,6 +156,9 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
       );
       request.files.add(await http.MultipartFile.fromPath('file', file.path));
 
+      // 传递旧图片的 URL
+      request.fields['oldImageUrl'] = widget.ingredient.imageURL ?? '';
+
       final response = await request.send();
 
       if (response.statusCode == 200) {
@@ -201,7 +204,10 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
         backgroundColor: appBarColor,
         actions: [
           IconButton(
-            icon: Icon(_isEditing ? Icons.save : Icons.edit),
+            icon: Icon(
+              _isEditing ? Icons.save : Icons.edit,
+              color: Colors.white, // 设置为白色
+            ),
             onPressed: () {
               if (_isEditing) {
                 _saveChanges(); // 保存更新
@@ -240,9 +246,10 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                           ),
                   ),
                   child: _isEditing && _newImageUrl == null
-                      ? Center(
+                      ? const Center(
                           child: Text('Tap to change image',
-                              style: TextStyle(color: greyIconColor)))
+                              style: TextStyle(
+                                  color: Color.fromARGB(255, 18, 59, 88))))
                       : null,
                 ),
               ),
