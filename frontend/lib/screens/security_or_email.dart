@@ -10,15 +10,25 @@ class PasswordResetChoicePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 使用 MediaQuery 获取屏幕宽高
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 18, 32, 47),
+      appBar: AppBar(
+        title: const Text(
+          'Password Reset',
+          style: TextStyle(color: whiteTextColor),
+        ),
+        backgroundColor: appBarColor,
+      ),
+      backgroundColor: backgroundColor,
       body: Center(
         child: Container(
-          width: 360,
-          height: 640,
+          width: screenWidth * 0.9, // 调整为屏幕宽度的 90%
+          height: screenHeight * 0.8, // 调整为屏幕高度的 80%
           decoration: BoxDecoration(
-            color: const Color(0xFFD1E7FE),
-            border: Border.all(width: 1),
+            color: backgroundColor,
           ),
           child: Stack(
             children: [
@@ -28,10 +38,10 @@ class PasswordResetChoicePage extends StatelessWidget {
                 left: 50,
                 right: 50,
                 child: Text(
-                  'Reset Your Password',
+                  'Please select the verification method for resetting your password',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.black,
+                    color: blackTextColor,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
@@ -39,20 +49,19 @@ class PasswordResetChoicePage extends StatelessWidget {
               ),
               // Security Question Button
               Positioned(
-                left: 80,
-                top: 250,
+                left: screenWidth * 0.2, // 相对于屏幕宽度动态调整位置
+                top: screenHeight * 0.35, // 相对于屏幕高度动态调整位置
                 child: SizedBox(
-                  width: 200,
-                  height: 50,
+                  width: screenWidth * 0.5, // 根据屏幕宽度动态调整按钮宽度
+                  height: screenHeight * 0.07, // 根据屏幕高度动态调整按钮高度
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF47709B),
+                      backgroundColor: buttonBackgroundColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                     onPressed: () {
-                      // Navigate to EmailInputPage
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -65,27 +74,29 @@ class PasswordResetChoicePage extends StatelessWidget {
                       style: TextStyle(
                         color: Color(0xFFE5E5E5),
                         fontSize: 15,
+                        height: 1.5, // 调整行高使文字居中
                       ),
+                      textAlign: TextAlign.center, // 确保文字居中对齐
+                      maxLines: 2, // 确保文字最多两行显示
                     ),
                   ),
                 ),
               ),
               // Email Link Button
               Positioned(
-                left: 80,
-                top: 320,
+                left: screenWidth * 0.2,
+                top: screenHeight * 0.45,
                 child: SizedBox(
-                  width: 200,
-                  height: 50,
+                  width: screenWidth * 0.5,
+                  height: screenHeight * 0.07,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF47709B),
+                      backgroundColor: buttonBackgroundColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                     onPressed: () {
-                      // Navigate to email link verification page
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -98,27 +109,29 @@ class PasswordResetChoicePage extends StatelessWidget {
                       style: TextStyle(
                         color: Color(0xFFE5E5E5),
                         fontSize: 15,
+                        height: 1.5, // 调整行高使文字居中
                       ),
+                      textAlign: TextAlign.center, // 确保文字居中对齐
+                      maxLines: 2, // 确保文字最多两行显示
                     ),
                   ),
                 ),
               ),
               // Cancel Button
               Positioned(
-                left: 80,
-                top: 390,
+                left: screenWidth * 0.2,
+                top: screenHeight * 0.55,
                 child: SizedBox(
-                  width: 200,
-                  height: 50,
+                  width: screenWidth * 0.5,
+                  height: screenHeight * 0.07,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF47709B),
+                      backgroundColor: buttonBackgroundColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                     onPressed: () {
-                      // Navigate back to login page
                       Navigator.pop(context);
                     },
                     child: const Text(
@@ -126,7 +139,10 @@ class PasswordResetChoicePage extends StatelessWidget {
                       style: TextStyle(
                         color: Color(0xFFE5E5E5),
                         fontSize: 15,
+                        height: 1.5, // 调整行高使文字居中
                       ),
+                      textAlign: TextAlign.center, // 确保文字居中对齐
+                      maxLines: 2, // 确保文字最多两行显示
                     ),
                   ),
                 ),
