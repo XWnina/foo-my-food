@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foo_my_food_app/utils/helper_function.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+
 class AddIngredientPage extends StatefulWidget {
   @override
   _AddIngredientPageState createState() => _AddIngredientPageState();
@@ -21,17 +22,47 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
   DateTime _expirationDate = DateTime.now();
   String _ingredientName = ''; // Store ingredient name
 
-  Future<void> _pickImage() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+  Future<void> _pickImage(ImageSource source) async {
+    final pickedFile = await ImagePicker().pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
-        _image = File(pickedFile.path); // Update image file
+        _image = File(pickedFile.path); // 更新图片文件
       });
     }
   }
 
-  // Function to handle date picker for expiration date
+  // 显示选择图片来源的选项
+  void _showImageSourceActionSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.camera),
+                title: Text('Take a Photo'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.camera); // 从相机拍照
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library),
+                title: Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.gallery); // 从相册选择图片
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _selectExpirationDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -45,92 +76,78 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
       });
     }
   }
+
   void _showError(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: redErrorTextColor))));
-  }
-Future<void> _addIngredient() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  final userId = prefs.getString('userId');
-
-  if (userId == null) {
-    _showError('User ID not found');
-    return;
-  }
-
-  if (_ingredientName.isEmpty || _selectedCategory == null || _selectedStorageMethod == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please fill in all required fields')),
-    );
-    return;
+        SnackBar(content: Text(message, style: TextStyle(color: redErrorTextColor))));
   }
 
-  // Step 1: Create the ingredient using the Ingredient Controller
-  const String ingredientApiUrl = '$baseApiUrl/ingredients';
+  // 上传图片并添加食材
+  Future<void> _uploadImageAndAddIngredient() async {
+    if (_image == null) {
+      _showError('Please upload an image');
+      return;
+    }
 
-  final ingredientData = {
-    'name': _ingredientName,
-    'category': _selectedCategory,
-    'isUserCreated': true,
-    'createdBy':userId,
-    //'imageURL': _image?.path, // You might need to handle image URL appropriately
-    'storageMethod': _selectedStorageMethod,
-    'baseQuantity': _quantity,
-    // Add other required fields if necessary
-  };
+    // 上传图片到后端API
+    final String uploadImageUrl = '$baseApiUrl/ingredients/upload_image';
+    var request = http.MultipartRequest('POST', Uri.parse(uploadImageUrl));
+    request.files.add(await http.MultipartFile.fromPath('file', _image!.path));
 
-  try {
-    final ingredientResponse = await http.post(
-      Uri.parse(ingredientApiUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(ingredientData),
-    );
+    try {
+      var response = await request.send();
+      if (response.statusCode == 200) {
+        var responseData = await http.Response.fromStream(response);
+        var imageUrl = jsonDecode(responseData.body)['imageUrl'];
 
-    if (ingredientResponse.statusCode == 201) {
-      final createdIngredient = jsonDecode(ingredientResponse.body);
-      final ingredientId = createdIngredient['ingredientId']; // Extract the ID of the created ingredient
+        await _addIngredientWithImage(imageUrl);
+      } else {
+        throw Exception('Image upload failed');
+      }
+    } catch (e) {
+      _showError('Error: ${e.toString()}');
+    }
+  }
 
-      // Step 2: Add to User Ingredients using the UserIngredientController
-      const String userIngredientApiUrl = '$baseApiUrl/user_ingredients';
+  // 添加食材并包含图片URL
+  Future<void> _addIngredientWithImage(String imageUrl) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
 
-      final userIngredientData = {
-        'userId': userId,
-        'ingredientId': ingredientId,
-        'userQuantity': _quantity,
-        // Add other required fields if necessary
-      };
+    if (userId == null) {
+      _showError('User ID not found');
+      return;
+    }
 
-      final userIngredientResponse = await http.post(
-        Uri.parse(userIngredientApiUrl),
+    final ingredientData = {
+      'name': _ingredientName,
+      'category': _selectedCategory,
+      'isUserCreated': true,
+      'createdBy': userId,
+      'imageURL': imageUrl, // 上传图片后的URL
+      'storageMethod': _selectedStorageMethod,
+      'baseQuantity': _quantity,
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseApiUrl/ingredients'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(userIngredientData),
+        body: jsonEncode(ingredientData),
       );
 
-      if (userIngredientResponse.statusCode == 201) {
+      if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Ingredient added successfully!')),
         );
-        // Clear form or navigate back
-        setState(() {
-          _ingredientName = '';
-          _image = null; // Handle image if needed
-          _selectedCategory = null;
-          _selectedStorageMethod = null;
-          _quantity = 1;
-          _expirationDate = DateTime.now();
-        });
       } else {
-        throw Exception('Failed to add ingredient to user ingredients');
+        throw Exception('Failed to add ingredient');
       }
-    } else {
-      throw Exception('Failed to create ingredient');
+    } catch (e) {
+      _showError('Error: ${e.toString()}');
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: ${e.toString()}')),
-    );
   }
-}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -143,7 +160,6 @@ Future<void> _addIngredient() async {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Centered Transparent TextField for Ingredient Name
             Center(
               child: SizedBox(
                 width: 300, // Set width of the text field
@@ -183,13 +199,10 @@ Future<void> _addIngredient() async {
               ),
             ),
             SizedBox(height: 16),
-
-            // Display uploaded image or placeholder
             GestureDetector(
-              onTap: _pickImage,
+              onTap: _showImageSourceActionSheet, // 弹出选择框
               child: _image != null
-                  ? Image.file(_image!,
-                      height: 100, width: 100, fit: BoxFit.cover)
+                  ? Image.file(_image!, height: 100, width: 100, fit: BoxFit.cover)
                   : Container(
                       height: 100,
                       width: 100,
@@ -198,8 +211,6 @@ Future<void> _addIngredient() async {
                     ),
             ),
             SizedBox(height: 16),
-
-            // Dropdown for category
             DropdownButtonFormField<String>(
               value: _selectedCategory,
               items: foodCategories.map((String category) {
@@ -216,8 +227,6 @@ Future<void> _addIngredient() async {
               decoration: InputDecoration(labelText: 'Category'),
             ),
             SizedBox(height: 16),
-
-            // Dropdown for storage method
             DropdownButtonFormField<String>(
               value: _selectedStorageMethod,
               items: storageMethods.map((String method) {
@@ -234,16 +243,13 @@ Future<void> _addIngredient() async {
               decoration: InputDecoration(labelText: 'Storage method'),
             ),
             SizedBox(height: 16),
-
-            // Quantity input
             Row(
               children: [
                 Text('Quantity:'),
                 SizedBox(width: 8),
                 DropdownButton<int>(
                   value: _quantity,
-                  items:
-                      List.generate(10, (index) => index + 1).map((int value) {
+                  items: List.generate(10, (index) => index + 1).map((int value) {
                     return DropdownMenuItem<int>(
                       value: value,
                       child: Text(value.toString()),
@@ -258,26 +264,21 @@ Future<void> _addIngredient() async {
               ],
             ),
             SizedBox(height: 16),
-
-            // Expiration date picker
             GestureDetector(
               onTap: () => _selectExpirationDate(context),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Expiration time: ${_expirationDate.toLocal()}'
-                        .split(' ')[0],
+                    'Expiration time: ${_expirationDate.toLocal()}'.split(' ')[0],
                   ),
                   Icon(Icons.calendar_today),
                 ],
               ),
             ),
             SizedBox(height: 16),
-
-            // Add button
             ElevatedButton(
-               onPressed: _addIngredient,
+               onPressed: _uploadImageAndAddIngredient,
               child: Text('Add'),
             ),
           ],
