@@ -23,6 +23,7 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
   String? _selectedCategory;
   String? _selectedStorageMethod;
   int _quantity = 1;
+  bool _isQuantityValid = true; // 用于跟踪数量输入是否有效
   DateTime _expirationDate = DateTime.now();
   String _ingredientId = '';
   String _ingredientName = '';
@@ -34,22 +35,21 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
   double _fiber = 0; // Fiber
 
   Future<void> _pickImage() async {
-  final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-  if (pickedFile != null) {
-    File imageFile = File(pickedFile.path);
-    int imageSize = imageFile.lengthSync();
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      File imageFile = File(pickedFile.path);
+      int imageSize = imageFile.lengthSync();
 
-    if (imageSize > 1048576) {
-      // 如果图片大小超过1MB，显示错误提示
-      _showError('Image size exceeds 1MB. Please select a smaller image.');
-    } else {
-      setState(() {
-        _image = imageFile; // 图片符合大小要求，更新 image 文件
-      });
+      if (imageSize > 1048576) {
+        // 如果图片大小超过1MB，显示错误提示
+        _showError('Image size exceeds 1MB. Please select a smaller image.');
+      } else {
+        setState(() {
+          _image = imageFile; // 图片符合大小要求，更新 image 文件
+        });
+      }
     }
   }
-}
-
 
   Future<void> _selectExpirationDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -66,138 +66,143 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message, style: const TextStyle(color: redErrorTextColor))));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(color: redErrorTextColor)),
+      ),
+    );
   }
 
   Future<void> _addIngredient() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  final userId = prefs.getString('userId');
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
 
-  if (userId == null) {
-    _showError('User ID not found');
-    return;
-  }
-
-  if (_ingredientName.isEmpty || _selectedCategory == null || _selectedStorageMethod == null || _unit.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please fill in all required fields')),
-    );
-    return;
-  }
-
-  try {
-    // 1. 上传图片并获取图片URL
-    String? imageUrl;
-    if (_image != null) {
-      var request = http.MultipartRequest('POST', Uri.parse('$baseApiUrl/ingredients/upload_image'));
-      request.files.add(await http.MultipartFile.fromPath('file', _image!.path));
-      var response = await request.send();
-
-      if (response.statusCode == 200) {
-        var responseBody = await http.Response.fromStream(response);
-        var jsonResponse = jsonDecode(responseBody.body);
-        imageUrl = jsonResponse['imageUrl'];
-      } else {
-        throw Exception('Failed to upload image');
-      }
+    if (userId == null) {
+      _showError('User ID not found');
+      return;
     }
 
-    // 2. 创建 Ingredient 并传递 imageURL
-    const String ingredientApiUrl = '$baseApiUrl/ingredients';
+    if (_ingredientName.isEmpty || _selectedCategory == null || _selectedStorageMethod == null || _unit.isEmpty || !_isQuantityValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all required fields')),
+      );
+      return;
+    }
 
-    final ingredientData = {
-      'name': _ingredientName,
-      'category': _selectedCategory,
-      'imageURL': imageUrl, // 使用上传后的图片 URL
-      'storageMethod': _selectedStorageMethod,
-      'baseQuantity': _quantity,
-      'unit': _unit,
-      'expirationDate': DateFormat('yyyy-MM-dd').format(_expirationDate),
-      'isUserCreated': true,
-      'createdBy': userId,
-      'calories': _calories,
-      'protein': _protein,
-      'fat': _fat,
-      'carbohydrates': _carbohydrates,
-      'fiber': _fiber,
-    };
+    try {
+      // 1. 上传图片并获取图片URL
+      String? imageUrl;
+      if (_image != null) {
+        var request = http.MultipartRequest('POST', Uri.parse('$baseApiUrl/ingredients/upload_image'));
+        request.files.add(await http.MultipartFile.fromPath('file', _image!.path));
+        var response = await request.send();
 
-    final ingredientResponse = await http.post(
-      Uri.parse(ingredientApiUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(ingredientData),
-    );
+        if (response.statusCode == 200) {
+          var responseBody = await http.Response.fromStream(response);
+          var jsonResponse = jsonDecode(responseBody.body);
+          imageUrl = jsonResponse['imageUrl'];
+        } else {
+          throw Exception('Failed to upload image');
+        }
+      }
 
-    if (ingredientResponse.statusCode == 201) {
-      // 3. Ingredient 成功创建后，获取 ingredientId
-      final createdIngredient = jsonDecode(ingredientResponse.body);
-      final ingredientId = createdIngredient['ingredientId'];
+      // 2. 创建 Ingredient 并传递 imageURL
+      const String ingredientApiUrl = '$baseApiUrl/ingredients';
 
-      // 4. 创建 UserIngredient
-      const String userIngredientApiUrl = '$baseApiUrl/user_ingredients';
-
-      final userIngredientData = {
-        'userId': userId,
-        'ingredientId': ingredientId,
-        'userQuantity': _quantity,
+      final ingredientData = {
+        'name': _ingredientName,
+        'category': _selectedCategory,
+        'imageURL': imageUrl, // 使用上传后的图片 URL
+        'storageMethod': _selectedStorageMethod,
+        'baseQuantity': _quantity,
+        'unit': _unit,
+        'expirationDate': DateFormat('yyyy-MM-dd').format(_expirationDate),
+        'isUserCreated': true,
+        'createdBy': userId,
+        'calories': _calories,
+        'protein': _protein,
+        'fat': _fat,
+        'carbohydrates': _carbohydrates,
+        'fiber': _fiber,
       };
 
-      final userIngredientResponse = await http.post(
-        Uri.parse(userIngredientApiUrl),
+      final ingredientResponse = await http.post(
+        Uri.parse(ingredientApiUrl),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(userIngredientData),
+        body: jsonEncode(ingredientData),
       );
 
-      if (userIngredientResponse.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ingredient added successfully!')),
+      if (ingredientResponse.statusCode == 201) {
+        // 3. Ingredient 成功创建后，获取 ingredientId
+        final createdIngredient = jsonDecode(ingredientResponse.body);
+        final ingredientId = createdIngredient['ingredientId'];
+
+        // 4. 创建 UserIngredient
+        const String userIngredientApiUrl = '$baseApiUrl/user_ingredients';
+
+        final userIngredientData = {
+          'userId': userId,
+          'ingredientId': ingredientId,
+          'userQuantity': _quantity,
+        };
+
+        final userIngredientResponse = await http.post(
+          Uri.parse(userIngredientApiUrl),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(userIngredientData),
         );
-        // 重置表单
-        setState(() {
-          _ingredientName = '';
-          _image = null;
-          _selectedCategory = null;
-          _selectedStorageMethod = null;
-          _quantity = 1;
-          _expirationDate = DateTime.now();
-          _unit = '';
-          _calories = 0;
-          _protein = 0;
-          _fat = 0;
-          _carbohydrates = 0;
-          _fiber = 0;
-        });
-        Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const MyHomePage(title: 'Home Page'),
-        ),
-      );
-      } else {
-        throw Exception('Failed to add ingredient to user ingredients');
-      }
-    } else {
-      throw Exception('Failed to create ingredient');
-    }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: ${e.toString()}')),
-    );
-  }
-}
 
+        if (userIngredientResponse.statusCode == 201) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Ingredient added successfully!')),
+          );
+          // 重置表单
+          setState(() {
+            _ingredientName = '';
+            _image = null;
+            _selectedCategory = null;
+            _selectedStorageMethod = null;
+            _quantity = 1;
+            _expirationDate = DateTime.now();
+            _unit = '';
+            _calories = 0;
+            _protein = 0;
+            _fat = 0;
+            _carbohydrates = 0;
+            _fiber = 0;
+          });
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const MyHomePage(title: 'Home Page'),
+            ),
+          );
+        } else {
+          throw Exception('Failed to add ingredient to user ingredients');
+        }
+      } else {
+        throw Exception('Failed to create ingredient');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text('Add food',
-        style: TextStyle(color: Colors.white),),
-
+        title: const Text(
+          'Add food',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: appBarColor,
       ),
-      body: SingleChildScrollView( // Added for scrolling
+      body: SingleChildScrollView(
+        // Added for scrolling
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -218,7 +223,12 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
                 onTap: _pickImage,
                 child: _image != null
                     ? Image.file(_image!, height: 100, width: 100, fit: BoxFit.cover)
-                    : Container(height: 100, width: 100, color: Colors.grey[300], child: const Icon(Icons.camera_alt)),
+                    : Container(
+                        height: 100,
+                        width: 100,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.camera_alt),
+                      ),
               ),
               const SizedBox(height: 16),
 
@@ -226,7 +236,10 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
               DropdownButtonFormField<String>(
                 value: _selectedCategory,
                 items: foodCategories.map((String category) {
-                  return DropdownMenuItem<String>(value: category, child: Text(category));
+                  return DropdownMenuItem<String>(
+                    value: category,
+                    child: Text(category),
+                  );
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
@@ -241,7 +254,10 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
               DropdownButtonFormField<String>(
                 value: _selectedStorageMethod,
                 items: storageMethods.map((String method) {
-                  return DropdownMenuItem<String>(value: method, child: Text(method));
+                  return DropdownMenuItem<String>(
+                    value: method,
+                    child: Text(method),
+                  );
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
@@ -252,17 +268,22 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
               ),
               const SizedBox(height: 16),
 
-              // Quantity Input (Only Manual Input)
+              // Quantity Input
               TextField(
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(hintText: 'Quantity'),
+                decoration: InputDecoration(
+                  hintText: 'Quantity',
+                  errorText: _isQuantityValid ? null : 'Please enter a valid number',
+                ),
                 onChanged: (value) {
                   setState(() {
-                    _quantity = int.tryParse(value) ?? 1; // Default to 1 if parsing fails
+                    _quantity = int.tryParse(value) ?? 0; // 默认值为0
+                    _isQuantityValid = _quantity > 0; // 确保数量为正数
                   });
                 },
               ),
               const SizedBox(height: 16),
+
               // Unit Input
               TextField(
                 decoration: const InputDecoration(hintText: 'Unit (e.g., grams, liters)'),
@@ -273,13 +294,14 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
                 },
               ),
               const SizedBox(height: 16),
+
               // Expiration Date Picker
               GestureDetector(
                 onTap: () => _selectExpirationDate(context),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Expiration date: ${_expirationDate.toLocal().toString().split(' ')[0]}'), // Display formatted date
+                    Text('Expiration date: ${_expirationDate.toLocal().toString().split(' ')[0]}'),
                     const Icon(Icons.calendar_today),
                   ],
                 ),

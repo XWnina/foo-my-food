@@ -71,16 +71,22 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
   }
 
   Future<void> _saveChanges() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+  if (_nameController.text.trim().isEmpty) {
+    _showError('Name cannot be empty');
+    return;
+  }
 
-    if (userId == null) {
-      _showError('User ID not found');
-      return;
-    }
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  final userId = prefs.getString('userId');
 
-    final apiUrl = '$baseApiUrl/ingredients/${widget.ingredient.ingredientId}';
+  if (userId == null) {
+    _showError('User ID not found');
+    return;
+  }
 
+  final apiUrl = '$baseApiUrl/ingredients/${widget.ingredient.ingredientId}';
+
+  try {
     // 提交更新的数据
     final updateResponse = await http.put(
       Uri.parse(apiUrl),
@@ -91,7 +97,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
         'userId': userId,
         'ingredientId': widget.ingredient.ingredientId,
         'userQuantity': int.parse(_quantityController.text),
-        'name': _nameController.text,
+        'name': _nameController.text.trim(),
         'expirationDate': _expirationDateController.text,
         'calories': double.parse(_caloriesController.text),
         'protein': double.parse(_proteinController.text),
@@ -99,8 +105,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
         'carbohydrates': double.parse(_carbohydratesController.text),
         'fiber': double.parse(_fiberController.text),
         'unit': _unitController.text,
-        'imageURL':
-            _newImageUrl ?? widget.ingredient.imageURL, // 如果有新图片则使用新 URL
+        'imageURL': _newImageUrl ?? widget.ingredient.imageURL, // 使用新图片 URL
       }),
     );
 
@@ -109,7 +114,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
       Provider.of<IngredientProvider>(context, listen: false).updateIngredient(
         widget.index,
         Ingredient(
-          name: _nameController.text,
+          name: _nameController.text.trim(),
           expirationDate: _expirationDateController.text,
           baseQuantity: int.parse(_quantityController.text),
           calories: double.parse(_caloriesController.text),
@@ -129,7 +134,11 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
     } else {
       _showError('Update failed');
     }
+  } catch (e) {
+    _showError('Error occurred while updating the ingredient');
   }
+}
+
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();

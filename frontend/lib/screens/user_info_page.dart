@@ -173,7 +173,7 @@ class _UserProfileState extends State<UserProfile> {
   // 检查所有表单是否有效
   void _checkIfFormIsValid() {
     // 如果头像已更改，或者表单字段无错误且非空，启用保存按钮
-    if ((_image != null || _avatarUrl != null) && // 检查头像是否已更改或存在
+    if ((_image != null || _avatarUrl != null)|| // 检查头像是否已更改或存在
         _usernameError == null &&
         _emailError == null &&
         _phoneError == null &&
