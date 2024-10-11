@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/screens/homepage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:foo_my_food_app/datasource/temp_db.dart'; // For food categories and storage methods
@@ -11,6 +12,8 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 class AddIngredientPage extends StatefulWidget {
+  const AddIngredientPage({super.key});
+
   @override
   _AddIngredientPageState createState() => _AddIngredientPageState();
 }
@@ -31,13 +34,22 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
   double _fiber = 0; // Fiber
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+  final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+  if (pickedFile != null) {
+    File imageFile = File(pickedFile.path);
+    int imageSize = imageFile.lengthSync();
+
+    if (imageSize > 1048576) {
+      // 如果图片大小超过1MB，显示错误提示
+      _showError('Image size exceeds 1MB. Please select a smaller image.');
+    } else {
       setState(() {
-        _image = File(pickedFile.path); // Update image file
+        _image = imageFile; // 图片符合大小要求，更新 image 文件
       });
     }
   }
+}
+
 
   Future<void> _selectExpirationDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -54,36 +66,52 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message, style: TextStyle(color: redErrorTextColor))));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message, style: const TextStyle(color: redErrorTextColor))));
   }
 
   Future<void> _addIngredient() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  final userId = prefs.getString('userId');
 
-    if (userId == null) {
-      _showError('User ID not found');
-      return;
+  if (userId == null) {
+    _showError('User ID not found');
+    return;
+  }
+
+  if (_ingredientName.isEmpty || _selectedCategory == null || _selectedStorageMethod == null || _unit.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please fill in all required fields')),
+    );
+    return;
+  }
+
+  try {
+    // 1. 上传图片并获取图片URL
+    String? imageUrl;
+    if (_image != null) {
+      var request = http.MultipartRequest('POST', Uri.parse('$baseApiUrl/ingredients/upload_image'));
+      request.files.add(await http.MultipartFile.fromPath('file', _image!.path));
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        var responseBody = await http.Response.fromStream(response);
+        var jsonResponse = jsonDecode(responseBody.body);
+        imageUrl = jsonResponse['imageUrl'];
+      } else {
+        throw Exception('Failed to upload image');
+      }
     }
 
-    if (_ingredientName.isEmpty || _selectedCategory == null || _selectedStorageMethod == null || _unit.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all required fields')),
-      );
-      return;
-    }
-
+    // 2. 创建 Ingredient 并传递 imageURL
     const String ingredientApiUrl = '$baseApiUrl/ingredients';
 
     final ingredientData = {
-      'id': _ingredientId,
       'name': _ingredientName,
       'category': _selectedCategory,
-      'imageURL': _image?.path,
+      'imageURL': imageUrl, // 使用上传后的图片 URL
       'storageMethod': _selectedStorageMethod,
       'baseQuantity': _quantity,
       'unit': _unit,
-      //'expirationDate': _expirationDate.toIso8601String(),
       'expirationDate': DateFormat('yyyy-MM-dd').format(_expirationDate),
       'isUserCreated': true,
       'createdBy': userId,
@@ -94,70 +122,79 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
       'fiber': _fiber,
     };
 
-    try {
-      final ingredientResponse = await http.post(
-        Uri.parse(ingredientApiUrl),
+    final ingredientResponse = await http.post(
+      Uri.parse(ingredientApiUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(ingredientData),
+    );
+
+    if (ingredientResponse.statusCode == 201) {
+      // 3. Ingredient 成功创建后，获取 ingredientId
+      final createdIngredient = jsonDecode(ingredientResponse.body);
+      final ingredientId = createdIngredient['ingredientId'];
+
+      // 4. 创建 UserIngredient
+      const String userIngredientApiUrl = '$baseApiUrl/user_ingredients';
+
+      final userIngredientData = {
+        'userId': userId,
+        'ingredientId': ingredientId,
+        'userQuantity': _quantity,
+      };
+
+      final userIngredientResponse = await http.post(
+        Uri.parse(userIngredientApiUrl),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(ingredientData),
+        body: jsonEncode(userIngredientData),
       );
 
-      if (ingredientResponse.statusCode == 201) {
-        final createdIngredient = jsonDecode(ingredientResponse.body);
-        final ingredientId = createdIngredient['ingredientId'];
-
-        const String userIngredientApiUrl = '$baseApiUrl/user_ingredients';
-
-        final userIngredientData = {
-          'userId': userId,
-          'ingredientId': ingredientId,
-          'userQuantity': _quantity,
-        };
-
-        final userIngredientResponse = await http.post(
-          Uri.parse(userIngredientApiUrl),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(userIngredientData),
+      if (userIngredientResponse.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ingredient added successfully!')),
         );
-
-        if (userIngredientResponse.statusCode == 201) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ingredient added successfully!')),
-          );
-          // Clear form or navigate back
-          setState(() {
-            _ingredientId ='';
-            _ingredientName = '';
-            _image = null;
-            _selectedCategory = null;
-            _selectedStorageMethod = null;
-            _quantity = 1;
-            _expirationDate = DateTime.now();
-            _unit = '';
-            _calories = 0;
-            _protein = 0;
-            _fat = 0;
-            _carbohydrates = 0;
-            _fiber = 0;
-          });
-        } else {
-          throw Exception('Failed to add ingredient to user ingredients');
-        }
-      } else {
-        throw Exception('Failed to create ingredient');
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        // 重置表单
+        setState(() {
+          _ingredientName = '';
+          _image = null;
+          _selectedCategory = null;
+          _selectedStorageMethod = null;
+          _quantity = 1;
+          _expirationDate = DateTime.now();
+          _unit = '';
+          _calories = 0;
+          _protein = 0;
+          _fat = 0;
+          _carbohydrates = 0;
+          _fiber = 0;
+        });
+        Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const MyHomePage(title: 'Home Page'),
+        ),
       );
+      } else {
+        throw Exception('Failed to add ingredient to user ingredients');
+      }
+    } else {
+      throw Exception('Failed to create ingredient');
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: ${e.toString()}')),
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Text('Add food'),
+        title: const Text('Add food',
+        style: TextStyle(color: Colors.white),),
+
         backgroundColor: appBarColor,
       ),
       body: SingleChildScrollView( // Added for scrolling
@@ -167,23 +204,23 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
             children: [
               // Ingredient Name
               TextField(
-                decoration: InputDecoration(hintText: 'Enter Ingredient Name'),
+                decoration: const InputDecoration(hintText: 'Enter Ingredient Name'),
                 onChanged: (value) {
                   setState(() {
                     _ingredientName = value;
                   });
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // Image Picker
               GestureDetector(
                 onTap: _pickImage,
                 child: _image != null
                     ? Image.file(_image!, height: 100, width: 100, fit: BoxFit.cover)
-                    : Container(height: 100, width: 100, color: Colors.grey[300], child: Icon(Icons.camera_alt)),
+                    : Container(height: 100, width: 100, color: Colors.grey[300], child: const Icon(Icons.camera_alt)),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // Category Dropdown
               DropdownButtonFormField<String>(
@@ -196,9 +233,9 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
                     _selectedCategory = value;
                   });
                 },
-                decoration: InputDecoration(labelText: 'Category'),
+                decoration: const InputDecoration(labelText: 'Category'),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // Storage Method Dropdown
               DropdownButtonFormField<String>(
@@ -211,31 +248,31 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
                     _selectedStorageMethod = value;
                   });
                 },
-                decoration: InputDecoration(labelText: 'Storage method'),
+                decoration: const InputDecoration(labelText: 'Storage method'),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // Quantity Input (Only Manual Input)
               TextField(
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(hintText: 'Quantity'),
+                decoration: const InputDecoration(hintText: 'Quantity'),
                 onChanged: (value) {
                   setState(() {
                     _quantity = int.tryParse(value) ?? 1; // Default to 1 if parsing fails
                   });
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               // Unit Input
               TextField(
-                decoration: InputDecoration(hintText: 'Unit (e.g., grams, liters)'),
+                decoration: const InputDecoration(hintText: 'Unit (e.g., grams, liters)'),
                 onChanged: (value) {
                   setState(() {
                     _unit = value;
                   });
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               // Expiration Date Picker
               GestureDetector(
                 onTap: () => _selectExpirationDate(context),
@@ -243,15 +280,15 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Expiration date: ${_expirationDate.toLocal().toString().split(' ')[0]}'), // Display formatted date
-                    Icon(Icons.calendar_today),
+                    const Icon(Icons.calendar_today),
                   ],
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // Nutritional Information Inputs
               TextField(
-                decoration: InputDecoration(hintText: 'Calories'),
+                decoration: const InputDecoration(hintText: 'Calories'),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
                   setState(() {
@@ -259,9 +296,9 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
                   });
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextField(
-                decoration: InputDecoration(hintText: 'Protein (g)'),
+                decoration: const InputDecoration(hintText: 'Protein (g)'),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
                   setState(() {
@@ -269,9 +306,9 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
                   });
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextField(
-                decoration: InputDecoration(hintText: 'Fat (g)'),
+                decoration: const InputDecoration(hintText: 'Fat (g)'),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
                   setState(() {
@@ -279,9 +316,9 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
                   });
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextField(
-                decoration: InputDecoration(hintText: 'Carbohydrates (g)'),
+                decoration: const InputDecoration(hintText: 'Carbohydrates (g)'),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
                   setState(() {
@@ -289,9 +326,9 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
                   });
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextField(
-                decoration: InputDecoration(hintText: 'Fiber (g)'),
+                decoration: const InputDecoration(hintText: 'Fiber (g)'),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
                   setState(() {
@@ -299,12 +336,12 @@ class _AddIngredientPageState extends State<AddIngredientPage> {
                   });
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // Add Button
               ElevatedButton(
                 onPressed: _addIngredient,
-                child: Text('Add'),
+                child: const Text('Add'),
               ),
             ],
           ),

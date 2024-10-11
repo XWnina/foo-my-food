@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-class Ingredient with ChangeNotifier{
+class Ingredient with ChangeNotifier {
   int ingredientId; // 确保这个字段在 JSON 中是可用的
   String name;
-   String imageURL;
-   String expirationDate;
-   int baseQuantity;
-   String unit;
-   double calories;
-   double protein;
-   double fat;
-   double carbohydrates;
-   double fiber;
+  String imageURL;
+  String expirationDate;
+  int baseQuantity;
+  String unit;
+  double calories;
+  double protein;
+  double fat;
+  double carbohydrates;
+  double fiber;
 
   Ingredient({
     required this.ingredientId,
@@ -63,6 +63,7 @@ class Ingredient with ChangeNotifier{
       'fiber': fiber,
     };
   }
+
   void update(Ingredient newIngredient) {
     name = newIngredient.name;
     expirationDate = newIngredient.expirationDate;
@@ -72,6 +73,7 @@ class Ingredient with ChangeNotifier{
     fat = newIngredient.fat;
     carbohydrates = newIngredient.carbohydrates;
     fiber = newIngredient.fiber;
+    imageURL = newIngredient.imageURL;
     notifyListeners(); // Notify listeners about the change
   }
 }

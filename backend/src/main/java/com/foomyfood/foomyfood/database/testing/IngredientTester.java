@@ -1,13 +1,13 @@
 package com.foomyfood.foomyfood.database.testing;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
-import com.foomyfood.foomyfood.database.Ingredient;
-import com.foomyfood.foomyfood.database.db_service.IngredientService;
-
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+
+import com.foomyfood.foomyfood.database.Ingredient;
+import com.foomyfood.foomyfood.database.db_service.IngredientService;
 
 // @Component
 public class IngredientTester implements CommandLineRunner {

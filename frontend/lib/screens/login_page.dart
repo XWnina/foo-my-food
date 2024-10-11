@@ -57,7 +57,7 @@ class LoginPageState extends State<LoginPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const MyHomePage(title: 'Home Page'),
+            builder: (context) => const MyHomePage(title: 'My Food'),
           ),
         );
       } else if (response.statusCode == 403) {

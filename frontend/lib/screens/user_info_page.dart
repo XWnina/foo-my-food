@@ -42,8 +42,8 @@ class _UserProfileState extends State<UserProfile> {
     final userId = prefs.getString('userId');
 
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('User ID not found. Please log in again.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('User ID not found. Please log in again.')));
       return;
     }
 
@@ -73,18 +73,32 @@ class _UserProfileState extends State<UserProfile> {
       }
     } catch (e) {
       print('Error: $e');
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to load user data')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load user data')));
     }
   }
 
   // 选择图片（相机或图库）
+  // 选择图片（相机或图库）
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await ImagePicker().pickImage(source: source);
     if (pickedFile != null) {
+      final imageFile = File(pickedFile.path);
+
+      // 获取图片大小，单位为字节，限制为1MB
+      final int imageSize = imageFile.lengthSync();
+      if (imageSize > 1048576) {
+        _showError(
+            'The selected image exceeds 1MB. Please choose a smaller image.');
+        return;
+      }
+
       setState(() {
-        _image = File(pickedFile.path);
+        _image = imageFile;
       });
+
+      // 每次选择图片后，检查表单是否有效
+      _checkIfFormIsValid();
     }
   }
 
@@ -98,16 +112,16 @@ class _UserProfileState extends State<UserProfile> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               ListTile(
-                leading: Icon(Icons.camera),
-                title: Text('Take a photo'),
+                leading: const Icon(Icons.camera),
+                title: const Text('Take a photo'),
                 onTap: () {
                   Navigator.of(context).pop();
                   _pickImage(ImageSource.camera); // 使用相机拍照
                 },
               ),
               ListTile(
-                leading: Icon(Icons.photo_library),
-                title: Text('Choose from gallery'),
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from gallery'),
                 onTap: () {
                   Navigator.of(context).pop();
                   _pickImage(ImageSource.gallery); // 从图库选择
@@ -158,15 +172,21 @@ class _UserProfileState extends State<UserProfile> {
 
   // 检查所有表单是否有效
   void _checkIfFormIsValid() {
-    if (_usernameError == null &&
+    // 如果头像已更改，或者表单字段无错误且非空，启用保存按钮
+    if ((_image != null || _avatarUrl != null) && // 检查头像是否已更改或存在
+        _usernameError == null &&
         _emailError == null &&
         _phoneError == null &&
         _usernameController.text.isNotEmpty &&
         _emailController.text.isNotEmpty &&
         _phoneController.text.isNotEmpty) {
-      _isSaveButtonEnabled = true;
+      setState(() {
+        _isSaveButtonEnabled = true;
+      });
     } else {
-      _isSaveButtonEnabled = false;
+      setState(() {
+        _isSaveButtonEnabled = false;
+      });
     }
   }
 
@@ -216,7 +236,8 @@ class _UserProfileState extends State<UserProfile> {
     request.fields['phoneNumber'] = _phoneController.text;
 
     if (_image != null) {
-      request.files.add(await http.MultipartFile.fromPath('avatar', _image!.path));
+      request.files
+          .add(await http.MultipartFile.fromPath('avatar', _image!.path));
     }
 
     try {
@@ -224,7 +245,7 @@ class _UserProfileState extends State<UserProfile> {
 
       if (updateResponse.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Profile updated successfully")));
+            const SnackBar(content: Text("Profile updated successfully")));
       } else if (updateResponse.statusCode == 409) {
         // 处理冲突：读取服务器返回的错误信息
         final responseBody = await updateResponse.stream.bytesToString();
@@ -252,68 +273,86 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   Future<void> _logout() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  final userId = prefs.getString('userId');
 
-    if (userId == null) {
-      _showError('User ID not found');
-      return;
-    }
+  if (userId == null) {
+    _showError('User ID not found');
+    return;
+  }
 
-    final url = '$baseApiUrl/logout';
+  const url = '$baseApiUrl/logout';
 
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'userId': userId}),
+  try {
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'userId': userId}),
+    );
+
+    if (response.statusCode == 200) {
+      await prefs.clear();
+
+      // 在显示登出成功信息后再导航到登录页面
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Logout successful'),
+          duration: Duration(seconds: 1),
+        ),
       );
 
-      if (response.statusCode == 200) {
-        await prefs.clear();
+      // 等待2秒后再导航
+      Future.delayed(const Duration(seconds: 1), () {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
+          MaterialPageRoute(builder: (context) => const LoginPage()),
           (route) => false,
         );
-      } else {
-        _showError('Logout failed: ${response.body}');
-      }
-    } catch (e) {
-      _showError('An error occurred: $e');
+      });
+    } else {
+      _showError('Logout failed: ${response.body}');
     }
+  } catch (e) {
+    _showError('An error occurred: $e');
   }
+}
+
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(message, style: TextStyle(color: redErrorTextColor))));
+        content:
+            Text(message, style: const TextStyle(color: redErrorTextColor))));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("User Profile"),
+        title: const Text(
+          "User Profile",
+          style: TextStyle(color: Colors.white), // 将文字颜色设置为白色
+        ),
         backgroundColor: appBarColor,
         actions: [
           IconButton(
-            icon: Icon(Icons.logout),
+            icon: const Icon(Icons.logout,
+            color: Colors.white,),
             onPressed: () {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
-                    title: Text("Logout"),
-                    content: Text("Are you sure you want to logout?"),
+                    title: const Text("Logout"),
+                    content: const Text("Are you sure you want to logout?"),
                     actions: [
                       TextButton(
-                        child: Text("Cancel"),
+                        child: const Text("Cancel"),
                         onPressed: () {
                           Navigator.of(context).pop();
                         },
                       ),
                       TextButton(
-                        child: Text("Logout"),
+                        child: const Text("Logout"),
                         onPressed: () {
                           Navigator.of(context).pop();
                           _logout();
@@ -347,11 +386,11 @@ class _UserProfileState extends State<UserProfile> {
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // First Name Input Field
             TextField(
               controller: _firstNameController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'First Name',
                 filled: true,
                 fillColor: whiteFillColor,
@@ -363,11 +402,11 @@ class _UserProfileState extends State<UserProfile> {
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // Last Name Input Field
             TextField(
               controller: _lastNameController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Last Name',
                 filled: true,
                 fillColor: whiteFillColor,
@@ -379,7 +418,7 @@ class _UserProfileState extends State<UserProfile> {
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // Username Input Field
             TextField(
               controller: _usernameController,
@@ -390,14 +429,20 @@ class _UserProfileState extends State<UserProfile> {
                 filled: true,
                 fillColor: whiteFillColor,
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: _usernameError == null ? greyBorderColor : Colors.red),
+                  borderSide: BorderSide(
+                      color: _usernameError == null
+                          ? greyBorderColor
+                          : Colors.red),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: _usernameError == null ? blueBorderColor : Colors.red),
+                  borderSide: BorderSide(
+                      color: _usernameError == null
+                          ? blueBorderColor
+                          : Colors.red),
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // Email Input Field
             TextField(
               controller: _emailController,
@@ -408,14 +453,18 @@ class _UserProfileState extends State<UserProfile> {
                 filled: true,
                 fillColor: whiteFillColor,
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: _emailError == null ? greyBorderColor : Colors.red),
+                  borderSide: BorderSide(
+                      color:
+                          _emailError == null ? greyBorderColor : Colors.red),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: _emailError == null ? blueBorderColor : Colors.red),
+                  borderSide: BorderSide(
+                      color:
+                          _emailError == null ? blueBorderColor : Colors.red),
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // Phone Number Input Field
             TextField(
               controller: _phoneController,
@@ -426,40 +475,46 @@ class _UserProfileState extends State<UserProfile> {
                 filled: true,
                 fillColor: whiteFillColor,
                 enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: _phoneError == null ? greyBorderColor : Colors.red),
+                  borderSide: BorderSide(
+                      color:
+                          _phoneError == null ? greyBorderColor : Colors.red),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: _phoneError == null ? blueBorderColor : Colors.red),
+                  borderSide: BorderSide(
+                      color:
+                          _phoneError == null ? blueBorderColor : Colors.red),
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _isSaveButtonEnabled ? _saveProfile : null, // 按钮是否可点击
               style: ElevatedButton.styleFrom(
-                backgroundColor: _isSaveButtonEnabled ? buttonBackgroundColor : Colors.grey, // 动态设置颜色
+                backgroundColor: _isSaveButtonEnabled
+                    ? buttonBackgroundColor
+                    : Colors.grey, // 动态设置颜色
                 foregroundColor: whiteTextColor,
               ),
-              child: Text("Save"),
+              child: const Text("Save"),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
                     return AlertDialog(
-                      title: Text("Logout"),
-                      content: Text("Are you sure you want to logout?"),
+                      title: const Text("Logout"),
+                      content: const Text("Are you sure you want to logout?"),
                       actions: [
                         TextButton(
-                          child: Text("Cancel"),
+                          child: const Text("Cancel"),
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
                         ),
                         TextButton(
-                          child: Text("Logout"),
+                          child: const Text("Logout"),
                           onPressed: () {
                             Navigator.of(context).pop();
                             _logout();
@@ -474,7 +529,7 @@ class _UserProfileState extends State<UserProfile> {
                 backgroundColor: Colors.red,
                 foregroundColor: whiteTextColor,
               ),
-              child: Text("Logout"),
+              child: const Text("Logout"),
             ),
           ],
         ),

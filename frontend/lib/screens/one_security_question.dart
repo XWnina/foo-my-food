@@ -45,7 +45,8 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
       if (response.statusCode == 200) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => SetPasswordPage(email: widget.email)),
+          MaterialPageRoute(
+              builder: (context) => SetPasswordPage(email: widget.email)),
         );
       } else {
         _showSnackBar('Incorrect answer. Please try again.');
@@ -117,6 +118,8 @@ class _SecurityQuestionPageState extends State<SecurityQuestionPage> {
                         decoration: const InputDecoration(
                           labelText: 'Your Answer',
                           border: OutlineInputBorder(),
+                          filled: true, // 启用填充颜色
+                          fillColor: Colors.white,
                         ),
                       ),
                       const SizedBox(height: 20),

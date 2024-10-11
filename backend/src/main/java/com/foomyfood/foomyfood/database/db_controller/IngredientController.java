@@ -109,14 +109,25 @@ public class IngredientController {
 
     // 上传图片到Google Cloud Storage
     @PostMapping("/upload_image")
-    public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, String>> uploadImage(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "oldImageUrl", required = false) String oldImageUrl) {
         try {
+            // 1. 如果有旧图片，则删除旧图片
+            if (oldImageUrl != null && !oldImageUrl.isEmpty()) {
+                googleCloudStorageService.deleteFile(oldImageUrl);
+            }
+
+            // 2. 上传新图片
             String imageUrl = googleCloudStorageService.uploadFile(file);
+
             Map<String, String> response = new HashMap<>();
             response.put("imageUrl", imageUrl);
             return ResponseEntity.ok(response);
+
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
 }
