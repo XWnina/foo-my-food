@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'screens/login_page.dart';
-
+import 'screens/login_page.dart';
+import 'package:provider/provider.dart';
+import 'providers/ingredient_provider.dart';
 void main() {
-  runApp(const MyApp());
+   runApp(
+    ChangeNotifierProvider(
+      create: (context) => IngredientProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

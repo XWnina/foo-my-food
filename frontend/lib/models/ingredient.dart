@@ -1,29 +1,25 @@
-class Ingredient {
-  final String name;
-  final String category;
-  final String imageURL;
-  final String storageMethod;
-  final int baseQuantity;
-  final String unit;
-  final String expirationDate;
-  final bool isUserCreated;
-  final int createdBy;
-  final int calories;
-  final double protein;
-  final double fat;
-  final double carbohydrates;
-  final double fiber;
+import 'package:flutter/material.dart';
+
+class Ingredient with ChangeNotifier{
+  int ingredientId; // 确保这个字段在 JSON 中是可用的
+  String name;
+   String imageURL;
+   String expirationDate;
+   int baseQuantity;
+   String unit;
+   double calories;
+   double protein;
+   double fat;
+   double carbohydrates;
+   double fiber;
 
   Ingredient({
+    required this.ingredientId,
     required this.name,
-    required this.category,
     required this.imageURL,
-    required this.storageMethod,
+    required this.expirationDate,
     required this.baseQuantity,
     required this.unit,
-    required this.expirationDate,
-    required this.isUserCreated,
-    required this.createdBy,
     required this.calories,
     required this.protein,
     required this.fat,
@@ -32,40 +28,50 @@ class Ingredient {
   });
 
   factory Ingredient.fromJson(Map<String, dynamic> json) {
+    // 检查 id 是否为 null 并处理
+    if (json['ingredientId'] == null) {
+      throw Exception('Ingredient ID cannot be null');
+    }
+
     return Ingredient(
-      name: json['name'] ?? 'Unknown', // 默认值
-      category: json['category'] ?? 'Uncategorized', // 默认值
-      imageURL: json['imageURL'] ?? '', // 默认值
-      storageMethod: json['StorageMethod'] ?? 'Unknown', // 默认值
-      baseQuantity: json['base_quantity'] ?? 0, // 默认值
-      unit: json['unit'] ?? 'units', // 默认值
-      expirationDate: json['expirationDate'] ?? 'N/A', // 默认值
-      isUserCreated: json['is_user_created'] ?? false, // 默认值
-      createdBy: json['created_by'] ?? 0, // 默认值
-      calories: json['calories'] ?? 0, // 默认值
-      protein: (json['protein'] as num?)?.toDouble() ?? 0.0, // 处理可能的 null
-      fat: (json['fat'] as num?)?.toDouble() ?? 0.0, // 处理可能的 null
-      carbohydrates: (json['carbohydrates'] as num?)?.toDouble() ?? 0.0, // 处理可能的 null
-      fiber: (json['fiber'] as num?)?.toDouble() ?? 0.0, // 处理可能的 null
+      ingredientId: json['ingredientId'], // 从 JSON 中解析 id
+      name: json['name'] ?? '', // 提供默认值
+      imageURL: json['imageURL'] ?? '',
+      expirationDate: json['expirationDate'] ?? '',
+      baseQuantity: json['baseQuantity'] ?? 0,
+      unit: json['unit'] ?? '',
+      calories: (json['calories'] ?? 0).toDouble(),
+      protein: (json['protein'] ?? 0).toDouble(),
+      fat: (json['fat'] ?? 0).toDouble(),
+      carbohydrates: (json['carbohydrates'] ?? 0).toDouble(),
+      fiber: (json['fiber'] ?? 0).toDouble(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'ingredientId': ingredientId,
       'name': name,
-      'category': category,
       'imageURL': imageURL,
-      'StorageMethod': storageMethod,
-      'base_quantity': baseQuantity,
+      'expirationDate': expirationDate,
+      'baseQuantity': baseQuantity,
       'unit': unit,
-      'expiration_date': expirationDate,
-      'is_user_created': isUserCreated,
-      'created_by': createdBy,
       'calories': calories,
       'protein': protein,
       'fat': fat,
       'carbohydrates': carbohydrates,
       'fiber': fiber,
     };
+  }
+  void update(Ingredient newIngredient) {
+    name = newIngredient.name;
+    expirationDate = newIngredient.expirationDate;
+    baseQuantity = newIngredient.baseQuantity;
+    calories = newIngredient.calories;
+    protein = newIngredient.protein;
+    fat = newIngredient.fat;
+    carbohydrates = newIngredient.carbohydrates;
+    fiber = newIngredient.fiber;
+    notifyListeners(); // Notify listeners about the change
   }
 }
