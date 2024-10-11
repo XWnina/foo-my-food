@@ -111,9 +111,9 @@ public class IngredientController {
     @PostMapping("/upload_image")
     public ResponseEntity<Map<String, String>> uploadImage(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("oldImageUrl") String oldImageUrl) {
+            @RequestParam(value = "oldImageUrl", required = false) String oldImageUrl) {
         try {
-            // 1. 删除旧图片
+            // 1. 如果有旧图片，则删除旧图片
             if (oldImageUrl != null && !oldImageUrl.isEmpty()) {
                 googleCloudStorageService.deleteFile(oldImageUrl);
             }
@@ -129,4 +129,5 @@ public class IngredientController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
 }
