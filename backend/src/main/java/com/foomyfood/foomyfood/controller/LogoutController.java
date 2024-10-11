@@ -22,7 +22,7 @@ public class LogoutController {
     private UserRepository userRepository;
 
     @PostMapping("/logout")
-    @Transactional  // Ensure that the logout happens in a transactional context
+    @Transactional
     public ResponseEntity<String> logout(@RequestBody Map<String, Long> request) {
         Long userId = request.get("userId");
 
@@ -39,7 +39,6 @@ public class LogoutController {
 
         // Check if the user is currently logged in
         if (!user.getLogInStatus()) {
-            // If the user is not logged in, return a message
             return ResponseEntity.status(400).body("User is already logged out.");
         }
 
