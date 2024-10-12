@@ -71,74 +71,75 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
   }
 
   Future<void> _saveChanges() async {
-  if (_nameController.text.trim().isEmpty) {
-    _showError('Name cannot be empty');
-    return;
-  }
-
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  final userId = prefs.getString('userId');
-
-  if (userId == null) {
-    _showError('User ID not found');
-    return;
-  }
-
-  final apiUrl = '$baseApiUrl/ingredients/${widget.ingredient.ingredientId}';
-
-  try {
-    // 提交更新的数据
-    final updateResponse = await http.put(
-      Uri.parse(apiUrl),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        'userId': userId,
-        'ingredientId': widget.ingredient.ingredientId,
-        'userQuantity': int.parse(_quantityController.text),
-        'name': _nameController.text.trim(),
-        'expirationDate': _expirationDateController.text,
-        'calories': double.parse(_caloriesController.text),
-        'protein': double.parse(_proteinController.text),
-        'fat': double.parse(_fatController.text),
-        'carbohydrates': double.parse(_carbohydratesController.text),
-        'fiber': double.parse(_fiberController.text),
-        'unit': _unitController.text,
-        'imageURL': _newImageUrl ?? widget.ingredient.imageURL, // 使用新图片 URL
-      }),
-    );
-
-    if (updateResponse.statusCode == 200) {
-      // 更新 provider 中的 ingredient
-      Provider.of<IngredientProvider>(context, listen: false).updateIngredient(
-        widget.index,
-        Ingredient(
-          name: _nameController.text.trim(),
-          expirationDate: _expirationDateController.text,
-          baseQuantity: int.parse(_quantityController.text),
-          calories: double.parse(_caloriesController.text),
-          protein: double.parse(_proteinController.text),
-          fat: double.parse(_fatController.text),
-          carbohydrates: double.parse(_carbohydratesController.text),
-          fiber: double.parse(_fiberController.text),
-          ingredientId: widget.ingredient.ingredientId,
-          imageURL: _newImageUrl ?? widget.ingredient.imageURL, // 使用更新后的图片 URL
-          unit: _unitController.text,
-        ),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Changes saved successfully!')),
-      );
-      Navigator.pop(context);
-    } else {
-      _showError('Update failed');
+    if (_nameController.text.trim().isEmpty) {
+      _showError('Name cannot be empty');
+      return;
     }
-  } catch (e) {
-    _showError('Error occurred while updating the ingredient');
-  }
-}
 
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      _showError('User ID not found');
+      return;
+    }
+
+    final apiUrl = '$baseApiUrl/ingredients/${widget.ingredient.ingredientId}';
+
+    try {
+      // 提交更新的数据
+      final updateResponse = await http.put(
+        Uri.parse(apiUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode({
+          'userId': userId,
+          'ingredientId': widget.ingredient.ingredientId,
+          'userQuantity': int.parse(_quantityController.text),
+          'name': _nameController.text.trim(),
+          'expirationDate': _expirationDateController.text,
+          'calories': double.parse(_caloriesController.text),
+          'protein': double.parse(_proteinController.text),
+          'fat': double.parse(_fatController.text),
+          'carbohydrates': double.parse(_carbohydratesController.text),
+          'fiber': double.parse(_fiberController.text),
+          'unit': _unitController.text,
+          'imageURL': _newImageUrl ?? widget.ingredient.imageURL, // 使用新图片 URL
+        }),
+      );
+
+      if (updateResponse.statusCode == 200) {
+        // 更新 provider 中的 ingredient
+        Provider.of<IngredientProvider>(context, listen: false)
+            .updateIngredient(
+          widget.index,
+          Ingredient(
+            name: _nameController.text.trim(),
+            expirationDate: _expirationDateController.text,
+            baseQuantity: int.parse(_quantityController.text),
+            calories: double.parse(_caloriesController.text),
+            protein: double.parse(_proteinController.text),
+            fat: double.parse(_fatController.text),
+            carbohydrates: double.parse(_carbohydratesController.text),
+            fiber: double.parse(_fiberController.text),
+            ingredientId: widget.ingredient.ingredientId,
+            imageURL:
+                _newImageUrl ?? widget.ingredient.imageURL, // 使用更新后的图片 URL
+            unit: _unitController.text,
+          ),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Changes saved successfully!')),
+        );
+        Navigator.pop(context);
+      } else {
+        _showError('Update failed');
+      }
+    } catch (e) {
+      _showError('Error occurred while updating the ingredient');
+    }
+  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -205,17 +206,18 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         title: Text(widget.ingredient.name,
             style: const TextStyle(
-              color: Color.fromARGB(255, 255, 255, 255),
+              color: text,
             )),
         backgroundColor: appBarColor,
         actions: [
           IconButton(
             icon: Icon(
               _isEditing ? Icons.save : Icons.edit,
-              color: Colors.white, // 设置为白色
+              color: text,
             ),
             onPressed: () {
               if (_isEditing) {
@@ -267,7 +269,10 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                   ? TextField(
                       controller: _nameController,
                       decoration: const InputDecoration(
-                          labelText: 'Name', border: OutlineInputBorder()),
+                          labelText: 'Name',
+                          filled: true,
+                          fillColor: whiteFillColor,
+                          border: OutlineInputBorder()),
                     )
                   : Text(
                       widget.ingredient.name,
@@ -333,7 +338,10 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                   ? TextField(
                       controller: _quantityController,
                       decoration: const InputDecoration(
-                          labelText: 'Quantity', border: OutlineInputBorder()),
+                          labelText: 'Quantity',
+                          filled: true,
+                          fillColor: whiteFillColor,
+                          border: OutlineInputBorder()),
                       keyboardType: TextInputType.number,
                     )
                   : Text('Quantity: ${widget.ingredient.baseQuantity}'),
@@ -342,7 +350,10 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                   ? TextField(
                       controller: _unitController,
                       decoration: const InputDecoration(
-                          labelText: 'Unit', border: OutlineInputBorder()),
+                          labelText: 'Unit',
+                          filled: true,
+                          fillColor: whiteFillColor,
+                          border: OutlineInputBorder()),
                     )
                   : Text('Unit: ${widget.ingredient.unit}'),
               const SizedBox(height: 16),
@@ -351,6 +362,8 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                       controller: _caloriesController,
                       decoration: InputDecoration(
                         labelText: 'Calories',
+                        filled: true,
+                        fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
                         errorText:
                             _isValidPositiveNumber(_caloriesController.text)
@@ -370,6 +383,8 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                       controller: _proteinController,
                       decoration: InputDecoration(
                         labelText: 'Protein',
+                        filled: true,
+                        fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
                         errorText:
                             _isValidPositiveNumber(_proteinController.text)
@@ -390,12 +405,14 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                       decoration: InputDecoration(
                         labelText: 'Fat',
                         border: const OutlineInputBorder(),
+                        filled: true,
+                        fillColor: whiteFillColor,
                         errorText: _isValidPositiveNumber(_fatController.text)
                             ? null
                             : 'Must be a positive number',
                       ),
                       keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       onChanged: (value) {
                         setState(() {}); // 监听输入变化并触发状态更新
                       },
@@ -407,6 +424,8 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                       controller: _carbohydratesController,
                       decoration: InputDecoration(
                         labelText: 'Carbohydrates',
+                        filled: true,
+                              fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
                         errorText: _isValidPositiveNumber(
                                 _carbohydratesController.text)
@@ -414,7 +433,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                             : 'Must be a positive number',
                       ),
                       keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       onChanged: (value) {
                         setState(() {}); // 监听输入变化并触发状态更新
                       },
@@ -426,13 +445,15 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                       controller: _fiberController,
                       decoration: InputDecoration(
                         labelText: 'Fiber',
+                        filled: true,
+                              fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
                         errorText: _isValidPositiveNumber(_fiberController.text)
                             ? null
                             : 'Must be a positive number',
                       ),
                       keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       onChanged: (value) {
                         setState(() {}); // 监听输入变化并触发状态更新
                       },
