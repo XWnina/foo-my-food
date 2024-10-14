@@ -11,6 +11,7 @@ import 'add_ingredient_manually.dart';
 import 'user_info_page.dart'; // 引入用户页面
 import 'package:provider/provider.dart';
 import 'package:foo_my_food_app/providers/ingredient_provider.dart';
+import 'recipepage.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -99,10 +100,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // 底部导航栏对应的页面
   final List<Widget> _pages = [
-    MyFoodPage(), // 我的食物页面
-    Text("Recipes Page"), // 配方页面
-    UserProfile(), // 用户资料页面
-  ];
+  MyFoodPage(), 
+  RecipePage(), // 替换为 RecipePage
+  UserProfile(), 
+];
+
 
   @override
   Widget build(BuildContext context) {
