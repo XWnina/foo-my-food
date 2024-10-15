@@ -100,11 +100,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // 底部导航栏对应的页面
   final List<Widget> _pages = [
-  MyFoodPage(), 
-  RecipePage(), // 替换为 RecipePage
-  UserProfile(), 
-];
-
+    MyFoodPage(),
+    RecipePage(), // 替换为 RecipePage
+    UserProfile(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -112,8 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
       backgroundColor: backgroundColor,
       appBar: _selectedIndex == 0 // 只有在 MyFood 页面时显示 AppBar
           ? AppBar(
-              title:
-                  Text(widget.title, style: TextStyle(color: text)),
+              title: Text(widget.title, style: TextStyle(color: text)),
               backgroundColor: buttonBackgroundColor,
             )
           : null, // 其他页面不显示 AppBar
@@ -123,6 +121,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton(
+              heroTag: "Add",
               onPressed: _navigateToAddIngredient,
               backgroundColor: buttonBackgroundColor,
               tooltip: 'Add Ingredient',
@@ -183,6 +182,7 @@ class MyFoodPage extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          if (ingredient.imageURL.isNotEmpty)
                           CircleAvatar(
                             backgroundColor: greyBackgroundColor,
                             backgroundImage: NetworkImage(ingredient.imageURL),
