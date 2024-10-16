@@ -17,23 +17,23 @@ class RecipePage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'No recipes added yet!',
+              'No recipes added yet! Click the + button to add.',
               style: AppTextStyles.headline4.copyWith(color: blackTextColor),
-            ),
-            SizedBox(height: 20),
-            FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AddRecipePage()),
-                );
-              },
-              backgroundColor: buttonBackgroundColor,
-              tooltip: 'Add Recipe',
-              child: const Icon(Icons.add, color: whiteTextColor),
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        heroTag: "AddRecipe",
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddRecipePage()),
+          );
+        },
+        backgroundColor: buttonBackgroundColor,
+        tooltip: 'Add Recipe',
+        child: const Icon(Icons.add, color: whiteTextColor),
       ),
     );
   }
