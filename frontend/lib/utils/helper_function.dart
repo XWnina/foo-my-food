@@ -7,7 +7,8 @@ class HelperFunctions {
   static bool checkPasswordsMatch(String password, String confirmPassword) {
     return password == confirmPassword;
   }
-  // 新增：检查密码是否至少5个字符并且包含一个特殊字符
+
+  // 检查密码是否至少5个字符并且包含一个特殊字符
   static bool checkPasswordRequirements(String password) {
     // 正则表达式要求密码至少包含一个特殊字符并且长度不少于5个字符
     final passwordRegex = RegExp(passwordRegexPsttern);

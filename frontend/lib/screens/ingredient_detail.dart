@@ -1,3 +1,4 @@
+import 'dart:async'; // 导入 Timer 库
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -17,11 +18,11 @@ class FoodItemDetailPage extends StatefulWidget {
   final int index;
 
   const FoodItemDetailPage({
-    Key? key,
+    super.key,
     required this.ingredient,
     required this.userId,
     required this.index,
-  }) : super(key: key);
+  });
 
   @override
   FoodItemDetailPageState createState() => FoodItemDetailPageState();
@@ -39,8 +40,21 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
   late TextEditingController _fiberController;
   late TextEditingController _unitController;
 
-  String? _newImageUrl; // 用来保存后端返回的新图片 URL
-  String? _expirationDateError; // 用来保存日期输入的错误信息
+  String? _newImageUrl;
+  String? _expirationDateError;
+
+  Timer? _debounce;
+
+  // 表单验证状态变量
+  bool _isFormValid = false;
+  bool _isNameValid = true;
+  bool _isQuantityValid = true;
+  bool _isCaloriesValid = true;
+  bool _isProteinValid = true;
+  bool _isFatValid = true;
+  bool _isCarbohydratesValid = true;
+  bool _isFiberValid = true;
+  bool _isExpirationDateValid = true;
 
   @override
   void initState() {
@@ -61,84 +75,158 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
     _fiberController =
         TextEditingController(text: widget.ingredient.fiber.toString());
     _unitController = TextEditingController(text: widget.ingredient.unit);
+
+    _validateForm(); // 初始化时验证表单
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  // 防抖方法
+  void _onDebounce(void Function() callback) {
+    if (_debounce?.isActive ?? false) {
+      _debounce!.cancel();
+    }
+    _debounce = Timer(const Duration(milliseconds: 500), callback);
+  }
+
+  // 表单验证方法
+  void _validateForm() {
+    setState(() {
+      _isNameValid = _nameController.text.trim().isNotEmpty;
+      _isQuantityValid =
+          _isValidPositiveNumber(_quantityController.text); // 必须大于0
+      _isCaloriesValid =
+          _isValidNonNegativeNumber(_caloriesController.text); // 必须大于等于0
+      _isProteinValid =
+          _isValidNonNegativeNumber(_proteinController.text); // 必须大于等于0
+      _isFatValid = _isValidNonNegativeNumber(_fatController.text); // 必须大于等于0
+      _isCarbohydratesValid =
+          _isValidNonNegativeNumber(_carbohydratesController.text); // 必须大于等于0
+      _isFiberValid =
+          _isValidNonNegativeNumber(_fiberController.text); // 必须大于等于0
+      _isExpirationDateValid =
+          _isValidExpirationDate(_expirationDateController.text);
+
+      // 表单整体是否有效
+      _isFormValid = _isNameValid &&
+          _isQuantityValid &&
+          _isCaloriesValid &&
+          _isProteinValid &&
+          _isFatValid &&
+          _isCarbohydratesValid &&
+          _isFiberValid &&
+          _isExpirationDateValid;
+    });
+  }
+
+  // 检查输入是否为大于 0 的有效数字（用于 Quantity）
+  bool _isValidPositiveNumber(String value) {
+    final number = double.tryParse(value);
+    return number != null && number > 0; // Quantity 必须大于 0
+  }
+
+  // 检查输入是否为大于等于 0 的有效数字（用于其他字段）
+  bool _isValidNonNegativeNumber(String value) {
+    final number = double.tryParse(value);
+    return number != null && number >= 0; // 必须大于等于 0
+  }
+
+  // 检查输入的日期是否符合格式，并且是否在今天之后
+  bool _isValidExpirationDate(String date) {
+    try {
+      final inputDate = DateFormat('yyyy-MM-dd').parseStrict(date);
+      final today = DateTime.now();
+      if (inputDate.isBefore(today)) {
+        return false; // 输入的日期不能是今天或今天之前的日期
+      }
+      return true;
+    } catch (e) {
+      return false; // 格式不正确
+    }
+  }
+
+  // 修改保存按钮逻辑
+  Future<void> _saveChanges() async {
+    _validateForm();
+    if (!_isFormValid) {
+      _showError('Please correct the errors in the form before saving');
+      return;
+    }
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      _showError('User ID not found');
+      return;
+    }
+
+    final apiUrl = '$baseApiUrl/ingredients/${widget.ingredient.ingredientId}';
+
+    try {
+      // 提交更新的数据
+      final updateResponse = await http.put(
+        Uri.parse(apiUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode({
+          'userId': userId,
+          'ingredientId': widget.ingredient.ingredientId,
+          'userQuantity': int.parse(_quantityController.text),
+          'name': _nameController.text.trim(),
+          'expirationDate': _expirationDateController.text,
+          'calories': double.parse(_caloriesController.text),
+          'protein': double.parse(_proteinController.text),
+          'fat': double.parse(_fatController.text),
+          'carbohydrates': double.parse(_carbohydratesController.text),
+          'fiber': double.parse(_fiberController.text),
+          'unit': _unitController.text,
+          'imageURL': _newImageUrl ?? widget.ingredient.imageURL,
+        }),
+      );
+
+      if (updateResponse.statusCode == 200) {
+        // 更新 provider 中的 ingredient
+        Provider.of<IngredientProvider>(context, listen: false)
+            .updateIngredient(
+          widget.index,
+          Ingredient(
+            name: _nameController.text.trim(),
+            expirationDate: _expirationDateController.text,
+            baseQuantity: int.parse(_quantityController.text),
+            calories: double.parse(_caloriesController.text),
+            protein: double.parse(_proteinController.text),
+            fat: double.parse(_fatController.text),
+            carbohydrates: double.parse(_carbohydratesController.text),
+            fiber: double.parse(_fiberController.text),
+            ingredientId: widget.ingredient.ingredientId,
+            imageURL: _newImageUrl ?? widget.ingredient.imageURL,
+            unit: _unitController.text,
+          ),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Changes saved successfully!')),
+        );
+        Navigator.pop(context);
+      } else {
+        _showError('Update failed');
+      }
+    } catch (e) {
+      _showError('Error occurred while updating the ingredient');
+    }
   }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-          content: Text(message, style: TextStyle(color: redErrorTextColor))),
+          content: Text(message, style: const TextStyle(color: Colors.red))),
     );
   }
-
-  Future<void> _saveChanges() async {
-  if (_nameController.text.trim().isEmpty) {
-    _showError('Name cannot be empty');
-    return;
-  }
-
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  final userId = prefs.getString('userId');
-
-  if (userId == null) {
-    _showError('User ID not found');
-    return;
-  }
-
-  final apiUrl = '$baseApiUrl/ingredients/${widget.ingredient.ingredientId}';
-
-  try {
-    // 提交更新的数据
-    final updateResponse = await http.put(
-      Uri.parse(apiUrl),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        'userId': userId,
-        'ingredientId': widget.ingredient.ingredientId,
-        'userQuantity': int.parse(_quantityController.text),
-        'name': _nameController.text.trim(),
-        'expirationDate': _expirationDateController.text,
-        'calories': double.parse(_caloriesController.text),
-        'protein': double.parse(_proteinController.text),
-        'fat': double.parse(_fatController.text),
-        'carbohydrates': double.parse(_carbohydratesController.text),
-        'fiber': double.parse(_fiberController.text),
-        'unit': _unitController.text,
-        'imageURL': _newImageUrl ?? widget.ingredient.imageURL, // 使用新图片 URL
-      }),
-    );
-
-    if (updateResponse.statusCode == 200) {
-      // 更新 provider 中的 ingredient
-      Provider.of<IngredientProvider>(context, listen: false).updateIngredient(
-        widget.index,
-        Ingredient(
-          name: _nameController.text.trim(),
-          expirationDate: _expirationDateController.text,
-          baseQuantity: int.parse(_quantityController.text),
-          calories: double.parse(_caloriesController.text),
-          protein: double.parse(_proteinController.text),
-          fat: double.parse(_fatController.text),
-          carbohydrates: double.parse(_carbohydratesController.text),
-          fiber: double.parse(_fiberController.text),
-          ingredientId: widget.ingredient.ingredientId,
-          imageURL: _newImageUrl ?? widget.ingredient.imageURL, // 使用更新后的图片 URL
-          unit: _unitController.text,
-        ),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Changes saved successfully!')),
-      );
-      Navigator.pop(context);
-    } else {
-      _showError('Update failed');
-    }
-  } catch (e) {
-    _showError('Error occurred while updating the ingredient');
-  }
-}
-
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -182,40 +270,21 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
     }
   }
 
-  // 检查输入的日期是否符合格式，并且是否在今天之后
-  bool _isValidExpirationDate(String date) {
-    try {
-      final inputDate = DateFormat('yyyy-MM-dd').parseStrict(date);
-      final today = DateTime.now();
-      if (inputDate.isBefore(today)) {
-        return false; // 输入的日期不能是今天或今天之前的日期
-      }
-      return true;
-    } catch (e) {
-      return false; // 格式不正确
-    }
-  }
-
-  // 检查输入是否为大于 0 的有效数字
-  bool _isValidPositiveNumber(String value) {
-    final number = double.tryParse(value);
-    return number != null && number > 0;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         title: Text(widget.ingredient.name,
             style: const TextStyle(
-              color: Color.fromARGB(255, 255, 255, 255),
+              color: text,
             )),
         backgroundColor: appBarColor,
         actions: [
           IconButton(
             icon: Icon(
               _isEditing ? Icons.save : Icons.edit,
-              color: Colors.white, // 设置为白色
+              color: text,
             ),
             onPressed: () {
               if (_isEditing) {
@@ -236,38 +305,61 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               GestureDetector(
-                onTap: _isEditing ? _pickImage : null, // 编辑模式下允许选择图片
+                onTap: () {
+                  _onDebounce(() {
+                    if (_isEditing) {
+                      _pickImage();
+                    }
+                  });
+                }, // 编辑模式下允许选择图片
                 child: Container(
                   height: 200,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     border: Border.all(color: greyBorderColor),
                     borderRadius: BorderRadius.circular(8),
-                    image: _isEditing && _newImageUrl != null
+                    image: (_newImageUrl != null && _newImageUrl!.isNotEmpty)
                         ? DecorationImage(
                             image: NetworkImage(_newImageUrl!), // 使用新上传的图片 URL
                             fit: BoxFit.cover,
                           )
-                        : DecorationImage(
-                            image: NetworkImage(
-                                widget.ingredient.imageURL), // 使用已有的图片 URL
-                            fit: BoxFit.cover,
-                          ),
+                        : (widget.ingredient.imageURL.isNotEmpty)
+                            ? DecorationImage(
+                                image: NetworkImage(
+                                    widget.ingredient.imageURL!), // 使用已有的图片 URL
+                                fit: BoxFit.cover,
+                              )
+                            : null, // 图片为空时不设置 DecorationImage
                   ),
-                  child: _isEditing && _newImageUrl == null
+                  child: (_isEditing && _newImageUrl == null)
                       ? const Center(
-                          child: Text('Tap to change image',
-                              style: TextStyle(
-                                  color: Color.fromARGB(255, 18, 59, 88))))
-                      : null,
+                          child: Text(
+                            'Tap to change image',
+                            style: TextStyle(
+                                color: Color.fromARGB(255, 18, 59, 88)),
+                          ),
+                        )
+                      : null, // 如果没有图片，显示提示文字
                 ),
               ),
               const SizedBox(height: 16),
               _isEditing
                   ? TextField(
                       controller: _nameController,
-                      decoration: const InputDecoration(
-                          labelText: 'Name', border: OutlineInputBorder()),
+                      decoration: InputDecoration(
+                        labelText: 'Name',
+                        filled: true,
+                        fillColor: whiteFillColor,
+                        border: const OutlineInputBorder(),
+                        errorText: _isNameValid
+                            ? null
+                            : 'Name cannot be empty', // 当名字为空时显示错误提示
+                      ),
+                      onChanged: (value) {
+                        _onDebounce(() {
+                          _validateForm();
+                        });
+                      },
                     )
                   : Text(
                       widget.ingredient.name,
@@ -285,13 +377,15 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                               labelText: 'Expiration Date',
                               filled: true,
                               fillColor: whiteFillColor,
-                              border: OutlineInputBorder(
+                              border: const OutlineInputBorder(
                                 borderSide: BorderSide(color: greyBorderColor),
                               ),
-                              focusedBorder: OutlineInputBorder(
+                              focusedBorder: const OutlineInputBorder(
                                 borderSide: BorderSide(color: blueBorderColor),
                               ),
-                              errorText: _expirationDateError,
+                              errorText: _isExpirationDateValid
+                                  ? null
+                                  : 'Invalid expiration date',
                               suffixIcon: IconButton(
                                 icon: Icon(Icons.calendar_today,
                                     color: greyIconColor),
@@ -314,13 +408,8 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                               ),
                             ),
                             onChanged: (value) {
-                              setState(() {
-                                if (_isValidExpirationDate(value)) {
-                                  _expirationDateError = null; // 日期合法，清除错误提示
-                                } else {
-                                  _expirationDateError =
-                                      'The date format must be yyyy-MM-DD or past date'; // 日期非法或是今天之前
-                                }
+                              _onDebounce(() {
+                                _validateForm();
                               });
                             },
                           ),
@@ -332,9 +421,19 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
               _isEditing
                   ? TextField(
                       controller: _quantityController,
-                      decoration: const InputDecoration(
-                          labelText: 'Quantity', border: OutlineInputBorder()),
+                      decoration: InputDecoration(
+                        labelText: 'Quantity',
+                        filled: true,
+                        fillColor: whiteFillColor,
+                        border: const OutlineInputBorder(),
+                        errorText: _isQuantityValid ? null : quantityError,
+                      ),
                       keyboardType: TextInputType.number,
+                      onChanged: (value) {
+                        _onDebounce(() {
+                          _validateForm();
+                        });
+                      },
                     )
                   : Text('Quantity: ${widget.ingredient.baseQuantity}'),
               const SizedBox(height: 16),
@@ -342,7 +441,15 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                   ? TextField(
                       controller: _unitController,
                       decoration: const InputDecoration(
-                          labelText: 'Unit', border: OutlineInputBorder()),
+                          labelText: 'Unit',
+                          filled: true,
+                          fillColor: whiteFillColor,
+                          border: OutlineInputBorder()),
+                      onChanged: (value) {
+                        _onDebounce(() {
+                          _validateForm();
+                        });
+                      },
                     )
                   : Text('Unit: ${widget.ingredient.unit}'),
               const SizedBox(height: 16),
@@ -351,16 +458,18 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                       controller: _caloriesController,
                       decoration: InputDecoration(
                         labelText: 'Calories',
+                        filled: true,
+                        fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
                         errorText:
-                            _isValidPositiveNumber(_caloriesController.text)
-                                ? null
-                                : 'Must be a positive number',
+                            _isCaloriesValid ? null : caloriesInvalidError,
                       ),
                       keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       onChanged: (value) {
-                        setState(() {}); // 监听输入变化并触发状态更新
+                        _onDebounce(() {
+                          _validateForm();
+                        });
                       },
                     )
                   : Text('Calories: ${widget.ingredient.calories} kcal'),
@@ -370,16 +479,17 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                       controller: _proteinController,
                       decoration: InputDecoration(
                         labelText: 'Protein',
+                        filled: true,
+                        fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
-                        errorText:
-                            _isValidPositiveNumber(_proteinController.text)
-                                ? null
-                                : 'Must be a positive number',
+                        errorText: _isProteinValid ? null : proteinInvalidError,
                       ),
                       keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       onChanged: (value) {
-                        setState(() {}); // 监听输入变化并触发状态更新
+                        _onDebounce(() {
+                          _validateForm();
+                        });
                       },
                     )
                   : Text('Protein: ${widget.ingredient.protein} g'),
@@ -389,15 +499,17 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                       controller: _fatController,
                       decoration: InputDecoration(
                         labelText: 'Fat',
+                        filled: true,
+                        fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
-                        errorText: _isValidPositiveNumber(_fatController.text)
-                            ? null
-                            : 'Must be a positive number',
+                        errorText: _isFatValid ? null : fatInvalidError,
                       ),
                       keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       onChanged: (value) {
-                        setState(() {}); // 监听输入变化并触发状态更新
+                        _onDebounce(() {
+                          _validateForm();
+                        });
                       },
                     )
                   : Text('Fat: ${widget.ingredient.fat} g'),
@@ -407,16 +519,19 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                       controller: _carbohydratesController,
                       decoration: InputDecoration(
                         labelText: 'Carbohydrates',
+                        filled: true,
+                        fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
-                        errorText: _isValidPositiveNumber(
-                                _carbohydratesController.text)
+                        errorText: _isCarbohydratesValid
                             ? null
-                            : 'Must be a positive number',
+                            : carbohydratesInvalidError,
                       ),
                       keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       onChanged: (value) {
-                        setState(() {}); // 监听输入变化并触发状态更新
+                        _onDebounce(() {
+                          _validateForm();
+                        });
                       },
                     )
                   : Text('Carbohydrates: ${widget.ingredient.carbohydrates} g'),
@@ -426,15 +541,17 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                       controller: _fiberController,
                       decoration: InputDecoration(
                         labelText: 'Fiber',
+                        filled: true,
+                        fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
-                        errorText: _isValidPositiveNumber(_fiberController.text)
-                            ? null
-                            : 'Must be a positive number',
+                        errorText: _isFiberValid ? null : fiberInvalidError,
                       ),
                       keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                          const TextInputType.numberWithOptions(decimal: true),
                       onChanged: (value) {
-                        setState(() {}); // 监听输入变化并触发状态更新
+                        _onDebounce(() {
+                          _validateForm();
+                        });
                       },
                     )
                   : Text('Fiber: ${widget.ingredient.fiber} g'),

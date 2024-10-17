@@ -34,6 +34,8 @@ dependencies:
   logging: ^1.0.0
   shared_preferences: ^2.0.13  # 添加 shared_preferences 包
   provider: ^6.0.0
+  device_calendar: ^4.3.3 # 日历操作的依赖
+  timezone: ^0.9.4
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -61,6 +63,7 @@ flutter:
   assets:
     - image/logo3.png
     - image/logo2.png
+    - image/logo1.png
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

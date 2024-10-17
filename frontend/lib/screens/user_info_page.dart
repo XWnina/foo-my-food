@@ -330,13 +330,13 @@ class _UserProfileState extends State<UserProfile> {
       appBar: AppBar(
         title: const Text(
           "User Profile",
-          style: TextStyle(color: Colors.white), // 将文字颜色设置为白色
+          style: TextStyle(color: text), // 将文字颜色设置为白色
         ),
         backgroundColor: appBarColor,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout,
-            color: Colors.white,),
+            color: text,),
             onPressed: () {
               showDialog(
                 context: context,
@@ -493,7 +493,7 @@ class _UserProfileState extends State<UserProfile> {
                 backgroundColor: _isSaveButtonEnabled
                     ? buttonBackgroundColor
                     : Colors.grey, // 动态设置颜色
-                foregroundColor: whiteTextColor,
+                foregroundColor: whiteFillColor,
               ),
               child: const Text("Save"),
             ),
@@ -526,7 +526,7 @@ class _UserProfileState extends State<UserProfile> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: const Color.fromARGB(255, 180, 11, 45),
                 foregroundColor: whiteTextColor,
               ),
               child: const Text("Logout"),
