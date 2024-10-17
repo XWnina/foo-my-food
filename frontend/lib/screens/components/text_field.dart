@@ -22,21 +22,27 @@ Widget buildTextInputField({
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
           borderSide: BorderSide(
-            color: isError ? redErrorBorderColor : blueBorderColor, // 根据 isError 判断边框颜色
+            color: isError
+                ? redErrorBorderColor
+                : blueBorderColor, // 根据 isError 判断边框颜色
             width: 2.0,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
           borderSide: BorderSide(
-            color: isError ? redErrorBorderColor : greyBorderColor, // 根据 isError 判断边框颜色
+            color: isError
+                ? redErrorBorderColor
+                : greyBorderColor, // 根据 isError 判断边框颜色
             width: 1.0,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
           borderSide: BorderSide(
-            color: isError ? redErrorBorderColor : blueBorderColor, // 焦点状态下根据 isError 判断边框颜色
+            color: isError
+                ? redErrorBorderColor
+                : blueBorderColor, // 焦点状态下根据 isError 判断边框颜色
             width: 2.0,
           ),
         ),
@@ -44,7 +50,6 @@ Widget buildTextInputField({
     ),
   );
 }
-
 
 // 通用的密码输入框构造方法，支持错误提示
 Widget buildPasswordInputField({

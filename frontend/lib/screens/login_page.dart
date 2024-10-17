@@ -65,7 +65,8 @@ class LoginPageState extends State<LoginPage> {
         setState(() {
           _emailNotVerified = true;
           _isEmailVerificationSent = true;
-          errorMessage = "Email not verified. Please check your inbox for the verification email.";
+          errorMessage =
+              "Email not verified. Please check your inbox for the verification email.";
         });
       } else if (response.statusCode == 404) {
         // 用户名或邮箱未找到
@@ -117,14 +118,16 @@ class LoginPageState extends State<LoginPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => SecurityQuestionSelectionPage(email: _emailController.text)),
+              builder: (context) =>
+                  SecurityQuestionSelectionPage(email: _emailController.text)),
         );
       } else if (response.statusCode == 403) {
         // 邮箱未验证，显示重新发送验证邮件的提示
         setState(() {
           _emailNotVerified = true;
           _isEmailVerificationSent = true;
-          errorMessage = "Email not verified. Please check your inbox for the verification email.";
+          errorMessage =
+              "Email not verified. Please check your inbox for the verification email.";
         });
       } else if (response.statusCode == 404) {
         // 用户名或邮箱未找到
@@ -173,6 +176,13 @@ class LoginPageState extends State<LoginPage> {
     });
   }
 
+  static const underlineStyle = TextStyle(
+    decoration: TextDecoration.underline, // 添加下划线样式
+    color: buttonBackgroundColor, // 设置文字颜色
+    fontSize: 13,
+  );
+
+  @override
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -182,40 +192,68 @@ class LoginPageState extends State<LoginPage> {
       backgroundColor: backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, // 拖动时隐藏键盘
+          keyboardDismissBehavior:
+              ScrollViewKeyboardDismissBehavior.onDrag, // 拖动时隐藏键盘
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(height: screenHeight * 0.1), // 留出顶部空间避免被键盘遮挡
+                SizedBox(height: screenHeight * 0.05), // 留出顶部空间避免被键盘遮挡
                 // Logo 区域
                 Container(
-                  width: screenWidth * 0.6,
-                  height: screenWidth * 0.6,
-                  decoration: BoxDecoration(
-                    color: whiteFillColor,
-                    border: Border.all(width: 1, color: greyBorderColor),
+                  width: screenWidth * 0.8,
+                  height: screenWidth * 0.8,
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent, // 将背景色设置为透明
                   ),
-                  child: Image.asset(
-                    "image/logo3.png",
-                    fit: BoxFit.cover,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(0.0),
+                    child: Image.asset(
+                      "image/logo1.png",
+                      fit: BoxFit.cover, // 确保图片填充整个容器
+                    ),
                   ),
                 ),
+
                 const SizedBox(height: 20), // 间距
                 // App 名字
-                Text(
-                  '-FOO MY FOOD-',
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.05,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '-',
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.06,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF265F60), // 其余部分的颜色
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'FOO',
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.06,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF598F83), // FOO 部分的颜色
+                        ),
+                      ),
+                      TextSpan(
+                        text: ' MY FOOD-',
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.06,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF265F60), // 其余部分的颜色
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+
                 const SizedBox(height: 20), // 间距
 
                 // 用户名或邮箱输入框
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: screenWidth * inputFieldWidthFactor),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * inputFieldWidthFactor),
                   child: buildTextInputField(
                     label: 'Email Or Username',
                     controller: _emailController,
@@ -231,7 +269,8 @@ class LoginPageState extends State<LoginPage> {
 
                 // 密码输入框
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: screenWidth * inputFieldWidthFactor),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * inputFieldWidthFactor),
                   child: buildPasswordInputField(
                     label: 'Password',
                     controller: _passwordController,
@@ -241,55 +280,7 @@ class LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 20), // 间距
 
-                // 根据邮箱验证状态显示不同的按钮
-                if (_emailNotVerified && _isEmailVerificationSent)
-                  // "I already verify" 按钮
-                  SizedBox(
-                    width: screenWidth * buttonWidthFactor,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: buttonBackgroundColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      onPressed: checkVerificationStatus, // 点击后检查邮箱验证状态
-                      child: const Text(
-                        'I already verify',
-                        style: TextStyle(
-                          color: whiteTextColor,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  // 登录按钮
-                  SizedBox(
-                    width: screenWidth * buttonWidthFactor,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: buttonBackgroundColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      onPressed: login, // 点击按钮调用登录函数
-                      child: const Text(
-                        loginButtonText, // 从 constants.dart 引用按钮文本
-                        style: TextStyle(
-                          color: whiteTextColor,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                const SizedBox(height: 20), // 间距
-
-                // 忘记密码按钮
+                // 登录按钮
                 SizedBox(
                   width: screenWidth * buttonWidthFactor,
                   height: 50,
@@ -300,47 +291,62 @@ class LoginPageState extends State<LoginPage> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const PasswordResetChoicePage()),
-                      );
-                    },
+                    onPressed: login, // 点击按钮调用登录函数
                     child: const Text(
-                      forgetResetPasswordText, // 从 constants.dart 引用按钮文本
+                      loginButtonText, // 从 constants.dart 引用按钮文本
                       style: TextStyle(
                         color: whiteTextColor,
-                        fontSize: 13,
+                        fontSize: 15,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 10), // 间距
 
-                // 创建账户按钮
-                SizedBox(
-                  width: screenWidth * buttonWidthFactor,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: buttonBackgroundColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                const SizedBox(height: 20), // 间距
+
+                // 忘记密码和创建账户放在同一行
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * inputFieldWidthFactor),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween, // 左右对齐
+                    children: [
+                      // 忘记密码
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const PasswordResetChoicePage()),
+                          );
+                        },
+                        child: const Text(
+                          forgetResetPasswordText, // 从 constants.dart 引用按钮文本
+                          style: TextStyle(
+                            color: buttonBackgroundColor, // 设置文字颜色
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const CreateAccount()),
-                      );
-                    },
-                    child: const Text(
-                      createAccountButtonText, // 从 constants.dart 引用按钮文本
-                      style: TextStyle(
-                        color: whiteTextColor,
-                        fontSize: 13,
+                      // 创建账户
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const CreateAccount()),
+                          );
+                        },
+                        child: const Text(
+                          createAccountButtonText, // 从 constants.dart 引用按钮文本
+                          style: TextStyle(
+                            color: buttonBackgroundColor, // 设置文字颜色
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 20), // 保证内容不会被键盘完全遮挡

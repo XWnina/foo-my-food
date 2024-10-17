@@ -11,6 +11,7 @@ import 'add_ingredient_manually.dart';
 import 'user_info_page.dart'; // 引入用户页面
 import 'package:provider/provider.dart';
 import 'package:foo_my_food_app/providers/ingredient_provider.dart';
+import 'recipepage.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -49,7 +50,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _fetchUserIngredients() async {
     try {
-      final response = await http.get(Uri.parse('$baseApiUrl/user_ingredients/$userId'));
+      final response =
+          await http.get(Uri.parse('$baseApiUrl/user_ingredients/$userId'));
 
       if (response.statusCode == 200) {
         final List<dynamic> userIngredientsData = json.decode(response.body);
@@ -61,14 +63,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
           if (ingredientId == null) continue;
 
-          final ingredientResponse = await http.get(Uri.parse('$baseApiUrl/ingredients/$ingredientId'));
+          final ingredientResponse = await http
+              .get(Uri.parse('$baseApiUrl/ingredients/$ingredientId'));
           if (ingredientResponse.statusCode == 200) {
             final ingredientData = json.decode(ingredientResponse.body);
             ingredients.add(Ingredient.fromJson(ingredientData));
           }
         }
 
-        Provider.of<IngredientProvider>(context, listen: false).ingredients = ingredients;
+        Provider.of<IngredientProvider>(context, listen: false).ingredients =
+            ingredients;
       } else {
         throw Exception('Failed to load user ingredients');
       }
@@ -96,9 +100,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // 底部导航栏对应的页面
   final List<Widget> _pages = [
-    MyFoodPage(), // 我的食物页面
-    Text("Recipes Page"), // 配方页面
-    UserProfile(), // 用户资料页面
+    MyFoodPage(),
+    RecipePage(), // 替换为 RecipePage
+    UserProfile(),
   ];
 
   @override
@@ -107,8 +111,8 @@ class _MyHomePageState extends State<MyHomePage> {
       backgroundColor: backgroundColor,
       appBar: _selectedIndex == 0 // 只有在 MyFood 页面时显示 AppBar
           ? AppBar(
-              title: Text(widget.title, style: TextStyle(color: whiteTextColor)),
-              backgroundColor: appBarColor,
+              title: Text(widget.title, style: TextStyle(color: text)),
+              backgroundColor: buttonBackgroundColor,
             )
           : null, // 其他页面不显示 AppBar
       body: IndexedStack(
@@ -117,6 +121,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton(
+              heroTag: "Add",
               onPressed: _navigateToAddIngredient,
               backgroundColor: buttonBackgroundColor,
               tooltip: 'Add Ingredient',
@@ -125,14 +130,17 @@ class _MyHomePageState extends State<MyHomePage> {
           : null, // 只有在 "My Food" 页面时显示添加按钮
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.food_bank_outlined), label: 'My Food'),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_rounded), label: 'Recipes'),
-          BottomNavigationBarItem(icon: Icon(Icons.account_box), label: 'Profile'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.food_bank_outlined), label: 'My Food'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_rounded), label: 'Recipes'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.account_box), label: 'Profile'),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
+        selectedItemColor: text,
         onTap: _onItemTapped,
-        backgroundColor: Colors.white,
+        backgroundColor: buttonBackgroundColor,
       ),
     );
   }
@@ -170,10 +178,11 @@ class MyFoodPage extends StatelessWidget {
                     },
                     child: Card(
                       margin: const EdgeInsets.all(8.0),
-                      color: whiteFillColor,
+                      color: card,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          if (ingredient.imageURL.isNotEmpty)
                           CircleAvatar(
                             backgroundColor: greyBackgroundColor,
                             backgroundImage: NetworkImage(ingredient.imageURL),
@@ -182,16 +191,17 @@ class MyFoodPage extends StatelessWidget {
                           const SizedBox(height: 10),
                           Text(
                             ingredient.name,
-                            style: const TextStyle(color: blackTextColor,
-                            fontSize: 18, // 增加字体大小
+                            style: const TextStyle(
+                              color: cardnametext,
+                              fontSize: 18, // 增加字体大小
                               fontWeight: FontWeight.bold, // 让字体加粗
-                              ),
+                            ),
                             textAlign: TextAlign.center,
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             'Expires: ${ingredient.expirationDate}',
-                            style: TextStyle(color: greyIconColor),
+                            style: const TextStyle(color: cardexpirestext),
                             textAlign: TextAlign.center,
                           ),
                         ],
