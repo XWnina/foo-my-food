@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import com.foomyfood.foomyfood.database.Recipe;
 import com.foomyfood.foomyfood.database.db_service.RecipeService;
 
-@Component
+// @Component
 public class RecipeTester implements CommandLineRunner {
 
     @Autowired

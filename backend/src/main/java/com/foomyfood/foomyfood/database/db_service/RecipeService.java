@@ -18,7 +18,6 @@ public class RecipeService {
     // Add a new recipe
     public Recipe addRecipe(Recipe recipe) {
         // Ensure that dishName and ingredients are not null
-        System.out.println("Received recipe: " + recipe);
         if (recipe.getDishName() == null || recipe.getDishName().isEmpty()) {
             throw new IllegalArgumentException("Dish name is mandatory.");
         }
