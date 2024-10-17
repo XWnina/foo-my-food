@@ -60,7 +60,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
 
   Future<void> _saveChanges() async {
     final updatedRecipe = {
-      'name': _nameController.text,
+      'dishName': _nameController.text,
       'ingredients':
           _ingredientsController.text.split(',').map((e) => e.trim()).toList(),
       'calories': int.tryParse(_caloriesController.text) ?? 0,

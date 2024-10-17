@@ -65,25 +65,60 @@ class _RecipePageState extends State<RecipePage> {
                 style: TextStyle(color: Colors.white),
               ),
             )
-          : ListView.builder(
+          : GridView.builder(
+              padding: const EdgeInsets.all(8),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, // Two items per row
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+                childAspectRatio: 0.8,
+              ),
               itemCount: _recipes.length,
               itemBuilder: (context, index) {
                 final recipe = _recipes[index];
-                return ListTile(
-                  title: Text(recipe.name),
-                  subtitle: Text('Calories: ${recipe.calories ?? 'N/A'}'),
+                return GestureDetector(
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => RecipeDetailPage(
-                          recipe: recipe.toJson(), // 将 Recipe 转换为 Map<String, dynamic>
+                          recipe: recipe.toJson(), 
                           userId: userId,
                           index: index,
                         ),
                       ),
                     );
                   },
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
+                              ? Image.network(recipe.imageUrl!, fit: BoxFit.cover)
+                              : const Icon(Icons.image, size: 50),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                recipe.name,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16),
+                              ),
+                              const SizedBox(height: 4),
+                              Text('Calories: ${recipe.calories} kcal'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               },
             ),

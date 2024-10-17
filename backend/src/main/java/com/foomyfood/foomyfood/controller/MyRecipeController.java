@@ -35,9 +35,11 @@ public class MyRecipeController {
     // 添加新配方
     @PostMapping
     public ResponseEntity<Recipe> addRecipe(@RequestBody Recipe recipe) {
+        System.out.println("Received recipe: " + recipe);
         Recipe createdRecipe = recipeService.addRecipe(recipe);
-        return ResponseEntity.ok(createdRecipe);
+        return new ResponseEntity<>(createdRecipe, HttpStatus.CREATED); // 返回 201 状态码
     }
+
 
     // 根据ID获取配方
     @GetMapping("/id/{id}")

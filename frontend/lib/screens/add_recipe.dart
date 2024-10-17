@@ -93,7 +93,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
       String? imageUrl;
       if (_image != null) {
         var request = http.MultipartRequest(
-            'POST', Uri.parse('$baseApiUrl/upload_image'));
+            'POST', Uri.parse('$baseApiUrl/myrecipes/upload_image'));
         request.files
             .add(await http.MultipartFile.fromPath('file', _image!.path));
         var response = await request.send();
@@ -121,6 +121,8 @@ class _AddRecipePageState extends State<AddRecipePage> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(recipeData),
       );
+      print('Response status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
