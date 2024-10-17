@@ -62,7 +62,7 @@ public class RecipeTester implements CommandLineRunner {
         Recipe recipe2 = recipeService.addRecipe(new Recipe("Minimal Recipe", null, null, null, null,
                 Arrays.asList("Ingredient1")));
 
-        // Recipe with only dishName and ingredients (calories defaults to 0, others default to "N/A")
+        // Recipe with only dishName and ingredients (calories defaults to -1, others default to "N/A")
         Recipe recipe3 = recipeService.addRecipe(new Recipe("Simple Recipe", null, null, null, null,
                 Arrays.asList("Simple Ingredient1", "Simple Ingredient2")));
 
