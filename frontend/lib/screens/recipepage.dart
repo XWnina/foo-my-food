@@ -36,10 +36,12 @@ class _RecipePageState extends State<RecipePage> {
 
   Future<void> _fetchUserRecipes() async {
     try {
-      final response = await http.get(Uri.parse('$baseApiUrl/myrecipes/user/$userId'));
+      final response =
+          await http.get(Uri.parse('$baseApiUrl/myrecipes/user/$userId'));
       if (response.statusCode == 200) {
         final List<dynamic> recipeData = json.decode(response.body);
-        List<Recipe> recipes = recipeData.map((data) => Recipe.fromJson(data)).toList();
+        List<Recipe> recipes =
+            recipeData.map((data) => Recipe.fromJson(data)).toList();
         setState(() {
           _recipes = recipes;
         });
@@ -54,6 +56,7 @@ class _RecipePageState extends State<RecipePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         title: const Text('My Recipes', style: TextStyle(color: Colors.white)),
         backgroundColor: appBarColor,
@@ -82,7 +85,7 @@ class _RecipePageState extends State<RecipePage> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => RecipeDetailPage(
-                          recipe: recipe.toJson(), 
+                          recipe: recipe.toJson(),
                           userId: userId,
                           index: index,
                         ),
@@ -90,29 +93,40 @@ class _RecipePageState extends State<RecipePage> {
                     );
                   },
                   child: Card(
+                    color: card,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                     child: Column(
                       children: [
                         Expanded(
-                          child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
-                              ? Image.network(recipe.imageUrl!, fit: BoxFit.cover)
+                          child: recipe.imageUrl != null &&
+                                  recipe.imageUrl!.isNotEmpty
+                              ? Image.network(recipe.imageUrl!,
+                                  fit: BoxFit.cover)
                               : const Icon(Icons.image, size: 50),
                         ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
                                 recipe.name,
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16),
+                                  color: cardnametext,
+                                  fontSize: 18, // 增加字体大小
+                                  fontWeight: FontWeight.bold, // 让字体加粗
+                                ),
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 4),
-                              Text('Calories: ${recipe.calories} kcal'),
+                              Text(
+                                'Calories: ${recipe.calories} kcal',
+                                style: const TextStyle(color: cardexpirestext),
+                                textAlign: TextAlign.center,
+                              ),
                             ],
                           ),
                         ),
