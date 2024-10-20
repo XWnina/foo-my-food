@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/screens/shopping_list_page.dart';
+import 'package:foo_my_food_app/screens/add_shopping_item_page.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -90,6 +92,21 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+
+  // 导航到添加购物清单页面
+  void _navigateToAddShoppingItem() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AddShoppingItemPage()),
+    ).then((newItem) {
+      if (newItem != null) {
+        // 这里可以处理新添加的购物清单物品，将其添加到购物清单列表中
+        print("New shopping item added: $newItem");
+      }
+    });
+  }
+
+  // 页面切换函数
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -98,7 +115,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final List<Widget> _pages = [
     MyFoodPage(),
-    RecipePage(),
+    RecipePage(), // 替换为 RecipePage
+    ShoppingListPage(),
     UserProfile(),
   ];
 
@@ -116,28 +134,49 @@ class _MyHomePageState extends State<MyHomePage> {
         index: _selectedIndex,
         children: _pages,
       ),
-      floatingActionButton: _selectedIndex == 0
+      floatingActionButton: (_selectedIndex == 0 ||
+              _selectedIndex == 2) // 在 MyFood 和 ShoppingList 页面时显示悬浮按钮
           ? FloatingActionButton(
               heroTag: "Add",
-              onPressed: _navigateToAddIngredient,
+              onPressed: () {
+                if (_selectedIndex == 0) {
+                  _navigateToAddIngredient(); // MyFood 页面添加食材的行为
+                } else if (_selectedIndex == 2) {
+                  _navigateToAddShoppingItem(); // ShoppingList 页面添加物品的行为
+                }
+              },
               backgroundColor: buttonBackgroundColor,
-              tooltip: 'Add Ingredient',
-              child: const Icon(Icons.add, color: whiteTextColor),
+              tooltip: 'Add Item',
+              child: _selectedIndex == 2 // 在 ShoppingList 页面显示不同的图标
+            ? const Icon(Icons.shopping_cart_checkout_outlined, color: whiteTextColor) // 购物清单页面显示购物车图标
+            : const Icon(Icons.add, color: whiteTextColor), // 其他页面显示添加图标
+
             )
-          : null,
+          : null, // 在其他页面不显示悬浮按钮
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-              icon: Icon(Icons.food_bank_outlined), label: 'My Food'),
+            icon: Icon(Icons.food_bank_outlined),
+            label: 'My Food',
+          ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_rounded), label: 'Recipes'),
+            icon: Icon(Icons.receipt_rounded),
+            label: 'Recipes',
+          ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.account_box), label: 'Profile'),
+            icon: Icon(Icons.shopping_cart),
+            label: 'Shopping List', // 添加购物清单按钮
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_box),
+            label: 'Profile',
+          ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: text,
+        selectedItemColor: text, // 设置选中的项目颜色
         onTap: _onItemTapped,
         backgroundColor: buttonBackgroundColor,
+        type: BottomNavigationBarType.fixed, // 确保使用固定样式，避免颜色问题
       ),
     );
   }
