@@ -230,6 +230,7 @@ class AddIngredientPageState extends State<AddIngredientPage> {
       );
     }
   }
+  
 
   Future<bool> _showAddToCalendarDialog() async {
     return await showDialog<bool>(
