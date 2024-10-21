@@ -54,17 +54,17 @@ public class PresetTableTester implements CommandLineRunner {
     private void createTestPresets() {
         // Valid presets with all fields filled
         PresetTable preset1 = presetTableService.createPreset(
-                new PresetTable(null, "Apple", "Fruit", "Refrigerated", 1.0, "kg", 7, 52, 0.3f, 0.2f, 14.0f, 2.4f)
+                new PresetTable(null, "Apple", "Fruit", "Refrigerated", 1, "kg", 7, 52, 0.3f, 0.2f, 14.0f, 2.4f)
         );
 
         // Preset with minimal details (optional fields set to default)
         PresetTable preset2 = presetTableService.createPreset(
-                new PresetTable(null, "Banana", "Fruit", "Room Temperature", 1.0, "kg", 5, 96, 1.3f, 0.3f, 22.8f, 2.6f)
+                new PresetTable(null, "Banana", "Fruit", "Room Temperature", 1, "kg", 5, 96, 1.3f, 0.3f, 22.8f, 2.6f)
         );
 
         // Preset with only name and category filled, using default values for others
         PresetTable preset3 = presetTableService.createPreset(
-                new PresetTable(null, "Carrot", "Vegetable", "Refrigerated", 0.5, "kg", 14, 41, 0.9f, 0.2f, 9.6f, 2.8f)
+                new PresetTable(null, "Carrot", "Vegetable", "Refrigerated", 1, "kg", 14, 41, 0.9f, 0.2f, 9.6f, 2.8f)
         );
 
         // Print created presets
@@ -98,7 +98,7 @@ public class PresetTableTester implements CommandLineRunner {
     // Update a preset
     private void updatePreset(Long presetId) {
         PresetTable updatedPreset = presetTableService.updatePreset(presetId,
-                new PresetTable(null, "Updated Apple", "Fruit", "Refrigerated", 1.5, "kg", 10, 55, 0.5f, 0.3f, 15.0f, 3.0f)
+                new PresetTable(null, "Updated Apple", "Fruit", "Refrigerated", 1, "kg", 10, 55, 0.5f, 0.3f, 15.0f, 3.0f)
         );
         System.out.println("Updated Preset: " + updatedPreset);
     }
