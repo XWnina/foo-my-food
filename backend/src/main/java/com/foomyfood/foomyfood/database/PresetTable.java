@@ -26,7 +26,7 @@ public class PresetTable {
     private String storageMethod;
 
     @Column(name = "baseQuantity", nullable = false)
-    private Double baseQuantity;
+    private Integer baseQuantity;
 
     @Column(name = "unit", nullable = false)
     private String unit;
@@ -53,7 +53,7 @@ public class PresetTable {
     public PresetTable() {
     }
 
-    public PresetTable(Long ingredientId, String name, String category, String storageMethod, double baseQuantity,
+    public PresetTable(Long ingredientId, String name, String category, String storageMethod, int baseQuantity,
             String unit, int expirationDate, int calories, float protein, float fat,
             float carbohydrates, float fiber) {
         this.ingredientId = ingredientId;
@@ -103,11 +103,11 @@ public class PresetTable {
         this.storageMethod = storageMethod;
     }
 
-    public Double getBaseQuantity() {
+    public Integer getBaseQuantity() {
         return baseQuantity;
     }
 
-    public void setBaseQuantity(Double baseQuantity) {
+    public void setBaseQuantity(Integer baseQuantity) {
         this.baseQuantity = baseQuantity;
     }
 
