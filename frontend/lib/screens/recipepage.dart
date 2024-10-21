@@ -1,39 +1,152 @@
 import 'package:flutter/material.dart';
-import 'add_recipe.dart'; // 导入添加recipe的页面
 import 'package:foo_my_food_app/utils/colors.dart';
-import 'package:foo_my_food_app/utils/text_style.dart';
+import 'package:foo_my_food_app/models/recipe.dart';
+import 'package:foo_my_food_app/utils/constants.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'add_recipe.dart';
+import 'recipe_detail.dart';
 
-class RecipePage extends StatelessWidget {
+class RecipePage extends StatefulWidget {
+  @override
+  _RecipePageState createState() => _RecipePageState();
+}
+
+class _RecipePageState extends State<RecipePage> {
+  List<Recipe> _recipes = [];
+  String userId = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? savedUserId = prefs.getString('userId');
+    if (savedUserId != null) {
+      setState(() {
+        userId = savedUserId;
+      });
+      _fetchUserRecipes();
+    }
+  }
+
+  Future<void> _fetchUserRecipes() async {
+    try {
+      final response =
+          await http.get(Uri.parse('$baseApiUrl/myrecipes/user/$userId'));
+      if (response.statusCode == 200) {
+        final List<dynamic> recipeData = json.decode(response.body);
+        List<Recipe> recipes =
+            recipeData.map((data) => Recipe.fromJson(data)).toList();
+        setState(() {
+          _recipes = recipes;
+        });
+      } else {
+        throw Exception('Failed to load recipes');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Text('My Recipes', style: TextStyle(color: text)),
-        backgroundColor: buttonBackgroundColor,
+        title: const Text('My Recipes', style: TextStyle(color: Colors.white)),
+        backgroundColor: appBarColor,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'No recipes added yet! Click the + button to add.',
-              style: AppTextStyles.headline4.copyWith(color: blackTextColor),
+      body: _recipes.isEmpty
+          ? const Center(
+              child: Text(
+                'No recipes added yet! Click the + button to add.',
+                style: TextStyle(color: Colors.white),
+              ),
+            )
+          : GridView.builder(
+              padding: const EdgeInsets.all(8),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, // Two items per row
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+                childAspectRatio: 0.8,
+              ),
+              itemCount: _recipes.length,
+              itemBuilder: (context, index) {
+                final recipe = _recipes[index];
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RecipeDetailPage(
+                          recipe: recipe.toJson(),
+                          userId: userId,
+                          index: index,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Card(
+                    color: card,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: recipe.imageUrl != null &&
+                                  recipe.imageUrl!.isNotEmpty
+                              ? Image.network(recipe.imageUrl!,
+                                  fit: BoxFit.cover)
+                              : const Icon(Icons.image, size: 50),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                recipe.name,
+                                style: const TextStyle(
+                                  color: cardnametext,
+                                  fontSize: 18, // 增加字体大小
+                                  fontWeight: FontWeight.bold, // 让字体加粗
+                                ),
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Calories: ${recipe.calories} kcal',
+                                style: const TextStyle(color: cardexpirestext),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
-          ],
-        ),
-      ),
       floatingActionButton: FloatingActionButton(
-        heroTag: "AddRecipe",
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => AddRecipePage()),
-          );
+          ).then((_) {
+            _fetchUserRecipes(); // Refresh the recipe list after adding a new recipe
+          });
         },
         backgroundColor: buttonBackgroundColor,
-        tooltip: 'Add Recipe',
-        child: const Icon(Icons.add, color: whiteTextColor),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

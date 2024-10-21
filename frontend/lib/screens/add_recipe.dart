@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:foo_my_food_app/utils/constants.dart';
 
 class AddRecipePage extends StatefulWidget {
   const AddRecipePage({super.key});
@@ -30,8 +31,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
             title: const Text('Take a photo'),
             onTap: () async {
               Navigator.pop(context);
-              final picked =
-                  await ImagePicker().pickImage(source: ImageSource.camera);
+              final picked = await ImagePicker().pickImage(source: ImageSource.camera);
               if (picked != null) {
                 _handleImagePicked(picked);
               }
@@ -42,8 +42,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
             title: const Text('Choose from gallery'),
             onTap: () async {
               Navigator.pop(context);
-              final picked =
-                  await ImagePicker().pickImage(source: ImageSource.gallery);
+              final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
               if (picked != null) {
                 _handleImagePicked(picked);
               }
@@ -70,20 +69,21 @@ class _AddRecipePageState extends State<AddRecipePage> {
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content:
-            Text(message, style: const TextStyle(color: redErrorTextColor)),
+        content: Text(message, style: const TextStyle(color: Colors.red)),
       ),
     );
   }
 
   Future<void> _addRecipe() async {
     final recipeName = _recipeNameController.text;
-    final ingredients = _ingredientsController.text;
+    final ingredients = _ingredientsController.text
+        .split(',')
+        .map((e) => e.trim())
+        .toList(); // 确保是数组形式
     final calories = _caloriesController.text;
     final description = _descriptionController.text;
     final videoLink = _videoLinkController.text;
 
-    // 仅验证必填项
     if (recipeName.isEmpty || ingredients.isEmpty) {
       _showError('Please fill in Recipe Name and Ingredients');
       return;
@@ -93,7 +93,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
       String? imageUrl;
       if (_image != null) {
         var request = http.MultipartRequest(
-            'POST', Uri.parse('your_image_upload_api_url_here'));
+            'POST', Uri.parse('$baseApiUrl/myrecipes/upload_image'));
         request.files
             .add(await http.MultipartFile.fromPath('file', _image!.path));
         var response = await request.send();
@@ -105,39 +105,32 @@ class _AddRecipePageState extends State<AddRecipePage> {
         }
       }
 
-      // 构建 recipe 数据，videoLink 和 imageURL 都是可选的
       final recipeData = {
-        'name': recipeName,
-        'ingredients': ingredients,
-        'calories': calories,
+        'dishName': recipeName, // 修改了这里的字段名
+        'ingredients': ingredients, // 确保是数组形式
+        'calories': int.tryParse(calories) ?? 0,
         'description': description,
-        if (imageUrl != null) 'imageURL': imageUrl, // 仅当有图片时传递URL
-        if (videoLink.isNotEmpty) 'videoLink': videoLink, // 仅当视频链接不为空时传递
+        if (imageUrl != null) 'imageURL': imageUrl,
+        if (videoLink.isNotEmpty) 'videoLink': videoLink,
       };
 
-      // 仅当videoLink不为空时，进行API请求
-      if (videoLink.isNotEmpty) {
-        final response = await http.post(
-          Uri.parse('your_video_api_url_here'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(recipeData),
-        );
+      print('Recipe data to be sent: $recipeData'); // 调试用，确保数据正确
 
-        if (response.statusCode == 201) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Recipe added successfully!')),
-          );
-          Navigator.pop(context); // 返回上一页
-        } else {
-          throw Exception('Failed to add recipe');
-        }
-      } else {
-        // 如果没有视频链接，只是提示用户成功添加，而不进行网络请求
+      final response = await http.post(
+        Uri.parse('$baseApiUrl/myrecipes'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(recipeData),
+      );
+      print('Response status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Recipe added successfully!')),
+          const SnackBar(content: Text('Recipe added successfully!')),
         );
-        Navigator.pop(context); // 返回上一页
+        Navigator.pop(context);
+      } else {
+        throw Exception('Failed to add recipe');
       }
     } catch (e) {
       _showError('Error: ${e.toString()}');
@@ -149,20 +142,17 @@ class _AddRecipePageState extends State<AddRecipePage> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title:
-            const Text('Add Recipe', style: TextStyle(color: whiteTextColor)),
+        title: const Text('Add Recipe', style: TextStyle(color: Colors.white)),
         backgroundColor: appBarColor,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Image Picker (Moved to top)
             GestureDetector(
               onTap: _pickImage,
               child: _image != null
-                  ? Image.file(_image!,
-                      height: 100, width: 100, fit: BoxFit.cover)
+                  ? Image.file(_image!, height: 100, width: 100, fit: BoxFit.cover)
                   : Container(
                       height: 100,
                       width: 100,
@@ -171,52 +161,41 @@ class _AddRecipePageState extends State<AddRecipePage> {
                     ),
             ),
             const SizedBox(height: 16),
-
-            // Recipe Name
             TextField(
               controller: _recipeNameController,
               decoration: const InputDecoration(hintText: 'Recipe Name'),
             ),
             const SizedBox(height: 16),
-
-            // Ingredients
             TextField(
               controller: _ingredientsController,
-              decoration: const InputDecoration(hintText: 'Ingredients'),
+              decoration: const InputDecoration(
+                  hintText: 'Ingredients (comma-separated)'),
             ),
             const SizedBox(height: 16),
-
-            // Calories
             TextField(
               controller: _caloriesController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(hintText: 'Calories'),
             ),
             const SizedBox(height: 16),
-
-            // Description
             TextField(
               controller: _descriptionController,
               maxLines: 4,
               decoration: const InputDecoration(hintText: 'Description'),
             ),
             const SizedBox(height: 16),
-
-            // Video Link
             TextField(
               controller: _videoLinkController,
               decoration: const InputDecoration(hintText: 'Video Link'),
             ),
             const SizedBox(height: 16),
-
-            // Add Recipe Button
             ElevatedButton(
               onPressed: _addRecipe,
               style: ElevatedButton.styleFrom(
                 backgroundColor: buttonBackgroundColor,
               ),
               child: const Text('Add Recipe',
-                  style: TextStyle(color: whiteTextColor)),
+                  style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

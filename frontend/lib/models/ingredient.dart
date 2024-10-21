@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 class Ingredient with ChangeNotifier {
   int ingredientId; // 确保这个字段在 JSON 中是可用的
   String name;
+  String category;
+  String storageMethod;
   String imageURL;
   String expirationDate;
   int baseQuantity;
@@ -16,6 +18,8 @@ class Ingredient with ChangeNotifier {
   Ingredient({
     required this.ingredientId,
     required this.name,
+    required this.category,
+    required this.storageMethod,
     required this.imageURL,
     required this.expirationDate,
     required this.baseQuantity,
@@ -36,6 +40,8 @@ class Ingredient with ChangeNotifier {
     return Ingredient(
       ingredientId: json['ingredientId'], // 从 JSON 中解析 id
       name: json['name'] ?? '', // 提供默认值
+      category: json['category'] ?? '',
+      storageMethod: json['storageMethod'] ?? '',
       imageURL: json['imageURL'] ?? '',
       expirationDate: json['expirationDate'] ?? '',
       baseQuantity: json['baseQuantity'] ?? 0,
@@ -52,6 +58,8 @@ class Ingredient with ChangeNotifier {
     return {
       'ingredientId': ingredientId,
       'name': name,
+      'category':category,
+      'storageMethod':storageMethod,
       'imageURL': imageURL,
       'expirationDate': expirationDate,
       'baseQuantity': baseQuantity,
@@ -66,6 +74,8 @@ class Ingredient with ChangeNotifier {
 
   void update(Ingredient newIngredient) {
     name = newIngredient.name;
+    category=newIngredient.category;
+    storageMethod=newIngredient.storageMethod;
     expirationDate = newIngredient.expirationDate;
     baseQuantity = newIngredient.baseQuantity;
     calories = newIngredient.calories;
