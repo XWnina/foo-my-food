@@ -70,4 +70,5 @@ public class IngredientService {
     public Optional<Ingredient> getIngredientByName(String name) {
         return ingredientRepository.findByName(name);
     }
+    
 }

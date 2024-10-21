@@ -16,7 +16,7 @@ public class PresetTable {
     @Column(name = "ingredientId")
     private Long ingredientId;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", unique = true, nullable = false)
     private String name;
 
     @Column(name = "category", nullable = false)
