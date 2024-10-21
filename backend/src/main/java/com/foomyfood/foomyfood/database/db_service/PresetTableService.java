@@ -28,6 +28,15 @@ public class PresetTableService {
     }
 
     public PresetTable createPreset(PresetTable preset) {
+        // Check if a preset with the same foodName already exists
+        Optional<PresetTable> existingPreset = presetTableRepository.findByName(preset.getName());
+
+        if (existingPreset.isPresent()) {
+            // Return the existing preset if a duplicate is found
+            return existingPreset.get();
+        }
+
+        // Save and return the new preset if it's not a duplicate
         return presetTableRepository.save(preset);
     }
 
@@ -47,8 +56,8 @@ public class PresetTableService {
             return presetTableRepository.save(preset);
         }).orElseThrow(() -> new RuntimeException("Preset not found with id " + id));
     }
-
     public void deletePreset(Long id) {
         presetTableRepository.deleteById(id);
     }
+
 }

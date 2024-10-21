@@ -5,12 +5,11 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
 
 import com.foomyfood.foomyfood.database.PresetTable;
 import com.foomyfood.foomyfood.database.db_service.PresetTableService;
 
-@Component
+// @Component
 public class PresetTableTester implements CommandLineRunner {
 
     @Autowired
