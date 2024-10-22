@@ -407,7 +407,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                             decoration: InputDecoration(
                               labelText: 'Expiration Date',
                               filled: true,
-                              
+
                               fillColor: whiteFillColor,
                               border: const OutlineInputBorder(
                                 borderSide: BorderSide(color: greyBorderColor),
