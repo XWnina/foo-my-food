@@ -92,7 +92,6 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-
   // 导航到添加购物清单页面
   void _navigateToAddShoppingItem() {
     Navigator.push(
@@ -191,10 +190,10 @@ class MyFoodPage extends StatelessWidget {
       );
       print(response.statusCode);
       if (response.statusCode == 204) {
-       
+
         Provider.of<IngredientProvider>(context, listen: false)
             .removeIngredient(index);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Ingredient deleted successfully')),
         );

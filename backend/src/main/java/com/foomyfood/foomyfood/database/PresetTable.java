@@ -7,6 +7,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 @Entity
 @Table(name = "preset_food")
 public class PresetTable {
@@ -125,6 +128,13 @@ public class PresetTable {
 
     public void setExpirationDate(int expirationDate) {
         this.expirationDate = expirationDate;
+    }
+
+    public String getFormattedExpirationDate() {
+        // 使用 LocalDate 计算当前日期加上过期天数，返回具体的过期日期
+        LocalDate expiration = LocalDate.now().plusDays(this.expirationDate);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        return expiration.format(formatter);
     }
 
     public int getCalories() {
