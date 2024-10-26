@@ -7,7 +7,6 @@ import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:foo_my_food_app/datasource/temp_db.dart'; // For food categories and storage methods
 import 'package:foo_my_food_app/utils/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:foo_my_food_app/utils/helper_function.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -22,40 +21,147 @@ class AddIngredientPage extends StatefulWidget {
 
 class AddIngredientPageState extends State<AddIngredientPage> {
   File? _image;
+
+  // 控制器
+  final TextEditingController _ingredientNameController =
+      TextEditingController();
+  final TextEditingController _quantityController = TextEditingController();
+  final TextEditingController _unitController = TextEditingController();
+  final TextEditingController _caloriesController = TextEditingController();
+  final TextEditingController _proteinController = TextEditingController();
+  final TextEditingController _fatController = TextEditingController();
+  final TextEditingController _carbohydratesController =
+      TextEditingController();
+  final TextEditingController _fiberController = TextEditingController();
+
   String? _selectedCategory;
   String? _selectedStorageMethod;
   int _quantity = 1;
-  bool _isQuantityValid = true; // 用于跟踪数量输入是否有效
-  DateTime _expirationDate = DateTime.now();
-  String _ingredientName = '';
-  String _unit = ''; // Unit of measurement
-  double _calories = 0; // Calories
-  double _protein = 0; // Protein
-  double _fat = 0; // Fat
-  double _carbohydrates = 0; // Carbohydrates
-  double _fiber = 0; // Fiber
-  bool _isFormValid = false; // 用于跟踪表单是否有效
+  bool _isQuantityValid = true;
+  bool _isNameValid = true;
+  bool _isUnitValid = true;
   bool _isCaloriesValid = true;
   bool _isProteinValid = true;
   bool _isFatValid = true;
   bool _isCarbohydratesValid = true;
   bool _isFiberValid = true;
+  DateTime _expirationDate = DateTime.now();
+  bool _isFormValid = false;
   final CalendarHelper _calendarHelper = CalendarHelper();
 
-  // 表单验证方法
+  // 用于模糊搜索结果
+  List<String> _matchingPresets = [];
+  bool _showDropdown = false;
+
+  @override
+  void dispose() {
+    // 释放控制器资源
+    _ingredientNameController.dispose();
+    _quantityController.dispose();
+    _unitController.dispose();
+    _caloriesController.dispose();
+    _proteinController.dispose();
+    _fatController.dispose();
+    _carbohydratesController.dispose();
+    _fiberController.dispose();
+    super.dispose();
+  }
+
   void _validateForm() {
     setState(() {
-      _isFormValid = _ingredientName.isNotEmpty &&
+      _isFormValid = _ingredientNameController.text.isNotEmpty &&
           _selectedCategory != null &&
           _selectedStorageMethod != null &&
-          _unit.isNotEmpty &&
+          _unitController.text.isNotEmpty &&
           _quantity > 0 &&
-          _calories >= 0 &&
-          _protein >= 0 &&
-          _fat >= 0 &&
-          _carbohydrates >= 0 &&
-          _fiber >= 0;
+          _caloriesController.text.isNotEmpty &&
+          _proteinController.text.isNotEmpty &&
+          _fatController.text.isNotEmpty &&
+          _carbohydratesController.text.isNotEmpty &&
+          _fiberController.text.isNotEmpty;
     });
+  }
+
+  void _validateName() {
+    setState(() {
+      _isNameValid = _ingredientNameController.text.isNotEmpty;
+    });
+    _validateForm();
+  }
+
+  void _validateQuantity() {
+    setState(() {
+      final quantity = int.tryParse(_quantityController.text);
+      _isQuantityValid = quantity != null && quantity > 0; // 确保数量是有效数字且大于 0
+    });
+    _validateForm(); // 验证表单
+  }
+
+  void _validateUnit() {
+    setState(() {
+      _isUnitValid = _unitController.text.isNotEmpty;
+    });
+    _validateForm();
+  }
+
+  void _validateProtein() {
+    setState(() {
+      if (_proteinController.text.isEmpty) {
+        _isProteinValid = true; // 空值时，不报错
+      } else {
+        final protein = double.tryParse(_proteinController.text);
+        _isProteinValid = protein != null && protein >= 0;
+      }
+    });
+    _validateForm();
+  }
+
+  void _validateCalories() {
+    setState(() {
+      if (_caloriesController.text.isEmpty) {
+        _isCaloriesValid = true;
+      } else {
+        final calories = double.tryParse(_caloriesController.text);
+        _isCaloriesValid = calories != null && calories >= 0;
+      }
+    });
+    _validateForm();
+  }
+
+  void _validateFat() {
+    setState(() {
+      if (_fatController.text.isEmpty) {
+        _isFatValid = true;
+      } else {
+        final fat = double.tryParse(_fatController.text);
+        _isFatValid = fat != null && fat >= 0;
+      }
+    });
+    _validateForm();
+  }
+
+  void _validateCarbohydrates() {
+    setState(() {
+      if (_carbohydratesController.text.isEmpty) {
+        _isCarbohydratesValid = true;
+      } else {
+        final carbohydrates = double.tryParse(_carbohydratesController.text);
+        _isCarbohydratesValid = carbohydrates != null && carbohydrates >= 0;
+      }
+    });
+    _validateForm();
+  }
+
+  void _validateFiber() {
+    setState(() {
+      if (_fiberController.text.isEmpty) {
+        _isFiberValid = true;
+      } else {
+        final fiber = double.tryParse(_fiberController.text);
+        _isFiberValid = fiber != null && fiber >= 0;
+      }
+    });
+    _validateForm();
   }
 
   Future<void> _pickImage() async {
@@ -71,7 +177,7 @@ class AddIngredientPageState extends State<AddIngredientPage> {
         setState(() {
           _image = imageFile;
         });
-        _validateForm(); // 更新图片后进行表单验证
+        _validateForm();
       }
     }
   }
@@ -129,20 +235,20 @@ class AddIngredientPageState extends State<AddIngredientPage> {
       const String ingredientApiUrl = '$baseApiUrl/ingredients';
 
       final ingredientData = {
-        'name': _ingredientName,
+        'name': _ingredientNameController.text,
         'category': _selectedCategory,
         'imageURL': imageUrl,
         'storageMethod': _selectedStorageMethod,
-        'baseQuantity': _quantity,
-        'unit': _unit,
+        'baseQuantity': int.parse(_quantityController.text),
+        'unit': _unitController.text,
         'expirationDate': DateFormat('yyyy-MM-dd').format(_expirationDate),
         'isUserCreated': true,
         'createdBy': userId,
-        'calories': _calories,
-        'protein': _protein,
-        'fat': _fat,
-        'carbohydrates': _carbohydrates,
-        'fiber': _fiber,
+        'calories': double.parse(_caloriesController.text),
+        'protein': double.parse(_proteinController.text),
+        'fat': double.parse(_fatController.text),
+        'carbohydrates': double.parse(_carbohydratesController.text),
+        'fiber': double.parse(_fiberController.text),
       };
 
       final ingredientResponse = await http.post(
@@ -160,7 +266,7 @@ class AddIngredientPageState extends State<AddIngredientPage> {
         final userIngredientData = {
           'userId': userId,
           'ingredientId': ingredientId,
-          'userQuantity': _quantity,
+          'userQuantity': int.parse(_quantityController.text),
         };
 
         final userIngredientResponse = await http.post(
@@ -186,7 +292,7 @@ class AddIngredientPageState extends State<AddIngredientPage> {
             }
 
             bool eventCreated = await _calendarHelper.createCalendarEvent(
-                _ingredientName, _expirationDate);
+                _ingredientNameController.text, _expirationDate);
             if (eventCreated) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -198,25 +304,24 @@ class AddIngredientPageState extends State<AddIngredientPage> {
           }
 
           setState(() {
-            _ingredientName = '';
-            _image = null;
+            _ingredientNameController.clear();
+            _quantityController.clear();
+            _unitController.clear();
+            _caloriesController.clear();
+            _proteinController.clear();
+            _fatController.clear();
+            _carbohydratesController.clear();
+            _fiberController.clear();
             _selectedCategory = null;
             _selectedStorageMethod = null;
             _quantity = 1;
             _expirationDate = DateTime.now();
-            _unit = '';
-            _calories = 0;
-            _protein = 0;
-            _fat = 0;
-            _carbohydrates = 0;
-            _fiber = 0;
           });
 
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const MyHomePage(title: 'Home Page'),
-            ),
+                builder: (context) => const MyHomePage(title: 'Home Page')),
           );
         } else {
           throw Exception('Failed to add ingredient to user ingredients');
@@ -230,7 +335,6 @@ class AddIngredientPageState extends State<AddIngredientPage> {
       );
     }
   }
-  
 
   Future<bool> _showAddToCalendarDialog() async {
     return await showDialog<bool>(
@@ -256,15 +360,78 @@ class AddIngredientPageState extends State<AddIngredientPage> {
         false;
   }
 
+  // 实时获取匹配食材
+  Future<void> _getMatchingPresets(String query) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseApiUrl/presetsaddfood/search?query=$query'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<String> presets =
+            List<String>.from(jsonDecode(response.body));
+        setState(() {
+          _matchingPresets = presets;
+          _showDropdown = presets.isNotEmpty;
+        });
+      } else {
+        setState(() {
+          _matchingPresets = [];
+          _showDropdown = false;
+        });
+      }
+    } catch (e) {
+      _showError('Error fetching matching presets: ${e.toString()}');
+      setState(() {
+        _matchingPresets = [];
+        _showDropdown = false;
+      });
+    }
+  }
+
+  // 根据选中的预设名称填充表单
+  Future<void> _fillFormWithPreset(String presetName) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseApiUrl/presetsaddfood/name/$presetName'),
+      );
+
+      if (response.statusCode == 200) {
+        final presetData = jsonDecode(response.body);
+
+        setState(() {
+          _ingredientNameController.text = presetData['name'];
+          _unitController.text = presetData['unit'];
+          _caloriesController.text = presetData['calories'].toString();
+          _proteinController.text = presetData['protein'].toString();
+          _fatController.text = presetData['fat'].toString();
+          _carbohydratesController.text =
+              presetData['carbohydrates'].toString();
+          _fiberController.text = presetData['fiber'].toString();
+
+          _selectedCategory = presetData['category'];
+          _selectedStorageMethod = presetData['storageMethod'];
+          _quantityController.text = presetData['baseQuantity'].toString();
+          _expirationDate =
+              DateFormat('yyyy-MM-dd').parse(presetData['expirationDate']);
+          _showDropdown = false; // 选中后隐藏下拉菜单
+        });
+
+        _validateForm();
+      } else {
+        _showError('No preset found with the name $presetName');
+      }
+    } catch (e) {
+      _showError('Error fetching preset: ${e.toString()}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text(
-          'Add food',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('Add food', style: TextStyle(color: Colors.white)),
         backgroundColor: appBarColor,
       ),
       body: SingleChildScrollView(
@@ -272,20 +439,39 @@ class AddIngredientPageState extends State<AddIngredientPage> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // Ingredient Name
+              // 食材名称输入框，使用控制器来管理文本
               TextField(
-                decoration:
-                    const InputDecoration(hintText: 'Enter Ingredient Name'),
+                controller: _ingredientNameController,
+                decoration: InputDecoration(
+                  hintText: 'Enter Ingredient Name',
+                  errorText: !_isNameValid ? 'Name is required' : null,
+                  suffixIcon: IconButton(
+                    icon: Icon(Icons.search),
+                    onPressed: () {
+                      if (_ingredientNameController.text.isNotEmpty) {
+                        _getMatchingPresets(_ingredientNameController.text);
+                      }
+                    },
+                  ),
+                ),
                 onChanged: (value) {
-                  setState(() {
-                    _ingredientName = value;
-                  });
-                  _validateForm(); // 验证表单
+                  _validateName(); // 验证name字段
                 },
               ),
+              // 如果有匹配结果，则显示下拉菜单
+              if (_showDropdown)
+                ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _matchingPresets.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      title: Text(_matchingPresets[index]),
+                      onTap: () => _fillFormWithPreset(
+                          _matchingPresets[index]), // 选择后自动填充表单
+                    );
+                  },
+                ),
               const SizedBox(height: 16),
-
-              // Image Picker
               GestureDetector(
                 onTap: _pickImage,
                 child: _image != null
@@ -299,8 +485,6 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                       ),
               ),
               const SizedBox(height: 16),
-
-              // Category Dropdown
               DropdownButtonFormField<String>(
                 value: _selectedCategory,
                 items: foodCategories.map((String category) {
@@ -313,13 +497,11 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                   setState(() {
                     _selectedCategory = value;
                   });
-                  _validateForm(); // 验证表单
+                  _validateForm();
                 },
                 decoration: const InputDecoration(labelText: 'Category'),
               ),
               const SizedBox(height: 16),
-
-              // Storage Method Dropdown
               DropdownButtonFormField<String>(
                 value: _selectedStorageMethod,
                 items: storageMethods.map((String method) {
@@ -332,43 +514,36 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                   setState(() {
                     _selectedStorageMethod = value;
                   });
-                  _validateForm(); // 验证表单
+                  _validateForm();
                 },
                 decoration: const InputDecoration(labelText: 'Storage method'),
               ),
               const SizedBox(height: 16),
-
-              // Quantity Input
               TextField(
+                controller: _quantityController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   hintText: 'Quantity',
-                  errorText: !_isQuantityValid ? quantityError : null,
+                  errorText: !_isQuantityValid
+                      ? 'Quantity must be greater than 0'
+                      : null,
                 ),
                 onChanged: (value) {
-                  setState(() {
-                    _quantity = int.tryParse(value) ?? 0;
-                    _isQuantityValid = _quantity > 0; // 数量必须大于0
-                  });
-                  _validateForm(); // 验证表单
+                  _validateQuantity(); // 验证quantity字段
                 },
               ),
               const SizedBox(height: 16),
-
-              // Unit Input
               TextField(
-                decoration: const InputDecoration(
-                    hintText: 'Unit (e.g., grams, liters)'),
+                controller: _unitController,
+                decoration: InputDecoration(
+                  hintText: 'Unit (e.g., grams, liters)',
+                  errorText: !_isUnitValid ? 'Unit is required' : null,
+                ),
                 onChanged: (value) {
-                  setState(() {
-                    _unit = value;
-                  });
-                  _validateForm(); // 验证表单
+                  _validateUnit(); // 验证unit字段
                 },
               ),
               const SizedBox(height: 16),
-
-              // Expiration Date Picker
               GestureDetector(
                 onTap: () => _selectExpirationDate(context),
                 child: Row(
@@ -381,133 +556,80 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Nutritional Information Inputs
               TextField(
+                controller: _caloriesController,
                 decoration: InputDecoration(
                   hintText: 'Calories',
-                  errorText: !_isCaloriesValid ? caloriesInvalidError : null,
+                  errorText: !_isCaloriesValid
+                      ? 'Calories must be a valid number'
+                      : null,
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
-                  setState(() {
-                    if (value.isEmpty) {
-                      // 如果用户删除输入，设置默认值为 0
-                      _calories = 0;
-                      _isCaloriesValid = true; // 重置验证状态
-                    } else {
-                      _calories = double.tryParse(value) ?? -1;
-                      _isCaloriesValid = _calories >= 0; // 只要输入有效，允许继续操作
-                    }
-                  });
-                  _validateForm(); // 验证表单
+                  _validateCalories(); // 验证calories字段
                 },
               ),
               const SizedBox(height: 16),
-
               TextField(
+                controller: _proteinController,
                 decoration: InputDecoration(
                   hintText: 'Protein (g)',
-                  errorText: !_isProteinValid ? proteinInvalidError : null,
+                  errorText: !_isProteinValid
+                      ? 'Protein must be a valid number'
+                      : null,
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
-                  setState(() {
-                    if (value.isEmpty) {
-                      // 如果用户删除输入，设置默认值为 0
-                      _protein = 0;
-                      _isProteinValid = true; // 重置验证状态
-                    } else {
-                      _protein = double.tryParse(value) ?? -1;
-                      _isProteinValid = _protein >= 0; // 只要输入有效，允许继续操作
-                    }
-                  });
-                  _validateForm(); // 验证表单
+                  _validateProtein(); // 验证protein字段
                 },
               ),
               const SizedBox(height: 16),
-
               TextField(
+                controller: _fatController,
                 decoration: InputDecoration(
                   hintText: 'Fat (g)',
-                  errorText: !_isFatValid ? fatInvalidError : null,
+                  errorText: !_isFatValid ? 'Fat must be a valid number' : null,
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
-                  setState(() {
-                    if (value.isEmpty) {
-                      // 如果用户删除输入，设置默认值为 0
-                      _fat = 0;
-                      _isFatValid = true; // 重置验证状态
-                    } else {
-                      _fat = double.tryParse(value) ?? -1;
-                      _isFatValid = _fat >= 0; // 只要输入有效，允许继续操作
-                    }
-                  });
-                  _validateForm(); // 验证表单
+                  _validateFat(); // 验证fat字段
                 },
               ),
               const SizedBox(height: 16),
-
               TextField(
+                controller: _carbohydratesController,
                 decoration: InputDecoration(
                   hintText: 'Carbohydrates (g)',
-                  errorText:
-                      !_isCarbohydratesValid ? carbohydratesInvalidError : null,
+                  errorText: !_isCarbohydratesValid
+                      ? 'Carbohydrates must be a valid number'
+                      : null,
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
-                  setState(() {
-                    if (value.isEmpty) {
-                      // 如果用户删除输入，设置默认值为 0
-                      _carbohydrates = 0;
-                      _isCarbohydratesValid = true; // 重置验证状态
-                    } else {
-                      _carbohydrates = double.tryParse(value) ?? -1;
-                      _isCarbohydratesValid =
-                          _carbohydrates >= 0; // 只要输入有效，允许继续操作
-                    }
-                  });
-                  _validateForm(); // 验证表单
+                  _validateCarbohydrates(); // 验证carbohydrates字段
                 },
               ),
               const SizedBox(height: 16),
-
               TextField(
+                controller: _fiberController,
                 decoration: InputDecoration(
                   hintText: 'Fiber (g)',
-                  errorText: !_isFiberValid ? fiberInvalidError : null,
+                  errorText:
+                      !_isFiberValid ? 'Fiber must be a valid number' : null,
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
-                  setState(() {
-                    if (value.isEmpty) {
-                      // 如果用户删除输入，设置默认值为 0
-                      _fiber = 0;
-                      _isFiberValid = true; // 重置验证状态
-                    } else {
-                      _fiber = double.tryParse(value) ?? -1;
-                      _isFiberValid = _fiber >= 0; // 只要输入有效，允许继续操作
-                    }
-                  });
-                  _validateForm(); // 验证表单
+                  _validateFiber(); // 验证fiber字段
                 },
               ),
               const SizedBox(height: 16),
-
-              // Add Button, disabled if form is not valid
               ElevatedButton(
-                onPressed:
-                    _isFormValid ? _addIngredient : null, // 只有当表单有效时才启用按钮
+                onPressed: _isFormValid ? _addIngredient : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _isFormValid
-                      ? buttonBackgroundColor
-                      : Colors.grey, // 根据表单状态设置按钮颜色
+                  backgroundColor:
+                      _isFormValid ? buttonBackgroundColor : Colors.grey,
                 ),
-                child: const Text(
-                  'Add',
-                  style: TextStyle(color: Colors.white), // 设置文字为白色
-                ),
+                child: const Text('Add', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),

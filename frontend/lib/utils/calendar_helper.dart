@@ -40,6 +40,7 @@ class CalendarHelper {
       event.end = expirationTZDateTime;
       event.description = "Your ingredient $title is about to expire!";
       event.allDay = true;
+      event.reminders = [Reminder(minutes: 60 * 9)]; // 提前9小时，即当天早上9点提醒
 
       var createEventResult =
           await _deviceCalendarPlugin.createOrUpdateEvent(event);
