@@ -2,3 +2,40 @@
 ios/.DS_Store
 macos/.DS_Store
 macos/Flutter/.DS_Store
+
+# Dart specific
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Flutter build output
+/build/
+
+# iOS build output
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/.symlinks/
+ios/Pods/
+ios/Runner.xcworkspace/
+
+# Android build output
+/android/.gradle/
+/android/app/build/
+
+# Web output
+/web/.dart_tool/
+/web/build/
+
+# macOS build output
+/macos/Flutter/ephemeral/
+
+# Windows build output
+/windows/Flutter/ephemeral/
+
+# Linux build output
+/linux/Flutter/ephemeral/
+
+# Flutter generated plugins
+.flutter-plugins
+.flutter-plugins-dependencies
