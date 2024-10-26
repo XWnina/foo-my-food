@@ -27,6 +27,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
   String userId = '';
+  List<String> categories = ['Vegetables','Fruits','Meat', 'Dairy','Grains', 'Spices','Beverages'];
+  List<String> selectedCategories = [];
 
   @override
   void initState() {
@@ -92,7 +94,6 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-
   // 导航到添加购物清单页面
   void _navigateToAddShoppingItem() {
     Navigator.push(
@@ -112,6 +113,16 @@ class _MyHomePageState extends State<MyHomePage> {
       _selectedIndex = index;
     });
   }
+  void _onCategorySelected(String category, bool isSelected) {
+    setState(() {
+      if (isSelected) {
+        selectedCategories.add(category);
+      } else {
+        selectedCategories.remove(category);
+      }
+    });
+    Provider.of<IngredientProvider>(context, listen: false).selectedCategories = selectedCategories;
+  }
 
   final List<Widget> _pages = [
     MyFoodPage(),
@@ -130,10 +141,35 @@ class _MyHomePageState extends State<MyHomePage> {
               backgroundColor: buttonBackgroundColor,
             )
           : null,
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
+      // body: IndexedStack(
+      //   index: _selectedIndex,
+      //   children: _pages,
+      // ),
+      body: Column(
+        children: [
+          if (_selectedIndex == 0)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Wrap(
+                spacing: 8.0,
+                children: categories.map((category) {
+                  return FilterChip(
+                    label: Text(category),
+                    selected: selectedCategories.contains(category),
+                    onSelected: (isSelected) => _onCategorySelected(category, isSelected),
+                  );
+                }).toList(),
+              ),
+            ),
+          Expanded(
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: _pages,
+            ),
+          ),
+        ],
       ),
+    
       floatingActionButton: (_selectedIndex == 0 ||
               _selectedIndex == 2) // 在 MyFood 和 ShoppingList 页面时显示悬浮按钮
           ? FloatingActionButton(
@@ -181,9 +217,24 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+class MyFoodPage extends StatefulWidget {
+  @override
+  _MyFoodPageState createState() => _MyFoodPageState();
+}
+class _MyFoodPageState extends State<MyFoodPage> {
+  List<String> selectedCategories = [];
 
-class MyFoodPage extends StatelessWidget {
-  // HIGHLIGHT: Added delete ingredient function
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final homePageState = context.findAncestorStateOfType<_MyHomePageState>();
+    if (homePageState != null) {
+      setState(() {
+        selectedCategories = homePageState.selectedCategories;
+      });
+    }
+  }
+
   Future<void> _deleteIngredient(BuildContext context, String userId, int ingredientId,int index) async {
     try {
       final response = await http.delete(
@@ -191,10 +242,10 @@ class MyFoodPage extends StatelessWidget {
       );
       print(response.statusCode);
       if (response.statusCode == 204) {
-       
+
         Provider.of<IngredientProvider>(context, listen: false)
             .removeIngredient(index);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Ingredient deleted successfully')),
         );
@@ -206,12 +257,18 @@ class MyFoodPage extends StatelessWidget {
         SnackBar(content: Text('Error deleting ingredient: $e')),
       );
     }
-  }
+}
 
   @override
   Widget build(BuildContext context) {
     return Consumer<IngredientProvider>(
       builder: (context, provider, _) {
+        List<Ingredient> filteredIngredients = provider.ingredients;
+        if (provider.selectedCategories.isNotEmpty) {
+          filteredIngredients = provider.ingredients
+              .where((ingredient) => provider.selectedCategories.contains(ingredient.category))
+              .toList();
+        }
         return Column(
           children: [
             Expanded(
@@ -220,9 +277,9 @@ class MyFoodPage extends StatelessWidget {
                   crossAxisCount: 2,
                   childAspectRatio: 1,
                 ),
-                itemCount: provider.ingredients.length,
+                itemCount: filteredIngredients.length,
                 itemBuilder: (context, index) {
-                  final ingredient = provider.ingredients[index];
+                  final ingredient = filteredIngredients[index];
                   return GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -264,6 +321,11 @@ class MyFoodPage extends StatelessWidget {
                               ),
                               Text(
                                 'Expires: ${ingredient.expirationDate}',
+                                style: const TextStyle(color: cardexpirestext),
+                                textAlign: TextAlign.center,
+                              ),
+                              Text(
+                                'Category: ${ingredient.category}',
                                 style: const TextStyle(color: cardexpirestext),
                                 textAlign: TextAlign.center,
                               ),
