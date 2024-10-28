@@ -47,6 +47,7 @@ class AddIngredientPageState extends State<AddIngredientPage> {
   bool _isFiberValid = true;
   DateTime _expirationDate = DateTime.now();
   bool _isFormValid = false;
+  bool _isSubmitting = false;
   final CalendarHelper _calendarHelper = CalendarHelper();
 
   // 用于模糊搜索结果
@@ -206,11 +207,18 @@ class AddIngredientPageState extends State<AddIngredientPage> {
   }
 
   Future<void> _addIngredient() async {
+    if (_isSubmitting) return;
+    setState(() {
+      _isSubmitting = true;
+    });
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
 
     if (userId == null) {
       _showError('User ID not found');
+      setState(() {
+        _isSubmitting = false;
+      });
       return;
     }
 
@@ -291,8 +299,14 @@ class AddIngredientPageState extends State<AddIngredientPage> {
               return;
             }
 
+            String formattedDate =
+                DateFormat('yyyy-MM-dd').format(_expirationDate);
+            String eventTitle =
+                '${_ingredientNameController.text} - $formattedDate Expired';
+
             bool eventCreated = await _calendarHelper.createCalendarEvent(
-                _ingredientNameController.text, _expirationDate);
+                eventTitle, _expirationDate);
+
             if (eventCreated) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -333,6 +347,10 @@ class AddIngredientPageState extends State<AddIngredientPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),
       );
+    } finally {
+      setState(() {
+        _isSubmitting = false; // 操作完成后，重新允许点击
+      });
     }
   }
 
@@ -624,7 +642,8 @@ class AddIngredientPageState extends State<AddIngredientPage> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _isFormValid ? _addIngredient : null,
+                onPressed:
+                    _isFormValid && !_isSubmitting ? _addIngredient : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
                       _isFormValid ? buttonBackgroundColor : Colors.grey,
