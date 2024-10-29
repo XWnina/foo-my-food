@@ -68,9 +68,13 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           if (provider.shoppingList.isEmpty) {
             return const Center(
               child: Text(
-                'Your shopping list is empty!',
-                style: TextStyle(fontSize: 20, color: blackTextColor),
-              ),
+                  'Your shopping list is empty!',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
             );
           }
 
