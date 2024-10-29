@@ -150,6 +150,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+  
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: _selectedIndex == 0
@@ -243,6 +244,38 @@ class MyFoodPage extends StatefulWidget {
 
 class _MyFoodPageState extends State<MyFoodPage> {
   List<String> selectedCategories = [];
+  bool _sortByExpirationDate = false;
+  bool _showExpiringIn7Days = false;
+  List<Ingredient> _ingredients = [];
+
+    @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<IngredientProvider>(context, listen: false).addListener(_updateIngredients);
+    });
+  }
+
+  @override
+  void dispose() {
+    Provider.of<IngredientProvider>(context, listen: false).removeListener(_updateIngredients);
+    super.dispose();
+  }
+
+  void _updateIngredients() {
+    setState(() {
+      _ingredients = List.from(Provider.of<IngredientProvider>(context, listen: false).ingredients);
+      _sortIngredients();
+    });
+  }
+
+  void _sortIngredients() {
+    if (_sortByExpirationDate) {
+      _ingredients.sort((a, b) => a.expirationDate.compareTo(b.expirationDate));
+    } else {
+      _ingredients.sort((a, b) => a.ingredientId.compareTo(b.ingredientId));
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -253,6 +286,7 @@ class _MyFoodPageState extends State<MyFoodPage> {
         selectedCategories = homePageState.selectedCategories;
       });
     }
+    _updateIngredients();
   }
 
   Future<void> _deleteIngredient(
@@ -265,7 +299,8 @@ class _MyFoodPageState extends State<MyFoodPage> {
       if (response.statusCode == 204) {
         Provider.of<IngredientProvider>(context, listen: false)
             .removeIngredient(index);
-
+        // Provider.of<IngredientProvider>(context, listen: false)
+        //     .removeIngredient(ingredientId);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Ingredient deleted successfully')),
         );
@@ -278,168 +313,202 @@ class _MyFoodPageState extends State<MyFoodPage> {
       );
     }
   }
-
+  bool _isWithinSevenDays(String dateString) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final expirationDate = DateTime.parse(dateString);
+    final expirationDateOnly = DateTime(expirationDate.year, expirationDate.month, expirationDate.day);
+    final difference = expirationDateOnly.difference(today).inDays;
+    return difference >= 0 && difference <= 7;
+  }
   @override
   Widget build(BuildContext context) {
-    return Consumer<IngredientProvider>(
-      builder: (context, provider, _) {
-        List<Ingredient> allIngredients = provider.ingredients;
-        List<Ingredient> filteredIngredients = allIngredients;
+    // highlight-start
+    List<Ingredient> filteredIngredients = _ingredients;
+    // highlight-end
 
-        // 根据是否有选定的类别来过滤食材
-        if (provider.selectedCategories.isNotEmpty) {
-          filteredIngredients = allIngredients
-              .where((ingredient) =>
-                  provider.selectedCategories.contains(ingredient.category))
-              .toList();
-        }
-        return allIngredients.isEmpty
-            ? const Center(
-                child: Text(
-                  'Your food is empty',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+    // Filter by categories
+    if (selectedCategories.isNotEmpty) {
+      filteredIngredients = filteredIngredients
+          .where((ingredient) =>
+              selectedCategories.contains(ingredient.category))
+          .toList();
+    }
+
+    // Filter ingredients expiring in 7 days if enabled
+    if (_showExpiringIn7Days) {
+      filteredIngredients = filteredIngredients.where((ingredient) => _isWithinSevenDays(ingredient.expirationDate)).toList();
+    }
+
+    return _ingredients.isEmpty
+        ? const Center(
+            child: Text(
+              'Your food is empty',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          )
+        : Column(
+            children: [
+              // Add buttons for sorting and filtering
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _sortByExpirationDate = !_sortByExpirationDate;
+                        _sortIngredients();
+                      });
+                    },
+                    child: Text(_sortByExpirationDate ? 'Unsort' : 'Sort by Expiration'),
                   ),
-                ),
-              )
-            : filteredIngredients.isEmpty
-                ? const Center(
-                    child: Text(
-                      "You don't have food in this category",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  )
-                : Column(
-                    children: [
-                      Expanded(
-                        child: GridView.builder(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 1,
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _showExpiringIn7Days = !_showExpiringIn7Days;
+                      });
+                    },
+                    child: Text(_showExpiringIn7Days ? 'Show All' : 'Expiring in 7 Days'),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: filteredIngredients.isEmpty
+                    ? const Center(
+                        child: Text(
+                          "No matching ingredients found",
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                           ),
-                          itemCount: filteredIngredients.length,
-                          itemBuilder: (context, index) {
-                            final ingredient = filteredIngredients[index];
-                            return GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => FoodItemDetailPage(
-                                      ingredient: ingredient,
-                                      userId: "",
-                                      index: index,
+                        ),
+                      )
+                    : GridView.builder(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 1,
+                        ),
+                        itemCount: filteredIngredients.length,
+                        itemBuilder: (context, index) {
+                          final ingredient = filteredIngredients[index];
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => FoodItemDetailPage(
+                                    ingredient: ingredient,
+                                    userId: "",
+                                    index: index,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Card(
+                              margin: const EdgeInsets.all(8.0),
+                              color: card,
+                              child: Stack(
+                                children: [
+                                  Align(
+                                    alignment: Alignment.center,
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        if (ingredient.imageURL.isNotEmpty)
+                                          CircleAvatar(
+                                            backgroundColor:
+                                                greyBackgroundColor,
+                                            backgroundImage: NetworkImage(
+                                                ingredient.imageURL),
+                                            radius: 40,
+                                          ),
+                                        const SizedBox(height: 10),
+                                        Text(
+                                          ingredient.name,
+                                          style: const TextStyle(
+                                            color: cardnametext,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          'Expires: ${ingredient.expirationDate}',
+                                          style: const TextStyle(
+                                              color: cardexpirestext),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        Text(
+                                          'Category: ${ingredient.category}',
+                                          style: const TextStyle(
+                                              color: cardexpirestext),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        
+                                      ],
                                     ),
                                   ),
-                                );
-                              },
-                              child: Card(
-                                margin: const EdgeInsets.all(8.0),
-                                color: card,
-                                child: Stack(
-                                  children: [
-                                    Align(
-                                      alignment: Alignment.center,
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          if (ingredient.imageURL.isNotEmpty)
-                                            CircleAvatar(
-                                              backgroundColor:
-                                                  greyBackgroundColor,
-                                              backgroundImage: NetworkImage(
-                                                  ingredient.imageURL),
-                                              radius: 40,
-                                            ),
-                                          const SizedBox(height: 10),
-                                          Text(
-                                            ingredient.name,
-                                            style: const TextStyle(
-                                              color: cardnametext,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          Text(
-                                            'Expires: ${ingredient.expirationDate}',
-                                            style: const TextStyle(
-                                                color: cardexpirestext),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          Text(
-                                            'Category: ${ingredient.category}',
-                                            style: const TextStyle(
-                                                color: cardexpirestext),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Positioned(
-                                      top: 0,
-                                      right: 0,
-                                      child: IconButton(
-                                        icon: const Icon(Icons.delete,
-                                            color: Colors.red),
-                                        onPressed: () async {
-                                          bool confirmDelete = await showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                title: const Text(
-                                                    'Confirm Delete'),
-                                                content: const Text(
-                                                    'Are you sure you want to delete this ingredient?'),
-                                                actions: <Widget>[
-                                                  TextButton(
-                                                    child: const Text('Cancel'),
-                                                    onPressed: () =>
-                                                        Navigator.of(context)
-                                                            .pop(false),
-                                                  ),
-                                                  TextButton(
-                                                    child: const Text('Delete'),
-                                                    onPressed: () =>
-                                                        Navigator.of(context)
-                                                            .pop(true),
-                                                  ),
-                                                ],
-                                              );
-                                            },
-                                          );
+                                  Positioned(
+                                    top: 0,
+                                    right: 0,
+                                    child: IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
+                                      onPressed: () async {
+                                        bool confirmDelete = await showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title: const Text(
+                                                  'Confirm Delete'),
+                                              content: const Text(
+                                                  'Are you sure you want to delete this ingredient?'),
+                                              actions: <Widget>[
+                                                TextButton(
+                                                  child: const Text('Cancel'),
+                                                  onPressed: () =>
+                                                      Navigator.of(context)
+                                                          .pop(false),
+                                                ),
+                                                TextButton(
+                                                  child: const Text('Delete'),
+                                                  onPressed: () =>
+                                                      Navigator.of(context)
+                                                          .pop(true),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
 
-                                          if (confirmDelete) {
-                                            SharedPreferences prefs =
-                                                await SharedPreferences
-                                                    .getInstance();
-                                            String userId =
-                                                prefs.getString('userId') ?? '';
-                                            _deleteIngredient(context, userId,
-                                                ingredient.ingredientId, index);
-                                          }
-                                        },
-                                      ),
+                                        if (confirmDelete) {
+                                          SharedPreferences prefs =
+                                              await SharedPreferences
+                                                  .getInstance();
+                                          String userId =
+                                              prefs.getString('userId') ?? '';
+                                          _deleteIngredient(context, userId,
+                                              ingredient.ingredientId, index);
+                                        }
+                                      },
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                          );
+                        },
                       ),
-                    ],
-                  );
-      },
-    );
+              ),
+            ],
+          );
   }
 }
