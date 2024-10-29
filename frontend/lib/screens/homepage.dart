@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/providers/shopping_list_provider.dart';
 import 'package:foo_my_food_app/screens/shopping_list_page.dart';
 import 'package:foo_my_food_app/screens/add_shopping_item_page.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
@@ -27,7 +28,15 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
   String userId = '';
-  List<String> categories = ['Vegetables','Fruits','Meat', 'Dairy','Grains', 'Spices','Beverages'];
+  List<String> categories = [
+    'Vegetables',
+    'Fruits',
+    'Meat',
+    'Dairy',
+    'Grains',
+    'Spices',
+    'Beverages'
+  ];
   List<String> selectedCategories = [];
 
   @override
@@ -88,7 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _navigateToAddIngredient() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AddIngredientPage()),
+      MaterialPageRoute(builder: (context) => const AddIngredientPage()),
     ).then((_) {
       _fetchUserIngredients();
     });
@@ -96,13 +105,19 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // 导航到添加购物清单页面
   void _navigateToAddShoppingItem() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => AddShoppingItemPage()),
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15), // 设置圆角弧度
+        ),
+        child: const AddShoppingItemPage(),
+      ),
     ).then((newItem) {
       if (newItem != null) {
-        // 这里可以处理新添加的购物清单物品，将其添加到购物清单列表中
         print("New shopping item added: $newItem");
+        // 刷新购物清单
+        Provider.of<ShoppingListProvider>(context, listen: false).fetchItems();
       }
     });
   }
@@ -113,6 +128,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _selectedIndex = index;
     });
   }
+
   void _onCategorySelected(String category, bool isSelected) {
     setState(() {
       if (isSelected) {
@@ -121,13 +137,14 @@ class _MyHomePageState extends State<MyHomePage> {
         selectedCategories.remove(category);
       }
     });
-    Provider.of<IngredientProvider>(context, listen: false).selectedCategories = selectedCategories;
+    Provider.of<IngredientProvider>(context, listen: false).selectedCategories =
+        selectedCategories;
   }
 
   final List<Widget> _pages = [
     MyFoodPage(),
     RecipePage(), // 替换为 RecipePage
-    ShoppingListPage(),
+    const ShoppingListPage(),
     UserProfile(),
   ];
 
@@ -137,7 +154,7 @@ class _MyHomePageState extends State<MyHomePage> {
       backgroundColor: backgroundColor,
       appBar: _selectedIndex == 0
           ? AppBar(
-              title: Text(widget.title, style: TextStyle(color: text)),
+              title: Text(widget.title, style: const TextStyle(color: text)),
               backgroundColor: buttonBackgroundColor,
             )
           : null,
@@ -156,7 +173,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   return FilterChip(
                     label: Text(category),
                     selected: selectedCategories.contains(category),
-                    onSelected: (isSelected) => _onCategorySelected(category, isSelected),
+                    onSelected: (isSelected) =>
+                        _onCategorySelected(category, isSelected),
                   );
                 }).toList(),
               ),
@@ -169,7 +187,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-    
+
       floatingActionButton: (_selectedIndex == 0 ||
               _selectedIndex == 2) // 在 MyFood 和 ShoppingList 页面时显示悬浮按钮
           ? FloatingActionButton(
@@ -184,9 +202,9 @@ class _MyHomePageState extends State<MyHomePage> {
               backgroundColor: buttonBackgroundColor,
               tooltip: 'Add Item',
               child: _selectedIndex == 2 // 在 ShoppingList 页面显示不同的图标
-            ? const Icon(Icons.shopping_cart_checkout_outlined, color: whiteTextColor) // 购物清单页面显示购物车图标
-            : const Icon(Icons.add, color: whiteTextColor), // 其他页面显示添加图标
-
+                  ? const Icon(Icons.shopping_cart_checkout_outlined,
+                      color: whiteTextColor) // 购物清单页面显示购物车图标
+                  : const Icon(Icons.add, color: whiteTextColor), // 其他页面显示添加图标
             )
           : null, // 在其他页面不显示悬浮按钮
       bottomNavigationBar: BottomNavigationBar(
@@ -217,10 +235,12 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
 class MyFoodPage extends StatefulWidget {
   @override
   _MyFoodPageState createState() => _MyFoodPageState();
 }
+
 class _MyFoodPageState extends State<MyFoodPage> {
   List<String> selectedCategories = [];
 
@@ -235,14 +255,14 @@ class _MyFoodPageState extends State<MyFoodPage> {
     }
   }
 
-  Future<void> _deleteIngredient(BuildContext context, String userId, int ingredientId,int index) async {
+  Future<void> _deleteIngredient(
+      BuildContext context, String userId, int ingredientId, int index) async {
     try {
       final response = await http.delete(
         Uri.parse('$baseApiUrl/user_ingredients/$userId/$ingredientId'),
       );
       print(response.statusCode);
       if (response.statusCode == 204) {
-
         Provider.of<IngredientProvider>(context, listen: false)
             .removeIngredient(index);
 
@@ -257,124 +277,168 @@ class _MyFoodPageState extends State<MyFoodPage> {
         SnackBar(content: Text('Error deleting ingredient: $e')),
       );
     }
-}
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<IngredientProvider>(
       builder: (context, provider, _) {
-        List<Ingredient> filteredIngredients = provider.ingredients;
+        List<Ingredient> allIngredients = provider.ingredients;
+        List<Ingredient> filteredIngredients = allIngredients;
+
+        // 根据是否有选定的类别来过滤食材
         if (provider.selectedCategories.isNotEmpty) {
-          filteredIngredients = provider.ingredients
-              .where((ingredient) => provider.selectedCategories.contains(ingredient.category))
+          filteredIngredients = allIngredients
+              .where((ingredient) =>
+                  provider.selectedCategories.contains(ingredient.category))
               .toList();
         }
-        return Column(
-          children: [
-            Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 1,
+        return allIngredients.isEmpty
+            ? const Center(
+                child: Text(
+                  'Your food is empty',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                itemCount: filteredIngredients.length,
-                itemBuilder: (context, index) {
-                  final ingredient = filteredIngredients[index];
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => FoodItemDetailPage(
-                            ingredient: ingredient,
-                            userId: "",
-                            index: index,
-                          ),
-                        ),
-                      );
-                    },
-                    child: Card(
-                      margin: const EdgeInsets.all(8.0),
-                      color: card,
-                      // HIGHLIGHT: Wrapped Column with Stack to add delete button
-                      child: Stack(
-                        children: [
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (ingredient.imageURL.isNotEmpty)
-                                CircleAvatar(
-                                  backgroundColor: greyBackgroundColor,
-                                  backgroundImage: NetworkImage(ingredient.imageURL),
-                                  radius: 40,
-                                ),
-                              const SizedBox(height: 10),
-                              Text(
-                                ingredient.name,
-                                style: const TextStyle(
-                                  color: cardnametext,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                'Expires: ${ingredient.expirationDate}',
-                                style: const TextStyle(color: cardexpirestext),
-                                textAlign: TextAlign.center,
-                              ),
-                              Text(
-                                'Category: ${ingredient.category}',
-                                style: const TextStyle(color: cardexpirestext),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                          // HIGHLIGHT: Added delete button
-                          Positioned(
-                            top: 0,
-                            right: 0,
-                            child: IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () async {
-                                bool confirmDelete = await showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: const Text('Confirm Delete'),
-                                      content: const Text('Are you sure you want to delete this ingredient?'),
-                                      actions: <Widget>[
-                                        TextButton(
-                                          child: const Text('Cancel'),
-                                          onPressed: () => Navigator.of(context).pop(false),
-                                        ),
-                                        TextButton(
-                                          child: const Text('Delete'),
-                                          onPressed: () => Navigator.of(context).pop(true),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-
-                                if (confirmDelete) {
-                                  SharedPreferences prefs = await SharedPreferences.getInstance();
-                                  String userId = prefs.getString('userId') ?? '';
-                                  _deleteIngredient(context, userId,ingredient.ingredientId, index);
-                                }
-                              },
-                            ),
-                          ),
-                        ],
+              )
+            : filteredIngredients.isEmpty
+                ? const Center(
+                    child: Text(
+                      "You don't have food in this category",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
+                  )
+                : Column(
+                    children: [
+                      Expanded(
+                        child: GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 1,
+                          ),
+                          itemCount: filteredIngredients.length,
+                          itemBuilder: (context, index) {
+                            final ingredient = filteredIngredients[index];
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => FoodItemDetailPage(
+                                      ingredient: ingredient,
+                                      userId: "",
+                                      index: index,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Card(
+                                margin: const EdgeInsets.all(8.0),
+                                color: card,
+                                child: Stack(
+                                  children: [
+                                    Align(
+                                      alignment: Alignment.center,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          if (ingredient.imageURL.isNotEmpty)
+                                            CircleAvatar(
+                                              backgroundColor:
+                                                  greyBackgroundColor,
+                                              backgroundImage: NetworkImage(
+                                                  ingredient.imageURL),
+                                              radius: 40,
+                                            ),
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            ingredient.name,
+                                            style: const TextStyle(
+                                              color: cardnametext,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Text(
+                                            'Expires: ${ingredient.expirationDate}',
+                                            style: const TextStyle(
+                                                color: cardexpirestext),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          Text(
+                                            'Category: ${ingredient.category}',
+                                            style: const TextStyle(
+                                                color: cardexpirestext),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 0,
+                                      right: 0,
+                                      child: IconButton(
+                                        icon: const Icon(Icons.delete,
+                                            color: Colors.red),
+                                        onPressed: () async {
+                                          bool confirmDelete = await showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: const Text(
+                                                    'Confirm Delete'),
+                                                content: const Text(
+                                                    'Are you sure you want to delete this ingredient?'),
+                                                actions: <Widget>[
+                                                  TextButton(
+                                                    child: const Text('Cancel'),
+                                                    onPressed: () =>
+                                                        Navigator.of(context)
+                                                            .pop(false),
+                                                  ),
+                                                  TextButton(
+                                                    child: const Text('Delete'),
+                                                    onPressed: () =>
+                                                        Navigator.of(context)
+                                                            .pop(true),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+
+                                          if (confirmDelete) {
+                                            SharedPreferences prefs =
+                                                await SharedPreferences
+                                                    .getInstance();
+                                            String userId =
+                                                prefs.getString('userId') ?? '';
+                                            _deleteIngredient(context, userId,
+                                                ingredient.ingredientId, index);
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   );
-                },
-              ),
-            ),
-          ],
-        );
       },
     );
   }

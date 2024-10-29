@@ -47,6 +47,7 @@ class AddIngredientPageState extends State<AddIngredientPage> {
   bool _isFiberValid = true;
   DateTime _expirationDate = DateTime.now();
   bool _isFormValid = false;
+  bool _isSubmitting = false;
   final CalendarHelper _calendarHelper = CalendarHelper();
 
   // 用于模糊搜索结果
@@ -72,13 +73,12 @@ class AddIngredientPageState extends State<AddIngredientPage> {
       _isFormValid = _ingredientNameController.text.isNotEmpty &&
           _selectedCategory != null &&
           _selectedStorageMethod != null &&
-          _unitController.text.isNotEmpty &&
           _quantity > 0 &&
-          _caloriesController.text.isNotEmpty &&
-          _proteinController.text.isNotEmpty &&
-          _fatController.text.isNotEmpty &&
-          _carbohydratesController.text.isNotEmpty &&
-          _fiberController.text.isNotEmpty;
+          _isCaloriesValid &&
+          _isProteinValid &&
+          _isFatValid &&
+          _isCarbohydratesValid &&
+          _isFiberValid;
     });
   }
 
@@ -99,67 +99,54 @@ class AddIngredientPageState extends State<AddIngredientPage> {
 
   void _validateUnit() {
     setState(() {
-      _isUnitValid = _unitController.text.isNotEmpty;
+      // 允许 unit 为空时自动通过
+      _isUnitValid =
+          _unitController.text.isEmpty || _unitController.text.isNotEmpty;
     });
     _validateForm();
   }
 
   void _validateProtein() {
     setState(() {
-      if (_proteinController.text.isEmpty) {
-        _isProteinValid = true; // 空值时，不报错
-      } else {
-        final protein = double.tryParse(_proteinController.text);
-        _isProteinValid = protein != null && protein >= 0;
-      }
+      _isProteinValid = _proteinController.text.isEmpty ||
+          (double.tryParse(_proteinController.text) != null &&
+              double.parse(_proteinController.text) >= 0);
     });
     _validateForm();
   }
 
   void _validateCalories() {
     setState(() {
-      if (_caloriesController.text.isEmpty) {
-        _isCaloriesValid = true;
-      } else {
-        final calories = double.tryParse(_caloriesController.text);
-        _isCaloriesValid = calories != null && calories >= 0;
-      }
+      _isCaloriesValid = _caloriesController.text.isEmpty ||
+          (double.tryParse(_caloriesController.text) != null &&
+              double.parse(_caloriesController.text) >= 0);
     });
     _validateForm();
   }
 
   void _validateFat() {
     setState(() {
-      if (_fatController.text.isEmpty) {
-        _isFatValid = true;
-      } else {
-        final fat = double.tryParse(_fatController.text);
-        _isFatValid = fat != null && fat >= 0;
-      }
+      _isFatValid = _fatController.text.isEmpty ||
+          (double.tryParse(_fatController.text) != null &&
+              double.parse(_fatController.text) >= 0);
     });
     _validateForm();
   }
 
   void _validateCarbohydrates() {
     setState(() {
-      if (_carbohydratesController.text.isEmpty) {
-        _isCarbohydratesValid = true;
-      } else {
-        final carbohydrates = double.tryParse(_carbohydratesController.text);
-        _isCarbohydratesValid = carbohydrates != null && carbohydrates >= 0;
-      }
+      _isCarbohydratesValid = _carbohydratesController.text.isEmpty ||
+          (double.tryParse(_carbohydratesController.text) != null &&
+              double.parse(_carbohydratesController.text) >= 0);
     });
     _validateForm();
   }
 
   void _validateFiber() {
     setState(() {
-      if (_fiberController.text.isEmpty) {
-        _isFiberValid = true;
-      } else {
-        final fiber = double.tryParse(_fiberController.text);
-        _isFiberValid = fiber != null && fiber >= 0;
-      }
+      _isFiberValid = _fiberController.text.isEmpty ||
+          (double.tryParse(_fiberController.text) != null &&
+              double.parse(_fiberController.text) >= 0);
     });
     _validateForm();
   }
@@ -206,11 +193,18 @@ class AddIngredientPageState extends State<AddIngredientPage> {
   }
 
   Future<void> _addIngredient() async {
+    if (_isSubmitting) return;
+    setState(() {
+      _isSubmitting = true;
+    });
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
 
     if (userId == null) {
       _showError('User ID not found');
+      setState(() {
+        _isSubmitting = false;
+      });
       return;
     }
 
@@ -240,15 +234,27 @@ class AddIngredientPageState extends State<AddIngredientPage> {
         'imageURL': imageUrl,
         'storageMethod': _selectedStorageMethod,
         'baseQuantity': int.parse(_quantityController.text),
-        'unit': _unitController.text,
+        'unit': _unitController.text.isNotEmpty
+            ? _unitController.text
+            : null, // 单位为空时设为 null
         'expirationDate': DateFormat('yyyy-MM-dd').format(_expirationDate),
         'isUserCreated': true,
         'createdBy': userId,
-        'calories': double.parse(_caloriesController.text),
-        'protein': double.parse(_proteinController.text),
-        'fat': double.parse(_fatController.text),
-        'carbohydrates': double.parse(_carbohydratesController.text),
-        'fiber': double.parse(_fiberController.text),
+        'calories': _caloriesController.text.isNotEmpty
+            ? double.parse(_caloriesController.text)
+            : 0.0, // 默认值 0.0
+        'protein': _proteinController.text.isNotEmpty
+            ? double.parse(_proteinController.text)
+            : 0.0,
+        'fat': _fatController.text.isNotEmpty
+            ? double.parse(_fatController.text)
+            : 0.0,
+        'carbohydrates': _carbohydratesController.text.isNotEmpty
+            ? double.parse(_carbohydratesController.text)
+            : 0.0,
+        'fiber': _fiberController.text.isNotEmpty
+            ? double.parse(_fiberController.text)
+            : 0.0,
       };
 
       final ingredientResponse = await http.post(
@@ -291,8 +297,14 @@ class AddIngredientPageState extends State<AddIngredientPage> {
               return;
             }
 
+            String formattedDate =
+                DateFormat('yyyy-MM-dd').format(_expirationDate);
+            String eventTitle =
+                '${_ingredientNameController.text} - $formattedDate Expired';
+
             bool eventCreated = await _calendarHelper.createCalendarEvent(
-                _ingredientNameController.text, _expirationDate);
+                eventTitle, _expirationDate);
+
             if (eventCreated) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -333,6 +345,10 @@ class AddIngredientPageState extends State<AddIngredientPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),
       );
+    } finally {
+      setState(() {
+        _isSubmitting = false; // 操作完成后，重新允许点击
+      });
     }
   }
 
@@ -624,7 +640,8 @@ class AddIngredientPageState extends State<AddIngredientPage> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _isFormValid ? _addIngredient : null,
+                onPressed:
+                    _isFormValid && !_isSubmitting ? _addIngredient : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
                       _isFormValid ? buttonBackgroundColor : Colors.grey,
