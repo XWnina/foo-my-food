@@ -64,13 +64,20 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
     _nameController = TextEditingController(text: widget.ingredient.name);
     _selectedCategory = widget.ingredient.category;
     _selectedStorageMethod = widget.ingredient.storageMethod;
-    _expirationDateController = TextEditingController(text: widget.ingredient.expirationDate);
-    _quantityController = TextEditingController(text: widget.ingredient.baseQuantity.toString());
-    _caloriesController = TextEditingController(text: widget.ingredient.calories.toString());
-    _proteinController = TextEditingController(text: widget.ingredient.protein.toString());
-    _fatController = TextEditingController(text: widget.ingredient.fat.toString());
-    _carbohydratesController = TextEditingController(text: widget.ingredient.carbohydrates.toString());
-    _fiberController = TextEditingController(text: widget.ingredient.fiber.toString());
+    _expirationDateController =
+        TextEditingController(text: widget.ingredient.expirationDate);
+    _quantityController =
+        TextEditingController(text: widget.ingredient.baseQuantity.toString());
+    _caloriesController =
+        TextEditingController(text: widget.ingredient.calories.toString());
+    _proteinController =
+        TextEditingController(text: widget.ingredient.protein.toString());
+    _fatController =
+        TextEditingController(text: widget.ingredient.fat.toString());
+    _carbohydratesController =
+        TextEditingController(text: widget.ingredient.carbohydrates.toString());
+    _fiberController =
+        TextEditingController(text: widget.ingredient.fiber.toString());
     _unitController = TextEditingController(text: widget.ingredient.unit);
 
     _validateForm();
@@ -91,14 +98,18 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
 
   void _validateForm() {
     setState(() {
-      _isNameValid = _nameController.text.trim().isNotEmpty;
-      _isQuantityValid = _isValidPositiveNumber(_quantityController.text);
-      _isCaloriesValid = _isValidNonNegativeNumber(_caloriesController.text);
-      _isProteinValid = _isValidNonNegativeNumber(_proteinController.text);
-      _isFatValid = _isValidNonNegativeNumber(_fatController.text);
-      _isCarbohydratesValid = _isValidNonNegativeNumber(_carbohydratesController.text);
-      _isFiberValid = _isValidNonNegativeNumber(_fiberController.text);
-      _isExpirationDateValid = _isValidExpirationDate(_expirationDateController.text);
+      _isCaloriesValid = _caloriesController.text.isEmpty ||
+          _isValidNonNegativeNumber(_caloriesController.text);
+      _isProteinValid = _proteinController.text.isEmpty ||
+          _isValidNonNegativeNumber(_proteinController.text);
+      _isFatValid = _fatController.text.isEmpty ||
+          _isValidNonNegativeNumber(_fatController.text);
+      _isCarbohydratesValid = _carbohydratesController.text.isEmpty ||
+          _isValidNonNegativeNumber(_carbohydratesController.text);
+      _isFiberValid = _fiberController.text.isEmpty ||
+          _isValidNonNegativeNumber(_fiberController.text);
+      _isExpirationDateValid =
+          _isValidExpirationDate(_expirationDateController.text);
 
       _isFormValid = _isNameValid &&
           _selectedCategory != null &&
@@ -127,10 +138,12 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
     try {
       final inputDate = DateFormat('yyyy-MM-dd').parseStrict(date);
       final today = DateTime.now();
-      if (inputDate.isBefore(today)) {
-        return false;
-      }
-      return true;
+      // 去掉时间部分，只比较日期
+      final todayDateOnly = DateTime(today.year, today.month, today.day);
+      final inputDateOnly =
+          DateTime(inputDate.year, inputDate.month, inputDate.day);
+
+      return !inputDateOnly.isBefore(todayDateOnly); // 允许今天或以后的日期
     } catch (e) {
       return false;
     }
@@ -167,11 +180,21 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
           'userQuantity': int.parse(_quantityController.text),
           'name': _nameController.text.trim(),
           'expirationDate': _expirationDateController.text,
-          'calories': double.parse(_caloriesController.text),
-          'protein': double.parse(_proteinController.text),
-          'fat': double.parse(_fatController.text),
-          'carbohydrates': double.parse(_carbohydratesController.text),
-          'fiber': double.parse(_fiberController.text),
+          'calories': _caloriesController.text.isNotEmpty
+              ? double.parse(_caloriesController.text)
+              : null, // 允许为空
+          'protein': _proteinController.text.isNotEmpty
+              ? double.parse(_proteinController.text)
+              : null,
+          'fat': _fatController.text.isNotEmpty
+              ? double.parse(_fatController.text)
+              : null,
+          'carbohydrates': _carbohydratesController.text.isNotEmpty
+              ? double.parse(_carbohydratesController.text)
+              : null,
+          'fiber': _fiberController.text.isNotEmpty
+              ? double.parse(_fiberController.text)
+              : null,
           'unit': _unitController.text,
           'imageURL': _newImageUrl ?? widget.ingredient.imageURL,
         }),
@@ -187,11 +210,21 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
             storageMethod: _selectedStorageMethod!,
             expirationDate: _expirationDateController.text,
             baseQuantity: int.parse(_quantityController.text),
-            calories: double.parse(_caloriesController.text),
-            protein: double.parse(_proteinController.text),
-            fat: double.parse(_fatController.text),
-            carbohydrates: double.parse(_carbohydratesController.text),
-            fiber: double.parse(_fiberController.text),
+            calories: _caloriesController.text.isNotEmpty
+                ? double.parse(_caloriesController.text)
+                : 0.0,
+            protein: _proteinController.text.isNotEmpty
+                ? double.parse(_proteinController.text)
+                : 0.0,
+            fat: _fatController.text.isNotEmpty
+                ? double.parse(_fatController.text)
+                : 0.0,
+            carbohydrates: _carbohydratesController.text.isNotEmpty
+                ? double.parse(_carbohydratesController.text)
+                : 0.0,
+            fiber: _fiberController.text.isNotEmpty
+                ? double.parse(_fiberController.text)
+                : 0.0,
             ingredientId: widget.ingredient.ingredientId,
             imageURL: _newImageUrl ?? widget.ingredient.imageURL,
             unit: _unitController.text,
@@ -214,6 +247,71 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
       SnackBar(
           content: Text(message, style: const TextStyle(color: Colors.red))),
     );
+  }
+
+  List<String> _matchingPresets = [];
+  bool _showDropdown = false;
+
+  Future<void> _getMatchingPresets(String query) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseApiUrl/presetsaddfood/search?query=$query'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<String> presets =
+            List<String>.from(jsonDecode(response.body));
+        setState(() {
+          _matchingPresets = presets;
+          _showDropdown = presets.isNotEmpty;
+        });
+      } else {
+        setState(() {
+          _matchingPresets = [];
+          _showDropdown = false;
+        });
+      }
+    } catch (e) {
+      _showError('Error fetching matching presets: ${e.toString()}');
+      setState(() {
+        _matchingPresets = [];
+        _showDropdown = false;
+      });
+    }
+  }
+
+  Future<void> _fillFormWithPreset(String presetName) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseApiUrl/presetsaddfood/name/$presetName'),
+      );
+
+      if (response.statusCode == 200) {
+        final presetData = jsonDecode(response.body);
+
+        setState(() {
+          _nameController.text = presetData['name'];
+          _unitController.text = presetData['unit'];
+          _caloriesController.text = presetData['calories'].toString();
+          _proteinController.text = presetData['protein'].toString();
+          _fatController.text = presetData['fat'].toString();
+          _carbohydratesController.text =
+              presetData['carbohydrates'].toString();
+          _fiberController.text = presetData['fiber'].toString();
+          _selectedCategory = presetData['category'];
+          _selectedStorageMethod = presetData['storageMethod'];
+          _quantityController.text = presetData['baseQuantity'].toString();
+          _expirationDateController.text = presetData['expirationDate'];
+          _showDropdown = false;
+        });
+
+        _validateForm();
+      } else {
+        _showError('No preset found with the name $presetName');
+      }
+    } catch (e) {
+      _showError('Error fetching preset: ${e.toString()}');
+    }
   }
 
   Future<void> _pickImage() async {
@@ -308,8 +406,8 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                           )
                         : (widget.ingredient.imageURL.isNotEmpty)
                             ? DecorationImage(
-                                image: NetworkImage(
-                                    widget.ingredient.imageURL!),
+                                image:
+                                    NetworkImage(widget.ingredient.imageURL!),
                                 fit: BoxFit.cover,
                               )
                             : null,
@@ -326,30 +424,42 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              _isEditing
-                  ? TextField(
-                      controller: _nameController,
-                      decoration: InputDecoration(
-                        labelText: 'Name',
-                        filled: true,
-                        fillColor: whiteFillColor,
-                        border: const OutlineInputBorder(),
-                        errorText: _isNameValid
-                            ? null
-                            : 'Name cannot be empty',
-                      ),
-                      onChanged: (value) {
-                        _onDebounce(() {
-                          _validateForm();
-                        });
+              // 食材名称输入框和搜索下拉菜单
+              if (_isEditing)
+                TextField(
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Name',
+                    filled: true,
+                    fillColor: whiteFillColor,
+                    border: const OutlineInputBorder(),
+                    errorText: _isNameValid ? null : 'Name cannot be empty',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: () {
+                        if (_nameController.text.isNotEmpty) {
+                          _getMatchingPresets(_nameController.text);
+                        }
                       },
-                    )
-                  : Text(
-                      widget.ingredient.name,
-                      style: const TextStyle(
-                          fontSize: 24, fontWeight: FontWeight.bold),
                     ),
+                  ),
+                  onChanged: (value) {
+                    _validateForm();
+                  },
+                ),
+              if (_isEditing && _showDropdown)
+                ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _matchingPresets.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      title: Text(_matchingPresets[index]),
+                      onTap: () => _fillFormWithPreset(_matchingPresets[index]),
+                    );
+                  },
+                ),
               const SizedBox(height: 16),
+              // 类别选择
               _isEditing
                   ? DropdownButtonFormField<String>(
                       value: _selectedCategory,
@@ -374,6 +484,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                     )
                   : Text('Category: ${widget.ingredient.category}'),
               const SizedBox(height: 16),
+              // 存储方式选择
               _isEditing
                   ? DropdownButtonFormField<String>(
                       value: _selectedStorageMethod,
@@ -398,6 +509,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                     )
                   : Text('Storage Method: ${widget.ingredient.storageMethod}'),
               const SizedBox(height: 16),
+              // 过期日期选择
               _isEditing
                   ? Row(
                       children: [
@@ -407,14 +519,8 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                             decoration: InputDecoration(
                               labelText: 'Expiration Date',
                               filled: true,
-
                               fillColor: whiteFillColor,
-                              border: const OutlineInputBorder(
-                                borderSide: BorderSide(color: greyBorderColor),
-                              ),
-                              focusedBorder: const OutlineInputBorder(
-                                borderSide: BorderSide(color: blueBorderColor),
-                              ),
+                              border: const OutlineInputBorder(),
                               errorText: _isExpirationDateValid
                                   ? null
                                   : 'Invalid expiration date',
@@ -433,7 +539,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                                       _expirationDateController.text =
                                           DateFormat('yyyy-MM-dd')
                                               .format(pickedDate);
-                                      _expirationDateError = null;
+                                      _validateForm();
                                     });
                                   }
                                 },
@@ -450,6 +556,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                     )
                   : Text('Expires on: ${widget.ingredient.expirationDate}'),
               const SizedBox(height: 16),
+              // 数量
               _isEditing
                   ? TextField(
                       controller: _quantityController,
@@ -469,6 +576,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                     )
                   : Text('Quantity: ${widget.ingredient.baseQuantity}'),
               const SizedBox(height: 16),
+              // 单位
               _isEditing
                   ? TextField(
                       controller: _unitController,
@@ -485,6 +593,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                     )
                   : Text('Unit: ${widget.ingredient.unit}'),
               const SizedBox(height: 16),
+              // 热量
               _isEditing
                   ? TextField(
                       controller: _caloriesController,
@@ -493,8 +602,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                         filled: true,
                         fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
-                        errorText:
-                            _isCaloriesValid ? null : 'Invalid calories',
+                        errorText: _isCaloriesValid ? null : 'Invalid calories',
                       ),
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
@@ -506,6 +614,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                     )
                   : Text('Calories: ${widget.ingredient.calories} kcal'),
               const SizedBox(height: 16),
+              // 蛋白质
               _isEditing
                   ? TextField(
                       controller: _proteinController,
@@ -526,6 +635,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                     )
                   : Text('Protein: ${widget.ingredient.protein} g'),
               const SizedBox(height: 16),
+              // 脂肪
               _isEditing
                   ? TextField(
                       controller: _fatController,
@@ -546,6 +656,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                     )
                   : Text('Fat: ${widget.ingredient.fat} g'),
               const SizedBox(height: 16),
+              // 碳水化合物
               _isEditing
                   ? TextField(
                       controller: _carbohydratesController,
@@ -568,6 +679,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                     )
                   : Text('Carbohydrates: ${widget.ingredient.carbohydrates} g'),
               const SizedBox(height: 16),
+              // 纤维
               _isEditing
                   ? TextField(
                       controller: _fiberController,
