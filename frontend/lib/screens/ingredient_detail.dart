@@ -98,6 +98,8 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
 
   void _validateForm() {
     setState(() {
+      _isNameValid = _nameController.text.isNotEmpty;
+      _isQuantityValid = _isValidPositiveNumber(_quantityController.text);
       _isCaloriesValid = _caloriesController.text.isEmpty ||
           _isValidNonNegativeNumber(_caloriesController.text);
       _isProteinValid = _proteinController.text.isEmpty ||
@@ -565,7 +567,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                         filled: true,
                         fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
-                        errorText: _isQuantityValid ? null : 'Invalid quantity',
+                        errorText: _isQuantityValid ? null : quantityError,
                       ),
                       keyboardType: TextInputType.number,
                       onChanged: (value) {
@@ -602,7 +604,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                         filled: true,
                         fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
-                        errorText: _isCaloriesValid ? null : 'Invalid calories',
+                        errorText: _isCaloriesValid ? null : caloriesInvalidError,
                       ),
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
@@ -623,7 +625,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                         filled: true,
                         fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
-                        errorText: _isProteinValid ? null : 'Invalid protein',
+                        errorText: _isProteinValid ? null : proteinInvalidError,
                       ),
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
@@ -644,7 +646,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                         filled: true,
                         fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
-                        errorText: _isFatValid ? null : 'Invalid fat',
+                        errorText: _isFatValid ? null : fatInvalidError,
                       ),
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
@@ -667,7 +669,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                         border: const OutlineInputBorder(),
                         errorText: _isCarbohydratesValid
                             ? null
-                            : 'Invalid carbohydrates',
+                            : carbohydratesInvalidError,
                       ),
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
@@ -688,7 +690,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                         filled: true,
                         fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
-                        errorText: _isFiberValid ? null : 'Invalid fiber',
+                        errorText: _isFiberValid ? null : fiberInvalidError,
                       ),
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
