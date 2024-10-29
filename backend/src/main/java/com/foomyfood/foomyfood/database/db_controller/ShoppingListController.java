@@ -60,4 +60,13 @@ public class ShoppingListController {
         shoppingListService.deleteItem(foodId);
         return ResponseEntity.noContent().build();
     }
+    @PutMapping("/{foodId}/isPurchased")
+    public ResponseEntity<ShoppingList> updateIsPurchased(@PathVariable Long foodId, @RequestBody Boolean isPurchased) {
+        try {
+            ShoppingList updatedItem = shoppingListService.updateIsPurchased(foodId, isPurchased);
+            return ResponseEntity.ok(updatedItem);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }
