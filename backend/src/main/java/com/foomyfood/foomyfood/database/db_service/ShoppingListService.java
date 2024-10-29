@@ -46,6 +46,19 @@ public class ShoppingListService {
             throw new RuntimeException("Item with ID " + foodId + " not found");
         }
     }
+    public ShoppingList updateIsPurchased(Long foodId, Boolean isPurchased) {
+        Optional<ShoppingList> existingItem = shoppingListRepository.findById(foodId);
+        if (existingItem.isPresent()) {
+            ShoppingList updatedItem = existingItem.get();
+
+            // 更新 isPurchased 字段
+            updatedItem.setIsPurchased(isPurchased);
+
+            return shoppingListRepository.save(updatedItem);
+        } else {
+            throw new RuntimeException("Item with ID " + foodId + " not found");
+        }
+    }
 
     public void deleteItem(Long foodId) {
         shoppingListRepository.deleteById(foodId);

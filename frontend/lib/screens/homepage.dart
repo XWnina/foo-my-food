@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/providers/shopping_list_provider.dart';
 import 'package:foo_my_food_app/screens/shopping_list_page.dart';
 import 'package:foo_my_food_app/screens/add_shopping_item_page.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
@@ -104,13 +105,19 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // 导航到添加购物清单页面
   void _navigateToAddShoppingItem() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => AddShoppingItemPage()),
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15), // 设置圆角弧度
+        ),
+        child: const AddShoppingItemPage(),
+      ),
     ).then((newItem) {
       if (newItem != null) {
-        // 这里可以处理新添加的购物清单物品，将其添加到购物清单列表中
         print("New shopping item added: $newItem");
+        // 刷新购物清单
+        Provider.of<ShoppingListProvider>(context, listen: false).fetchItems();
       }
     });
   }

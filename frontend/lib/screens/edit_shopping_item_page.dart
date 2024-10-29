@@ -1,33 +1,44 @@
 import 'package:flutter/material.dart';
-import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:provider/provider.dart';
+import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:foo_my_food_app/providers/shopping_list_provider.dart';
 
-class AddShoppingItemPage extends StatefulWidget {
-  const AddShoppingItemPage({super.key});
+class EditShoppingItemPage extends StatefulWidget {
+  final Map<String, dynamic> item;
+
+  const EditShoppingItemPage({super.key, required this.item});
 
   @override
-  _AddShoppingItemPageState createState() => _AddShoppingItemPageState();
+  _EditShoppingItemPageState createState() => _EditShoppingItemPageState();
 }
 
-class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
-  final TextEditingController _itemController = TextEditingController();
-  final TextEditingController _quantityController = TextEditingController();
-  final TextEditingController _unitController = TextEditingController();
+class _EditShoppingItemPageState extends State<EditShoppingItemPage> {
+  late TextEditingController _nameController;
+  late TextEditingController _quantityController;
+  late TextEditingController _unitController;
   String? itemError, quantityError, unitError;
 
   bool get isFormValid =>
       itemError == null &&
       quantityError == null &&
       unitError == null &&
-      _itemController.text.isNotEmpty &&
+      _nameController.text.isNotEmpty &&
       _quantityController.text.isNotEmpty &&
       _unitController.text.isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.item['name']);
+    _quantityController =
+        TextEditingController(text: widget.item['baseQuantity'].toString());
+    _unitController = TextEditingController(text: widget.item['unit']);
+  }
 
   void _validateItemName() {
     setState(() {
       itemError =
-          _itemController.text.trim().isEmpty ? 'Item name is required' : null;
+          _nameController.text.trim().isEmpty ? 'Item name is required' : null;
     });
   }
 
@@ -62,20 +73,20 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
 
     if (!isFormValid) return;
 
-    String name = _itemController.text.trim();
+    String name = _nameController.text.trim();
     int quantity = int.parse(_quantityController.text.trim());
     String unit = _unitController.text.trim();
 
-    Map<String, dynamic> newItem = {
+    Map<String, dynamic> updatedItem = {
+      'foodId': widget.item['foodId'],
       'name': name,
       'baseQuantity': quantity,
       'unit': unit,
-      'isPurchased': false,
     };
 
     await Provider.of<ShoppingListProvider>(context, listen: false)
-        .addItem(newItem);
-    Navigator.pop(context, newItem);
+        .updateItem(updatedItem);
+    Navigator.pop(context, updatedItem);
   }
 
   @override
@@ -91,9 +102,9 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
-            controller: _itemController,
+            controller: _nameController,
             decoration: InputDecoration(
-              labelText: 'Enter item name',
+              labelText: 'Edit item name',
               border: OutlineInputBorder(),
               fillColor: whiteFillColor,
               filled: true,
@@ -111,7 +122,7 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
           TextField(
             controller: _quantityController,
             decoration: InputDecoration(
-              labelText: 'Enter quantity',
+              labelText: 'Edit quantity',
               border: OutlineInputBorder(),
               fillColor: whiteFillColor,
               filled: true,
@@ -130,7 +141,7 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
           TextField(
             controller: _unitController,
             decoration: InputDecoration(
-              labelText: 'Enter unit',
+              labelText: 'Edit unit',
               border: OutlineInputBorder(),
               fillColor: whiteFillColor,
               filled: true,
@@ -151,7 +162,7 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
               backgroundColor: buttonBackgroundColor,
             ),
             child: const Text(
-              'Add Item',
+              'Save Changes',
               style: TextStyle(color: whiteTextColor),
             ),
           ),
