@@ -40,37 +40,41 @@ class _MyHomePageState extends State<MyHomePage> {
     'Beverages'
   ];
   List<String> selectedCategories = [];
-  // 定义 _ingredients 列表
-  List<Ingredient> _ingredients = [];
-  bool _expirationDialogShown = false; // Flag to track if the dialog is shown
 
   Future<void> _deleteIngredientsBatch(
-    BuildContext context, String userId, List<Ingredient> ingredients) async {
-  for (var ingredient in ingredients) {
-    final response = await http.delete(
-      Uri.parse('$baseApiUrl/user_ingredients/$userId/${ingredient.ingredientId}'),
-    );
-    if (response.statusCode == 204) {
-      Provider.of<IngredientProvider>(context, listen: false)
-          .removeIngredient_F(ingredient); // 使用对象删除
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete ${ingredient.name}')),
+      BuildContext context, String userId, List<Ingredient> ingredients) async {
+    for (var ingredient in ingredients) {
+      final response = await http.delete(
+        Uri.parse(
+            '$baseApiUrl/user_ingredients/$userId/${ingredient.ingredientId}'),
       );
+      if (response.statusCode == 204) {
+        Provider.of<IngredientProvider>(context, listen: false)
+            .removeIngredient_F(ingredient); // 使用对象删除
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete ${ingredient.name}')),
+        );
+      }
     }
+
+    _fetchUserIngredients(); // 刷新列表
+    setState(() {
+    });
   }
 
-  _fetchUserIngredients(); // 刷新列表
-  setState(() {
-    _expirationDialogShown = false;
-  });
-}
-
+  late List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
     _loadUserId();
+    _pages = [
+      MyFoodPage(fetchUserIngredientsCallback: _fetchUserIngredients),
+      RecipePage(), // 替换为 RecipePage
+      const ShoppingListPage(),
+      UserProfile(),
+    ];
   }
 
   Future<void> _loadUserId() async {
@@ -120,7 +124,6 @@ class _MyHomePageState extends State<MyHomePage> {
         }
 
         setState(() {
-          _ingredients = ingredients;
         });
 
         final ingredientProvider =
@@ -162,7 +165,6 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () {
                 Navigator.of(context).pop();
                 setState(() {
-                  _expirationDialogShown = false;
                 });
               },
               child: Text('Okay, I know now.'),
@@ -173,7 +175,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     context, userId, expiringIngredients);
                 Navigator.of(context).pop(); // 确保弹窗只关闭一次
                 setState(() {
-                  _expirationDialogShown = false;
                 });
               },
               child: Text('Cleaned up already.'),
@@ -230,13 +231,6 @@ class _MyHomePageState extends State<MyHomePage> {
     Provider.of<IngredientProvider>(context, listen: false).selectedCategories =
         selectedCategories;
   }
-
-  final List<Widget> _pages = [
-    MyFoodPage(),
-    RecipePage(), // 替换为 RecipePage
-    const ShoppingListPage(),
-    UserProfile(),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -321,12 +315,13 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class MyFoodPage extends StatefulWidget {
+  final Future<void> Function() fetchUserIngredientsCallback;
+  MyFoodPage({required this.fetchUserIngredientsCallback});
   @override
   _MyFoodPageState createState() => _MyFoodPageState();
 }
 
 class _MyFoodPageState extends State<MyFoodPage> {
-  List<String> selectedCategories = [];
   bool _sortByExpirationDate = false;
   bool _showExpiringIn7Days = false;
   List<Ingredient> _ingredients = [];
@@ -362,6 +357,13 @@ class _MyFoodPageState extends State<MyFoodPage> {
     } else {
       _ingredients.sort((a, b) => a.ingredientId.compareTo(b.ingredientId));
     }
+    // 在此处应用筛选
+    if (ingredientProvider.selectedCategories.isNotEmpty) {
+      _ingredients = _ingredients
+          .where((ingredient) => ingredientProvider.selectedCategories
+              .contains(ingredient.category))
+          .toList();
+    }
   }
 
   @override
@@ -380,12 +382,12 @@ class _MyFoodPageState extends State<MyFoodPage> {
       final response = await http.delete(
         Uri.parse('$baseApiUrl/user_ingredients/$userId/$ingredientId'),
       );
-      print(response.statusCode);
       if (response.statusCode == 204) {
         Provider.of<IngredientProvider>(context, listen: false)
             .removeIngredient(index);
-        // Provider.of<IngredientProvider>(context, listen: false)
-        //     .removeIngredient(ingredientId);
+
+        // 删除成功后更新视图
+        await widget.fetchUserIngredientsCallback();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Ingredient deleted successfully')),
         );
@@ -416,10 +418,10 @@ class _MyFoodPageState extends State<MyFoodPage> {
     // highlight-end
 
     // Filter by categories
-    if (selectedCategories.isNotEmpty) {
+    if (ingredientProvider.selectedCategories.isNotEmpty) {
       filteredIngredients = filteredIngredients
-          .where(
-              (ingredient) => selectedCategories.contains(ingredient.category))
+          .where((ingredient) => ingredientProvider.selectedCategories
+              .contains(ingredient.category))
           .toList();
     }
 
