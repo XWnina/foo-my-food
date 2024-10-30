@@ -2,7 +2,10 @@ package com.foomyfood.foomyfood.database.db_controller;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import com.foomyfood.foomyfood.database.Ingredient;
+import com.foomyfood.foomyfood.dto.IngredientDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.foomyfood.foomyfood.database.UserIngredient;
+import com.foomyfood.foomyfood.database.db_service.IngredientService;
 import com.foomyfood.foomyfood.database.db_service.UserIngredientService;
 
 @RestController
@@ -24,6 +28,9 @@ public class UserIngredientController {
 
     @Autowired
     private UserIngredientService userIngredientService;
+
+    @Autowired
+    private IngredientService ingredientService;
 
     @GetMapping("/{userId}")
     public ResponseEntity<List<UserIngredient>> getAllUserIngredients(@PathVariable Long userId) {
@@ -61,6 +68,15 @@ public class UserIngredientController {
     @DeleteMapping("/{userId}/{ingredientId}")
     public ResponseEntity<Void> deleteUserIngredient(@PathVariable Long userId, @PathVariable Long ingredientId) {
         userIngredientService.deleteUserIngredient(userId, ingredientId);
+        ingredientService.deleteIngredient(ingredientId);
+
         return ResponseEntity.noContent().build();
+    }
+    // 获取即将过期的食材列表
+    @GetMapping("/expiring_soon/{userId}")
+    public ResponseEntity<List<IngredientDTO>> getExpiringIngredients(@PathVariable Long userId) {
+        List<Ingredient> ingredients = userIngredientService.getExpiringIngredients(userId);
+        List<IngredientDTO> ingredientDTOs = ingredients.stream().map(IngredientDTO::new).collect(Collectors.toList());
+        return ResponseEntity.ok(ingredientDTOs);
     }
 }
