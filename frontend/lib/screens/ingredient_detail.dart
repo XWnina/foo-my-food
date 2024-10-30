@@ -57,6 +57,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
   bool _isCarbohydratesValid = true;
   bool _isFiberValid = true;
   bool _isExpirationDateValid = true;
+  bool _showNoResultsMessage = false;
 
   @override
   void initState() {
@@ -149,6 +150,13 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
     } catch (e) {
       return false;
     }
+  }
+
+  void _onSearchFieldChanged(String value) {
+    setState(() {
+      _showNoResultsMessage = false; // 输入发生改变时隐藏提示
+    });
+    _validateForm();
   }
 
   Future<void> _saveChanges() async {
@@ -266,11 +274,13 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
         setState(() {
           _matchingPresets = presets;
           _showDropdown = presets.isNotEmpty;
+          _showNoResultsMessage = presets.isEmpty;
         });
       } else {
         setState(() {
           _matchingPresets = [];
           _showDropdown = false;
+          _showNoResultsMessage = true;
         });
       }
     } catch (e) {
@@ -278,6 +288,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
       setState(() {
         _matchingPresets = [];
         _showDropdown = false;
+        _showNoResultsMessage = true;
       });
     }
   }
@@ -446,8 +457,17 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                     ),
                   ),
                   onChanged: (value) {
+                    _showNoResultsMessage = false;
                     _validateForm();
                   },
+                ),
+              if (_showNoResultsMessage)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    "No related ingredients, please enter manually.",
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
               if (_isEditing && _showDropdown)
                 ListView.builder(
@@ -456,7 +476,8 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                   itemBuilder: (context, index) {
                     return ListTile(
                       title: Text(_matchingPresets[index]),
-                      onTap: () => _fillFormWithPreset(_matchingPresets[index]),
+                      onTap: () => _fillFormWithPreset(
+                          _matchingPresets[index]), // 选择后自动填充表单
                     );
                   },
                 ),
@@ -604,7 +625,8 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
                         filled: true,
                         fillColor: whiteFillColor,
                         border: const OutlineInputBorder(),
-                        errorText: _isCaloriesValid ? null : caloriesInvalidError,
+                        errorText:
+                            _isCaloriesValid ? null : caloriesInvalidError,
                       ),
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
