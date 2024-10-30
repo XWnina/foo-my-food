@@ -15,6 +15,7 @@ import 'user_info_page.dart';
 import 'package:provider/provider.dart';
 import 'package:foo_my_food_app/providers/ingredient_provider.dart';
 import 'recipepage.dart';
+import 'dart:async';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -26,6 +27,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  Completer<void>? _dialogCompleter;
   int _selectedIndex = 0;
   String userId = '';
   List<String> categories = [
@@ -38,6 +40,32 @@ class _MyHomePageState extends State<MyHomePage> {
     'Beverages'
   ];
   List<String> selectedCategories = [];
+  // 定义 _ingredients 列表
+  List<Ingredient> _ingredients = [];
+  bool _expirationDialogShown = false; // Flag to track if the dialog is shown
+
+  Future<void> _deleteIngredientsBatch(
+    BuildContext context, String userId, List<Ingredient> ingredients) async {
+  for (var ingredient in ingredients) {
+    final response = await http.delete(
+      Uri.parse('$baseApiUrl/user_ingredients/$userId/${ingredient.ingredientId}'),
+    );
+    if (response.statusCode == 204) {
+      Provider.of<IngredientProvider>(context, listen: false)
+          .removeIngredient_F(ingredient); // 使用对象删除
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete ${ingredient.name}')),
+      );
+    }
+  }
+
+  _fetchUserIngredients(); // 刷新列表
+  setState(() {
+    _expirationDialogShown = false;
+  });
+}
+
 
   @override
   void initState() {
@@ -69,6 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
       if (response.statusCode == 200) {
         final List<dynamic> userIngredientsData = json.decode(response.body);
         List<Ingredient> ingredients = [];
+        List<Ingredient> expiringSoonIngredients = [];
 
         for (var item in userIngredientsData) {
           int? ingredientId = item['ingredientId'];
@@ -80,18 +109,79 @@ class _MyHomePageState extends State<MyHomePage> {
               .get(Uri.parse('$baseApiUrl/ingredients/$ingredientId'));
           if (ingredientResponse.statusCode == 200) {
             final ingredientData = json.decode(ingredientResponse.body);
-            ingredients.add(Ingredient.fromJson(ingredientData));
+            Ingredient ingredient = Ingredient.fromJson(ingredientData);
+            ingredients.add(ingredient);
+
+            DateTime expirationDate = DateTime.parse(ingredient.expirationDate);
+            if (expirationDate.difference(DateTime.now()).inDays <= 3) {
+              expiringSoonIngredients.add(ingredient);
+            }
           }
         }
 
-        Provider.of<IngredientProvider>(context, listen: false).ingredients =
-            ingredients;
+        setState(() {
+          _ingredients = ingredients;
+        });
+
+        final ingredientProvider =
+            Provider.of<IngredientProvider>(context, listen: false);
+        ingredientProvider.ingredients = ingredients;
+
+        // 仅当未显示弹窗时才显示过期提醒
+        if (expiringSoonIngredients.isNotEmpty &&
+            !ingredientProvider.showExpirationAlert) {
+          ingredientProvider.showExpirationAlert = true;
+          _showExpirationAlert(expiringSoonIngredients).then((_) {
+            ingredientProvider.showExpirationAlert = false; // 弹窗关闭后重置状态
+          });
+        }
       } else {
         throw Exception('Failed to load user ingredients');
       }
     } catch (e) {
       print('Error: $e');
     }
+  }
+
+  Future<void> _showExpirationAlert(
+      List<Ingredient> expiringIngredients) async {
+    return showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Alert!'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: expiringIngredients.map((ingredient) {
+              return Text(
+                  '${ingredient.name} expires on ${ingredient.expirationDate}');
+            }).toList(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                setState(() {
+                  _expirationDialogShown = false;
+                });
+              },
+              child: Text('Okay, I know now.'),
+            ),
+            TextButton(
+              onPressed: () async {
+                await _deleteIngredientsBatch(
+                    context, userId, expiringIngredients);
+                Navigator.of(context).pop(); // 确保弹窗只关闭一次
+                setState(() {
+                  _expirationDialogShown = false;
+                });
+              },
+              child: Text('Cleaned up already.'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _navigateToAddIngredient() {
@@ -150,7 +240,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-  
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: _selectedIndex == 0
@@ -159,10 +248,6 @@ class _MyHomePageState extends State<MyHomePage> {
               backgroundColor: buttonBackgroundColor,
             )
           : null,
-      // body: IndexedStack(
-      //   index: _selectedIndex,
-      //   children: _pages,
-      // ),
       body: Column(
         children: [
           if (_selectedIndex == 0)
@@ -188,26 +273,24 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-
-      floatingActionButton: (_selectedIndex == 0 ||
-              _selectedIndex == 2) // 在 MyFood 和 ShoppingList 页面时显示悬浮按钮
+      floatingActionButton: (_selectedIndex == 0 || _selectedIndex == 2)
           ? FloatingActionButton(
               heroTag: "Add",
               onPressed: () {
                 if (_selectedIndex == 0) {
-                  _navigateToAddIngredient(); // MyFood 页面添加食材的行为
+                  _navigateToAddIngredient();
                 } else if (_selectedIndex == 2) {
-                  _navigateToAddShoppingItem(); // ShoppingList 页面添加物品的行为
+                  _navigateToAddShoppingItem();
                 }
               },
               backgroundColor: buttonBackgroundColor,
               tooltip: 'Add Item',
-              child: _selectedIndex == 2 // 在 ShoppingList 页面显示不同的图标
+              child: _selectedIndex == 2
                   ? const Icon(Icons.shopping_cart_checkout_outlined,
-                      color: whiteTextColor) // 购物清单页面显示购物车图标
-                  : const Icon(Icons.add, color: whiteTextColor), // 其他页面显示添加图标
+                      color: whiteTextColor)
+                  : const Icon(Icons.add, color: whiteTextColor),
             )
-          : null, // 在其他页面不显示悬浮按钮
+          : null,
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -220,7 +303,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart),
-            label: 'Shopping List', // 添加购物清单按钮
+            label: 'Shopping List',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_box),
@@ -228,10 +311,10 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: text, // 设置选中的项目颜色
+        selectedItemColor: text,
         onTap: _onItemTapped,
         backgroundColor: buttonBackgroundColor,
-        type: BottomNavigationBarType.fixed, // 确保使用固定样式，避免颜色问题
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }
@@ -247,24 +330,28 @@ class _MyFoodPageState extends State<MyFoodPage> {
   bool _sortByExpirationDate = false;
   bool _showExpiringIn7Days = false;
   List<Ingredient> _ingredients = [];
+  late IngredientProvider ingredientProvider;
 
-    @override
+  @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<IngredientProvider>(context, listen: false).addListener(_updateIngredients);
+      ingredientProvider =
+          Provider.of<IngredientProvider>(context, listen: false);
+      ingredientProvider.addListener(_updateIngredients);
     });
   }
 
   @override
   void dispose() {
-    Provider.of<IngredientProvider>(context, listen: false).removeListener(_updateIngredients);
+    ingredientProvider.removeListener(_updateIngredients);
     super.dispose();
   }
 
   void _updateIngredients() {
+    if (!mounted) return;
     setState(() {
-      _ingredients = List.from(Provider.of<IngredientProvider>(context, listen: false).ingredients);
+      _ingredients = List.from(ingredientProvider.ingredients);
       _sortIngredients();
     });
   }
@@ -280,13 +367,11 @@ class _MyFoodPageState extends State<MyFoodPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final homePageState = context.findAncestorStateOfType<_MyHomePageState>();
-    if (homePageState != null) {
-      setState(() {
-        selectedCategories = homePageState.selectedCategories;
-      });
-    }
-    _updateIngredients();
+    // 确保 `ingredientProvider` 仅初始化一次
+    ingredientProvider =
+        Provider.of<IngredientProvider>(context, listen: false);
+    ingredientProvider.addListener(_updateIngredients);
+    _updateIngredients(); // 初始化时更新食材数据
   }
 
   Future<void> _deleteIngredient(
@@ -313,14 +398,17 @@ class _MyFoodPageState extends State<MyFoodPage> {
       );
     }
   }
+
   bool _isWithinSevenDays(String dateString) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final expirationDate = DateTime.parse(dateString);
-    final expirationDateOnly = DateTime(expirationDate.year, expirationDate.month, expirationDate.day);
+    final expirationDateOnly =
+        DateTime(expirationDate.year, expirationDate.month, expirationDate.day);
     final difference = expirationDateOnly.difference(today).inDays;
     return difference >= 0 && difference <= 7;
   }
+
   @override
   Widget build(BuildContext context) {
     // highlight-start
@@ -330,14 +418,16 @@ class _MyFoodPageState extends State<MyFoodPage> {
     // Filter by categories
     if (selectedCategories.isNotEmpty) {
       filteredIngredients = filteredIngredients
-          .where((ingredient) =>
-              selectedCategories.contains(ingredient.category))
+          .where(
+              (ingredient) => selectedCategories.contains(ingredient.category))
           .toList();
     }
 
     // Filter ingredients expiring in 7 days if enabled
     if (_showExpiringIn7Days) {
-      filteredIngredients = filteredIngredients.where((ingredient) => _isWithinSevenDays(ingredient.expirationDate)).toList();
+      filteredIngredients = filteredIngredients
+          .where((ingredient) => _isWithinSevenDays(ingredient.expirationDate))
+          .toList();
     }
 
     return _ingredients.isEmpty
@@ -364,7 +454,9 @@ class _MyFoodPageState extends State<MyFoodPage> {
                         _sortIngredients();
                       });
                     },
-                    child: Text(_sortByExpirationDate ? 'Unsort' : 'Sort by Expiration'),
+                    child: Text(_sortByExpirationDate
+                        ? 'Unsort'
+                        : 'Sort by Expiration'),
                   ),
                   ElevatedButton(
                     onPressed: () {
@@ -372,7 +464,9 @@ class _MyFoodPageState extends State<MyFoodPage> {
                         _showExpiringIn7Days = !_showExpiringIn7Days;
                       });
                     },
-                    child: Text(_showExpiringIn7Days ? 'Show All' : 'Expiring in 7 Days'),
+                    child: Text(_showExpiringIn7Days
+                        ? 'Show All'
+                        : 'Expiring in 7 Days'),
                   ),
                 ],
               ),
@@ -452,7 +546,6 @@ class _MyFoodPageState extends State<MyFoodPage> {
                                               color: cardexpirestext),
                                           textAlign: TextAlign.center,
                                         ),
-                                        
                                       ],
                                     ),
                                   ),
@@ -467,8 +560,8 @@ class _MyFoodPageState extends State<MyFoodPage> {
                                           context: context,
                                           builder: (BuildContext context) {
                                             return AlertDialog(
-                                              title: const Text(
-                                                  'Confirm Delete'),
+                                              title:
+                                                  const Text('Confirm Delete'),
                                               content: const Text(
                                                   'Are you sure you want to delete this ingredient?'),
                                               actions: <Widget>[
