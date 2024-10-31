@@ -20,6 +20,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
   final TextEditingController _caloriesController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _videoLinkController = TextEditingController();
+  final TextEditingController _labelsController = TextEditingController();
 
   Future<void> _pickImage() async {
     final pickedFile = await showModalBottomSheet(
@@ -31,7 +32,8 @@ class _AddRecipePageState extends State<AddRecipePage> {
             title: const Text('Take a photo'),
             onTap: () async {
               Navigator.pop(context);
-              final picked = await ImagePicker().pickImage(source: ImageSource.camera);
+              final picked =
+                  await ImagePicker().pickImage(source: ImageSource.camera);
               if (picked != null) {
                 _handleImagePicked(picked);
               }
@@ -42,7 +44,8 @@ class _AddRecipePageState extends State<AddRecipePage> {
             title: const Text('Choose from gallery'),
             onTap: () async {
               Navigator.pop(context);
-              final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+              final picked =
+                  await ImagePicker().pickImage(source: ImageSource.gallery);
               if (picked != null) {
                 _handleImagePicked(picked);
               }
@@ -79,7 +82,11 @@ class _AddRecipePageState extends State<AddRecipePage> {
     final ingredients = _ingredientsController.text
         .split(',')
         .map((e) => e.trim())
-        .toList(); // 确保是数组形式
+        .toList(); // store ingredients as list
+    final labels = _labelsController.text
+        .split(',')
+        .map((e) => e.trim())
+        .toList(); // store ingredients as list
     final calories = _caloriesController.text;
     final description = _descriptionController.text;
     final videoLink = _videoLinkController.text;
@@ -106,15 +113,16 @@ class _AddRecipePageState extends State<AddRecipePage> {
       }
 
       final recipeData = {
-        'dishName': recipeName, // 修改了这里的字段名
-        'ingredients': ingredients, // 确保是数组形式
+        'dishName': recipeName, 
+        'ingredients': ingredients, 
+        'labels': labels,
         'calories': int.tryParse(calories) ?? 0,
         'description': description,
         if (imageUrl != null) 'imageURL': imageUrl,
         if (videoLink.isNotEmpty) 'videoLink': videoLink,
       };
 
-      print('Recipe data to be sent: $recipeData'); // 调试用，确保数据正确
+      print('======Recipe data to be sent: $recipeData'); 
 
       final response = await http.post(
         Uri.parse('$baseApiUrl/myrecipes'),
@@ -152,7 +160,8 @@ class _AddRecipePageState extends State<AddRecipePage> {
             GestureDetector(
               onTap: _pickImage,
               child: _image != null
-                  ? Image.file(_image!, height: 100, width: 100, fit: BoxFit.cover)
+                  ? Image.file(_image!,
+                      height: 100, width: 100, fit: BoxFit.cover)
                   : Container(
                       height: 100,
                       width: 100,
@@ -170,6 +179,12 @@ class _AddRecipePageState extends State<AddRecipePage> {
               controller: _ingredientsController,
               decoration: const InputDecoration(
                   hintText: 'Ingredients (comma-separated)'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _labelsController,
+              decoration:
+                  const InputDecoration(hintText: 'Labels (comma-separated)'),
             ),
             const SizedBox(height: 16),
             TextField(
