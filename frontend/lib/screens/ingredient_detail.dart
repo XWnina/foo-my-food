@@ -17,12 +17,14 @@ class FoodItemDetailPage extends StatefulWidget {
   final Ingredient ingredient;
   final String userId;
   final int index;
+  final Function(Ingredient) onUpdate;
 
   const FoodItemDetailPage({
     super.key,
     required this.ingredient,
     required this.userId,
     required this.index,
+    required this.onUpdate,
   });
 
   @override
@@ -211,6 +213,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
       );
 
       if (updateResponse.statusCode == 200) {
+        // **更新食材在 Provider 中**
         Provider.of<IngredientProvider>(context, listen: false)
             .updateIngredient(
           widget.index,
@@ -240,9 +243,40 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
             unit: _unitController.text,
           ),
         );
+
+        // **添加成功提示**
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Changes saved successfully!')),
         );
+
+        // **调用更新回调以更新食材信息**
+        widget.onUpdate(Ingredient(
+          ingredientId: widget.ingredient.ingredientId,
+          name: _nameController.text.trim(),
+          category: _selectedCategory!,
+          storageMethod: _selectedStorageMethod!,
+          expirationDate: _expirationDateController.text,
+          baseQuantity: int.parse(_quantityController.text),
+          calories: _caloriesController.text.isNotEmpty
+              ? double.parse(_caloriesController.text)
+              : 0.0,
+          protein: _proteinController.text.isNotEmpty
+              ? double.parse(_proteinController.text)
+              : 0.0,
+          fat: _fatController.text.isNotEmpty
+              ? double.parse(_fatController.text)
+              : 0.0,
+          carbohydrates: _carbohydratesController.text.isNotEmpty
+              ? double.parse(_carbohydratesController.text)
+              : 0.0,
+          fiber: _fiberController.text.isNotEmpty
+              ? double.parse(_fiberController.text)
+              : 0.0,
+          imageURL: _newImageUrl ?? widget.ingredient.imageURL,
+          unit: _unitController.text,
+        ));
+
+        // **返回上一页**
         Navigator.pop(context);
       } else {
         _showError('Update failed');
@@ -250,7 +284,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
     } catch (e) {
       _showError('Error occurred while updating the ingredient');
     }
-  }
+}
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
