@@ -15,8 +15,6 @@ import jakarta.persistence.Table;
 public class Recipe {
     // Dish names and ingredient list should not be empty
     // Default calories is set to -1 (to show un-set)
-    // Default video link, image URL, and description is set to "N/A"
-    // Ingredients are stored as a comma-separated string
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,6 +37,7 @@ public class Recipe {
 
     @Column(name = "ingredients", nullable = false)
     private String ingredients;
+
 
     @Column(name = "labels")
     private String labels = "";
@@ -106,6 +105,7 @@ public class Recipe {
         this.ingredients = ingredients;
     }
 
+
     public String getLabels() {
         return labels;
     }
@@ -144,5 +144,6 @@ public class Recipe {
 
     public void setIngredientsAsList(List<String> ingredients) {
         this.ingredients = String.join(", ", ingredients);
+
     }
 }
