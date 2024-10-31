@@ -15,6 +15,8 @@ import jakarta.persistence.Table;
 public class Recipe {
     // Dish names and ingredient list should not be empty
     // Default calories is set to -1 (to show un-set)
+    // Default video link, image URL, and description is set to "N/A"
+    // Ingredients are stored as a comma-separated string
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,6 +39,9 @@ public class Recipe {
 
     @Column(name = "ingredients", nullable = false)
     private String ingredients;
+
+    @Column(name = "labels")
+    private String labels;
 
     // Constructors
     public Recipe() {
@@ -73,7 +78,12 @@ public class Recipe {
             this.ingredients = String.join(",", ingredients);
         } else {
             throw new IllegalArgumentException("Ingredients cannot be null or empty.");
+        }
 
+        if (labels != null && !labels.isEmpty()) {
+            this.labels = labels;
+        } else {
+            this.labels = "N/A";
         }
 
     }
@@ -135,6 +145,18 @@ public class Recipe {
         this.ingredients = String.join(",", ingredients);
     }
 
+    public String getLabels() {
+        return labels;
+    }
+
+    public void setLabels(String labels) {
+        this.labels = labels;
+    }
+
+    public List<String> getLabelsAsList() {
+        return Arrays.asList(labels.split(","));
+    }
+
     public List<String> getIngredientsAsList() {
         return Arrays.asList(ingredients.split(","));
     }
@@ -148,7 +170,7 @@ public class Recipe {
                 + ", videoLink='" + videoLink + '\''
                 + ", imageURL='" + imageURL + '\''
                 + ", description='" + description + '\''
-                // Remove ingredients to prevent LazyInitializationException
+                // Remove ingredients and labels to prevent LazyInitializationException
                 + '}';
     }
 }
