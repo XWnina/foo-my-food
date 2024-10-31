@@ -239,74 +239,87 @@ class _MyHomePageState extends State<MyHomePage> {
             )
           : null,
       body: Column(
-  children: [
-    if (_selectedIndex == 0)
-      Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            PopupMenuButton<String>(
-              tooltip: 'Filter Categories',
-              onSelected: (String category) {
-                _onCategorySelected(category); // 点击时更新选中状态
-              },
-              itemBuilder: (BuildContext context) {
-                return categories.map((String category) {
-                  return PopupMenuItem<String>(
-                    value: category,
-                    child: StatefulBuilder(
-                      builder: (BuildContext context, StateSetter setState) {
-                        return ListTile(
-                          title: Text(category),
-                          leading: Checkbox(
-                            value: selectedCategories.contains(category),
-                            onChanged: (bool? isSelected) {
-                              setState(() {
-                                _onCategorySelected(category); // 更新勾选状态
-                              });
+        children: [
+          if (_selectedIndex == 0)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end, // 将内容放置到右侧
+                children: [
+                  PopupMenuButton<String>(
+                    tooltip: 'Filter Categories',
+                    onSelected: (String category) {
+                      _onCategorySelected(category); // 点击时更新选中状态
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return categories.map((String category) {
+                        return PopupMenuItem<String>(
+                          value: category,
+                          child: StatefulBuilder(
+                            builder:
+                                (BuildContext context, StateSetter setState) {
+                              return ListTile(
+                                title: Text(category),
+                                leading: Checkbox(
+                                  value: selectedCategories.contains(category),
+                                  onChanged: (bool? isSelected) {
+                                    setState(() {
+                                      _onCategorySelected(category); // 更新勾选状态
+                                    });
+                                  },
+                                ),
+                                onTap: () {
+                                  setState(() {
+                                    _onCategorySelected(category); // 点击项也更新勾选状态
+                                  });
+                                },
+                              );
                             },
                           ),
-                          onTap: () {
-                            setState(() {
-                              _onCategorySelected(category); // 点击项也更新勾选状态
-                            });
-                          },
                         );
-                      },
-                    ),
-                  );
-                }).toList();
-              },
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Filter Categories', // 使用文字作为按钮
-                    style: TextStyle(
-                      color: cardnametext, // 设置文字颜色
-                      fontSize: 16, // 设置文字大小
+                      }).toList();
+                    },
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Filter Categories', // 使用文字作为按钮
+                          style: TextStyle(
+                            color: cardnametext, // 设置文字颜色
+                            fontSize: 16, // 设置文字大小
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_drop_down, // 倒三角图标
+                          color: Colors.black, // 设置图标颜色
+                        ),
+                      ],
                     ),
                   ),
-                  Icon(
-                    Icons.arrow_drop_down, // 倒三角图标
-                    color: Colors.black, // 设置图标颜色
+                  const SizedBox(width: 8), // 按钮和选中类别的间距
+                  Expanded(
+                    child: Text(
+                      selectedCategories.isNotEmpty
+                          ? selectedCategories.join(', ') // 显示选中类别
+                          : 'All categories of food ', // 如果没有选中类别
+                      style: const TextStyle(
+                        color: Color.fromARGB(255, 50, 98, 99),
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis, // 处理过长的文字
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          Expanded(
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: _pages,
+            ),
+          ),
+        ],
       ),
-    Expanded(
-      child: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
-      ),
-    ),
-  ],
-),
-
       floatingActionButton: (_selectedIndex == 0 || _selectedIndex == 2)
           ? FloatingActionButton(
               heroTag: "Add",
