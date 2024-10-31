@@ -3,6 +3,7 @@ import 'screens/login_page.dart';
 import 'package:provider/provider.dart';
 import 'providers/ingredient_provider.dart';
 import 'providers/shopping_list_provider.dart'; // 引入 ShoppingListProvider
+import 'providers/recipe_provider.dart'; 
 import 'package:device_calendar/device_calendar.dart';
 
 void main() {
@@ -11,6 +12,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (context) => IngredientProvider()),
         ChangeNotifierProvider(create: (context) => ShoppingListProvider()), // 添加 ShoppingListProvider
+        ChangeNotifierProvider(create: (context) => RecipeProvider()),
       ],
       child: const MyApp(),
     ),

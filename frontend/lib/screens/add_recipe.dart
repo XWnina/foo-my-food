@@ -21,6 +21,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
   final TextEditingController _caloriesController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _videoLinkController = TextEditingController();
+
   String? userId;
 
   @override
@@ -37,6 +38,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
           "Error: userId is null. Ensure user is logged in and userId is saved in SharedPreferences.");
     }
   }
+
 
   Future<void> _pickImage() async {
     final pickedFile = await showModalBottomSheet(
@@ -103,7 +105,11 @@ class _AddRecipePageState extends State<AddRecipePage> {
     final ingredients = _ingredientsController.text
         .split(',')
         .map((e) => e.trim())
-        .toList(); // 确保是数组形式
+        .toList(); // store ingredients as list
+    final labels = _labelsController.text
+        .split(',')
+        .map((e) => e.trim())
+        .toList(); // store ingredients as list
     final calories = _caloriesController.text;
     final description = _descriptionController.text;
     final videoLink = _videoLinkController.text;
@@ -130,8 +136,10 @@ class _AddRecipePageState extends State<AddRecipePage> {
       }
 
       final recipeData = {
+
         'dishName': recipeName, // 修改了这里的字段名
         'ingredients': ingredients.join(', '), 
+
         'calories': int.tryParse(calories) ?? 0,
         'description': description,
         'userId': userId, // 新增 userId 字段
@@ -139,7 +147,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
         if (videoLink.isNotEmpty) 'videoLink': videoLink,
       };
 
-      print('Recipe data to be sent: $recipeData'); // 调试用，确保数据正确
+      print('======Recipe data to be sent: $recipeData'); 
 
       final response = await http.post(
         Uri.parse('$baseApiUrl/myrecipes'),
@@ -196,6 +204,12 @@ class _AddRecipePageState extends State<AddRecipePage> {
               controller: _ingredientsController,
               decoration: const InputDecoration(
                   hintText: 'Ingredients (comma-separated)'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _labelsController,
+              decoration:
+                  const InputDecoration(hintText: 'Labels (comma-separated)'),
             ),
             const SizedBox(height: 16),
             TextField(
