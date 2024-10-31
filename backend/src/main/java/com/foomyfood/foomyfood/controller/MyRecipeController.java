@@ -27,8 +27,8 @@ public class MyRecipeController {
 
     // 获取某个用户的所有配方
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Recipe>> getAllRecipesByUser() {
-        List<Recipe> recipes = recipeService.getAllRecipes();
+    public ResponseEntity<List<Recipe>> getAllRecipesByUser(@PathVariable Long userId) {
+        List<Recipe> recipes = recipeService.getAllRecipesByUserId(userId);
         return ResponseEntity.ok(recipes);
     }
 
