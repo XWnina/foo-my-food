@@ -47,6 +47,7 @@ public class RecipeService {
             recipe.setDescription(updatedRecipe.getDescription());
             recipe.setIngredients(String.join(", ", updatedRecipe.getIngredientsAsList()));
             recipe.setLabels(updatedRecipe.getLabels());
+
             return recipeRepository.save(recipe);
         }).orElseThrow(() -> new RuntimeException("Recipe with ID " + id + " not found"));
     }

@@ -228,6 +228,7 @@ class _MyHomePageState extends State<MyHomePage> {
         selectedCategories;
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -428,7 +429,25 @@ class _MyFoodPageState extends State<MyFoodPage> {
     ingredientProvider.addListener(_updateIngredients);
     _updateIngredients(); // 初始化时更新食材数据
   }
-
+  void _navigateToFoodItemDetail(Ingredient ingredient, String userId, int index) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FoodItemDetailPage(
+          ingredient: ingredient,
+          userId: userId,
+          index: index,
+          onUpdate: (updatedIngredient) async {
+            // Update the ingredient in the provider
+            Provider.of<IngredientProvider>(context, listen: false)
+                .updateIngredient(index, updatedIngredient);
+            // Refresh the ingredients list
+            await widget.fetchUserIngredientsCallback();
+          },
+        ),
+      ),
+    );
+  }
   Future<void> _deleteIngredient(
       BuildContext context, String userId, int ingredientId, int index) async {
     try {
@@ -547,17 +566,10 @@ class _MyFoodPageState extends State<MyFoodPage> {
                         itemBuilder: (context, index) {
                           final ingredient = filteredIngredients[index];
                           return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => FoodItemDetailPage(
-                                    ingredient: ingredient,
-                                    userId: "",
-                                    index: index,
-                                  ),
-                                ),
-                              );
+                            onTap: () async {
+                              SharedPreferences prefs = await SharedPreferences.getInstance();
+                              String userId = prefs.getString('userId') ?? '';
+                              _navigateToFoodItemDetail(ingredient, userId, index);
                             },
                             child: Card(
                               margin: const EdgeInsets.all(8.0),
