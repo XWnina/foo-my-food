@@ -21,9 +21,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
   final TextEditingController _caloriesController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _videoLinkController = TextEditingController();
-
   String? userId;
-
   @override
   void initState() {
     super.initState();
@@ -39,7 +37,6 @@ class _AddRecipePageState extends State<AddRecipePage> {
     }
   }
 
-
   Future<void> _pickImage() async {
     final pickedFile = await showModalBottomSheet(
       context: context,
@@ -50,6 +47,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
             title: const Text('Take a photo'),
             onTap: () async {
               Navigator.pop(context);
+
               final picked =
                   await ImagePicker().pickImage(source: ImageSource.camera);
               if (picked != null) {
@@ -105,11 +103,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
     final ingredients = _ingredientsController.text
         .split(',')
         .map((e) => e.trim())
-        .toList(); // store ingredients as list
-    final labels = _labelsController.text
-        .split(',')
-        .map((e) => e.trim())
-        .toList(); // store ingredients as list
+        .toList(); // 确保是数组形式
     final calories = _caloriesController.text;
     final description = _descriptionController.text;
     final videoLink = _videoLinkController.text;
@@ -136,10 +130,8 @@ class _AddRecipePageState extends State<AddRecipePage> {
       }
 
       final recipeData = {
-
         'dishName': recipeName, // 修改了这里的字段名
-        'ingredients': ingredients.join(', '), 
-
+         'ingredients': ingredients.join(', '), 
         'calories': int.tryParse(calories) ?? 0,
         'description': description,
         'userId': userId, // 新增 userId 字段
@@ -147,7 +139,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
         if (videoLink.isNotEmpty) 'videoLink': videoLink,
       };
 
-      print('======Recipe data to be sent: $recipeData'); 
+      print('Recipe data to be sent: $recipeData'); // 调试用，确保数据正确
 
       final response = await http.post(
         Uri.parse('$baseApiUrl/myrecipes'),
@@ -185,7 +177,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
             GestureDetector(
               onTap: _pickImage,
               child: _image != null
-                  ? Image.file(_image!,
+                   ? Image.file(_image!,
                       height: 100, width: 100, fit: BoxFit.cover)
                   : Container(
                       height: 100,
@@ -204,12 +196,6 @@ class _AddRecipePageState extends State<AddRecipePage> {
               controller: _ingredientsController,
               decoration: const InputDecoration(
                   hintText: 'Ingredients (comma-separated)'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _labelsController,
-              decoration:
-                  const InputDecoration(hintText: 'Labels (comma-separated)'),
             ),
             const SizedBox(height: 16),
             TextField(

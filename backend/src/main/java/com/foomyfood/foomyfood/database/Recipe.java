@@ -145,4 +145,4 @@ public class Recipe {
     public void setIngredientsAsList(List<String> ingredients) {
         this.ingredients = String.join(", ", ingredients);
     }
-
+}
