@@ -1,5 +1,8 @@
 package com.foomyfood.foomyfood.database;
 
+import java.util.Arrays;
+import java.util.List;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -42,6 +45,9 @@ public class Recipe {
 
     @Column(name = "user_cooked_times")
     private Integer userCookedTimes;
+
+    @Column(name = "user_id")
+    private Long userId;
 
     // Getters and Setters
     public Long getId() {
@@ -112,7 +118,32 @@ public class Recipe {
         return userCookedTimes;
     }
 
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public void getRecipeById(Long userId) {
+        this.userId = userId;
+    }
+
     public void setUserCookedTimes(Integer userCookedTimes) {
         this.userCookedTimes = userCookedTimes;
     }
+
+    public List<String> getIngredientsAsList() {
+        return Arrays.asList(ingredients.split(","));
+    }
+
+    public List<String> getLabelsAsList() {
+        return Arrays.asList(labels.split(","));
+    }
+
+    public void setIngredientsAsList(List<String> ingredients) {
+        this.ingredients = String.join(", ", ingredients);
+    }
+
 }

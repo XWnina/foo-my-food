@@ -51,6 +51,11 @@ public class RecipeService {
         }).orElseThrow(() -> new RuntimeException("Recipe with ID " + id + " not found"));
     }
 
+    public List<Recipe> getAllRecipesByUserId(Long userId) {
+        return recipeRepository.findByUserId(userId);
+    }
+
+
     // Delete a recipe by ID
     public void deleteRecipe(Long id) {
         if (recipeRepository.existsById(id)) {

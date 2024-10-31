@@ -38,10 +38,14 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.recipe['name']);
-    _ingredientsController = TextEditingController(text: widget.recipe['ingredients']?.join(', '));
-    _caloriesController = TextEditingController(text: widget.recipe['calories']?.toString() ?? '');
-    _descriptionController = TextEditingController(text: widget.recipe['description'] ?? '');
-    _videoLinkController = TextEditingController(text: widget.recipe['videoLink'] ?? '');
+    _ingredientsController =
+        TextEditingController(text: widget.recipe['ingredients']?.join(', '));
+    _caloriesController = TextEditingController(
+        text: widget.recipe['calories']?.toString() ?? '');
+    _descriptionController =
+        TextEditingController(text: widget.recipe['description'] ?? '');
+    _videoLinkController =
+        TextEditingController(text: widget.recipe['videoLink'] ?? '');
   }
 
   @override
@@ -61,7 +65,10 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
 
     final updatedRecipe = {
       'dishName': _nameController.text,
-      'ingredients': _ingredientsController.text.split(',').map((e) => e.trim()).toList(),
+      'ingredients': _ingredientsController.text
+          .split(',')
+          .map((e) => e.trim())
+          .join(', '), // 将数组转为逗号分隔字符串
       'calories': int.tryParse(_caloriesController.text) ?? 0,
       'description': _descriptionController.text,
       'videoLink': _videoLinkController.text,
@@ -104,7 +111,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                 title: const Text('Take a photo'),
                 onTap: () async {
                   Navigator.of(context).pop();
-                  final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
+                  final pickedFile =
+                      await ImagePicker().pickImage(source: ImageSource.camera);
                   if (pickedFile != null) {
                     setState(() {
                       _imageFile = File(pickedFile.path);
@@ -117,7 +125,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                 title: const Text('Choose from gallery'),
                 onTap: () async {
                   Navigator.of(context).pop();
-                  final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+                  final pickedFile = await ImagePicker()
+                      .pickImage(source: ImageSource.gallery);
                   if (pickedFile != null) {
                     setState(() {
                       _imageFile = File(pickedFile.path);
@@ -190,8 +199,10 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                   border: Border.all(color: greyBorderColor),
                   borderRadius: BorderRadius.circular(8),
                   image: _imageFile != null
-                      ? DecorationImage(image: FileImage(_imageFile!), fit: BoxFit.cover)
-                      : (widget.recipe['imageURL'] != null && widget.recipe['imageURL'].isNotEmpty)
+                      ? DecorationImage(
+                          image: FileImage(_imageFile!), fit: BoxFit.cover)
+                      : (widget.recipe['imageURL'] != null &&
+                              widget.recipe['imageURL'].isNotEmpty)
                           ? DecorationImage(
                               image: NetworkImage(widget.recipe['imageURL']),
                               fit: BoxFit.cover,
@@ -200,7 +211,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                 ),
                 child: _isEditing && _imageFile == null
                     ? const Center(
-                        child: Text('Tap to change image', style: TextStyle(color: Colors.grey)),
+                        child: Text('Tap to change image',
+                            style: TextStyle(color: Colors.grey)),
                       )
                     : null,
               ),
@@ -218,7 +230,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                   )
                 : Text(
                     widget.recipe['name'],
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold),
                   ),
             const SizedBox(height: 16),
             _isEditing
@@ -231,7 +244,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                       border: OutlineInputBorder(),
                     ),
                   )
-                : Text('Ingredients: ${widget.recipe['ingredients']?.join(', ')}'),
+                : Text(
+                    'Ingredients: ${widget.recipe['ingredients']?.join(', ')}'),
             const SizedBox(height: 16),
             _isEditing
                 ? TextField(
@@ -269,7 +283,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                       border: OutlineInputBorder(),
                     ),
                   )
-                : widget.recipe['videoLink'] != null && widget.recipe['videoLink'].isNotEmpty
+                : widget.recipe['videoLink'] != null &&
+                        widget.recipe['videoLink'].isNotEmpty
                     ? Text('Video Link: ${widget.recipe['videoLink']}')
                     : const SizedBox(),
           ],
