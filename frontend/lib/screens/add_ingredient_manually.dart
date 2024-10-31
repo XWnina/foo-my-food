@@ -331,11 +331,7 @@ class AddIngredientPageState extends State<AddIngredientPage> {
             _expirationDate = DateTime.now();
           });
 
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const MyHomePage(title: 'Home Page')),
-          );
+          Navigator.pop(context);
         } else {
           throw Exception('Failed to add ingredient to user ingredients');
         }
@@ -570,9 +566,7 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   hintText: 'Quantity',
-                  errorText: !_isQuantityValid
-                      ? quantityError
-                      : null,
+                  errorText: !_isQuantityValid ? quantityError : null,
                 ),
                 onChanged: (value) {
                   _validateQuantity();
@@ -612,9 +606,7 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                 controller: _caloriesController,
                 decoration: InputDecoration(
                   hintText: 'Calories',
-                  errorText: !_isCaloriesValid
-                      ? caloriesInvalidError
-                      : null,
+                  errorText: !_isCaloriesValid ? caloriesInvalidError : null,
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
@@ -626,9 +618,7 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                 controller: _proteinController,
                 decoration: InputDecoration(
                   hintText: 'Protein (g)',
-                  errorText: !_isProteinValid
-                      ? proteinInvalidError
-                      : null,
+                  errorText: !_isProteinValid ? proteinInvalidError : null,
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
@@ -652,9 +642,8 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                 controller: _carbohydratesController,
                 decoration: InputDecoration(
                   hintText: 'Carbohydrates (g)',
-                  errorText: !_isCarbohydratesValid
-                      ? carbohydratesInvalidError
-                      : null,
+                  errorText:
+                      !_isCarbohydratesValid ? carbohydratesInvalidError : null,
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
@@ -666,8 +655,7 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                 controller: _fiberController,
                 decoration: InputDecoration(
                   hintText: 'Fiber (g)',
-                  errorText:
-                      !_isFiberValid ? fiberInvalidError : null,
+                  errorText: !_isFiberValid ? fiberInvalidError : null,
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
