@@ -27,7 +27,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Completer<void>? _dialogCompleter;
   int _selectedIndex = 0;
   String userId = '';
   List<String> categories = [
@@ -40,6 +39,7 @@ class _MyHomePageState extends State<MyHomePage> {
     'Beverages'
   ];
   List<String> selectedCategories = [];
+  String? selectedCategory;
 
   Future<void> _deleteIngredientsBatch(
       BuildContext context, String userId, List<Ingredient> ingredients) async {
@@ -59,8 +59,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     _fetchUserIngredients(); // 刷新列表
-    setState(() {
-    });
+    setState(() {});
   }
 
   late List<Widget> _pages;
@@ -123,8 +122,7 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         }
 
-        setState(() {
-        });
+        setState(() {});
 
         final ingredientProvider =
             Provider.of<IngredientProvider>(context, listen: false);
@@ -152,7 +150,7 @@ class _MyHomePageState extends State<MyHomePage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Alert!'),
+          title: const Text('Alert!'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: expiringIngredients.map((ingredient) {
@@ -164,20 +162,18 @@ class _MyHomePageState extends State<MyHomePage> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                setState(() {
-                });
+                setState(() {});
               },
-              child: Text('Okay, I know now.'),
+              child: const Text('Okay, I know now.'),
             ),
             TextButton(
               onPressed: () async {
                 await _deleteIngredientsBatch(
                     context, userId, expiringIngredients);
                 Navigator.of(context).pop(); // 确保弹窗只关闭一次
-                setState(() {
-                });
+                setState(() {});
               },
-              child: Text('Cleaned up already.'),
+              child: const Text('Cleaned up already.'),
             ),
           ],
         );
@@ -220,12 +216,12 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _onCategorySelected(String category, bool isSelected) {
+  void _onCategorySelected(String category) {
     setState(() {
-      if (isSelected) {
-        selectedCategories.add(category);
+      if (selectedCategories.contains(category)) {
+        selectedCategories.remove(category); // 移除已选中的分类
       } else {
-        selectedCategories.remove(category);
+        selectedCategories.add(category); // 添加新选择的分类
       }
     });
     Provider.of<IngredientProvider>(context, listen: false).selectedCategories =
@@ -243,30 +239,74 @@ class _MyHomePageState extends State<MyHomePage> {
             )
           : null,
       body: Column(
-        children: [
-          if (_selectedIndex == 0)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Wrap(
-                spacing: 8.0,
-                children: categories.map((category) {
-                  return FilterChip(
-                    label: Text(category),
-                    selected: selectedCategories.contains(category),
-                    onSelected: (isSelected) =>
-                        _onCategorySelected(category, isSelected),
+  children: [
+    if (_selectedIndex == 0)
+      Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            PopupMenuButton<String>(
+              tooltip: 'Filter Categories',
+              onSelected: (String category) {
+                _onCategorySelected(category); // 点击时更新选中状态
+              },
+              itemBuilder: (BuildContext context) {
+                return categories.map((String category) {
+                  return PopupMenuItem<String>(
+                    value: category,
+                    child: StatefulBuilder(
+                      builder: (BuildContext context, StateSetter setState) {
+                        return ListTile(
+                          title: Text(category),
+                          leading: Checkbox(
+                            value: selectedCategories.contains(category),
+                            onChanged: (bool? isSelected) {
+                              setState(() {
+                                _onCategorySelected(category); // 更新勾选状态
+                              });
+                            },
+                          ),
+                          onTap: () {
+                            setState(() {
+                              _onCategorySelected(category); // 点击项也更新勾选状态
+                            });
+                          },
+                        );
+                      },
+                    ),
                   );
-                }).toList(),
+                }).toList();
+              },
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Filter Categories', // 使用文字作为按钮
+                    style: TextStyle(
+                      color: cardnametext, // 设置文字颜色
+                      fontSize: 16, // 设置文字大小
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_drop_down, // 倒三角图标
+                    color: Colors.black, // 设置图标颜色
+                  ),
+                ],
               ),
             ),
-          Expanded(
-            child: IndexedStack(
-              index: _selectedIndex,
-              children: _pages,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
+    Expanded(
+      child: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
+      ),
+    ),
+  ],
+),
+
       floatingActionButton: (_selectedIndex == 0 || _selectedIndex == 2)
           ? FloatingActionButton(
               heroTag: "Add",
