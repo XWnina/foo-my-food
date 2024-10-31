@@ -47,8 +47,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
         TextEditingController(text: widget.recipe['description'] ?? '');
     _videoLinkController =
         TextEditingController(text: widget.recipe['videoLink'] ?? '');
-    _labelsController =
-        TextEditingController(text: widget.recipe['labels']?.join(', ') ?? '');
+
   }
 
   @override
@@ -69,9 +68,12 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
 
     final updatedRecipe = {
       'dishName': _nameController.text,
-      'ingredients':
-          _ingredientsController.text.split(',').map((e) => e.trim()).toList(),
-      'labels': _labelsController.text.split(',').map((e) => e.trim()).toList(),
+
+      'ingredients': _ingredientsController.text
+          .split(',')
+          .map((e) => e.trim())
+          .join(', '), // 将数组转为逗号分隔字符串
+
       'calories': int.tryParse(_caloriesController.text) ?? 0,
       'description': _descriptionController.text,
       'videoLink': _videoLinkController.text,
@@ -249,18 +251,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                   )
                 : Text(
                     'Ingredients: ${widget.recipe['ingredients']?.join(', ')}'),
-            const SizedBox(height: 16),
-            _isEditing
-                ? TextField(
-                    controller: _labelsController,
-                    decoration: const InputDecoration(
-                      labelText: 'Labels (comma-separated)',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(),
-                    ),
-                  )
-                : Text('Labels: ${widget.recipe['labels']?.join(', ')}'),
+
             const SizedBox(height: 16),
             _isEditing
                 ? TextField(

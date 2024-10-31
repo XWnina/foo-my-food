@@ -5,6 +5,7 @@ import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:foo_my_food_app/utils/constants.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AddRecipePage extends StatefulWidget {
   const AddRecipePage({super.key});
@@ -20,7 +21,24 @@ class _AddRecipePageState extends State<AddRecipePage> {
   final TextEditingController _caloriesController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _videoLinkController = TextEditingController();
-  final TextEditingController _labelsController = TextEditingController();
+
+  String? userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId(); // 加载 userId
+  }
+
+  Future<void> _loadUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    userId = prefs.getString('userId'); // 从 SharedPreferences 中获取 userId
+    if (userId == null) {
+      print(
+          "Error: userId is null. Ensure user is logged in and userId is saved in SharedPreferences.");
+    }
+  }
+
 
   Future<void> _pickImage() async {
     final pickedFile = await showModalBottomSheet(
@@ -78,6 +96,11 @@ class _AddRecipePageState extends State<AddRecipePage> {
   }
 
   Future<void> _addRecipe() async {
+    if (userId == null) {
+      print("Error: userId is not loaded.");
+      return;
+    }
+
     final recipeName = _recipeNameController.text;
     final ingredients = _ingredientsController.text
         .split(',')
@@ -113,11 +136,13 @@ class _AddRecipePageState extends State<AddRecipePage> {
       }
 
       final recipeData = {
-        'dishName': recipeName, 
-        'ingredients': ingredients, 
-        'labels': labels,
+
+        'dishName': recipeName, // 修改了这里的字段名
+        'ingredients': ingredients.join(', '), 
+
         'calories': int.tryParse(calories) ?? 0,
         'description': description,
+        'userId': userId, // 新增 userId 字段
         if (imageUrl != null) 'imageURL': imageUrl,
         if (videoLink.isNotEmpty) 'videoLink': videoLink,
       };

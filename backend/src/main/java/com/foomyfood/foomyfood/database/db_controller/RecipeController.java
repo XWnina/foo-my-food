@@ -27,17 +27,17 @@ public class RecipeController {
     // Add a new recipe
     @PostMapping
     public ResponseEntity<Recipe> addRecipe(@RequestBody Recipe recipe) {
-        // Ensure that dishName and ingredients are not null
         if (recipe.getDishName() == null || recipe.getDishName().isEmpty()) {
-            return ResponseEntity.badRequest().body(null); // Dish name is required
+            return ResponseEntity.badRequest().body(null);
         }
         if (recipe.getIngredients() == null || recipe.getIngredients().isEmpty()) {
-            return ResponseEntity.badRequest().body(null); // Ingredients are required
+            return ResponseEntity.badRequest().body(null);
         }
 
         Recipe createdRecipe = recipeService.addRecipe(recipe);
         return ResponseEntity.ok(createdRecipe);
     }
+
 
     // Get a recipe by ID
     @GetMapping("/{id}")
