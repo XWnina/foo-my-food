@@ -1,8 +1,5 @@
 package com.foomyfood.foomyfood.database;
 
-import java.util.Arrays;
-import java.util.List;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -41,52 +38,10 @@ public class Recipe {
     private String ingredients;
 
     @Column(name = "labels")
-    private String labels;
+    private String labels = "";
 
-    // Constructors
-    public Recipe() {
-    }
-
-    public Recipe(String dishName, Integer calories, String videoLink, String imageURL, String description, List<String> ingredients) {
-        this.dishName = dishName;
-
-        if (calories != null) {
-            this.calories = calories;
-        } else {
-            this.calories = -1;
-        }
-
-        if (videoLink != null && !videoLink.isEmpty()) {
-            this.videoLink = videoLink;
-        } else {
-            this.videoLink = "N/A";
-        }
-
-        if (imageURL != null && !imageURL.isEmpty()) {
-            this.imageURL = imageURL;
-        } else {
-            this.imageURL = "N/A";
-        }
-
-        if (description != null && !description.isEmpty()) {
-            this.description = description;
-        } else {
-            this.description = "N/A";
-        }
-
-        if (ingredients != null && !ingredients.isEmpty()) {
-            this.ingredients = String.join(",", ingredients);
-        } else {
-            throw new IllegalArgumentException("Ingredients cannot be null or empty.");
-        }
-
-        if (labels != null && !labels.isEmpty()) {
-            this.labels = labels;
-        } else {
-            this.labels = "N/A";
-        }
-
-    }
+    @Column(name = "user_cooked_times")
+    private Integer userCookedTimes;
 
     // Getters and Setters
     public Long getId() {
@@ -141,8 +96,8 @@ public class Recipe {
         return ingredients;
     }
 
-    public void setIngredients(List<String> ingredients) {
-        this.ingredients = String.join(",", ingredients);
+    public void setIngredients(String ingredients) {
+        this.ingredients = ingredients;
     }
 
     public String getLabels() {
@@ -153,24 +108,11 @@ public class Recipe {
         this.labels = labels;
     }
 
-    public List<String> getLabelsAsList() {
-        return Arrays.asList(labels.split(","));
+    public Integer getUserCookedTimes() {
+        return userCookedTimes;
     }
 
-    public List<String> getIngredientsAsList() {
-        return Arrays.asList(ingredients.split(","));
-    }
-
-    @Override
-    public String toString() {
-        return "Recipe{"
-                + "id=" + id
-                + ", dishName='" + dishName + '\''
-                + ", calories=" + calories
-                + ", videoLink='" + videoLink + '\''
-                + ", imageURL='" + imageURL + '\''
-                + ", description='" + description + '\''
-                // Remove ingredients and labels to prevent LazyInitializationException
-                + '}';
+    public void setUserCookedTimes(Integer userCookedTimes) {
+        this.userCookedTimes = userCookedTimes;
     }
 }
