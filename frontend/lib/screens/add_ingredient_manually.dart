@@ -49,6 +49,7 @@ class AddIngredientPageState extends State<AddIngredientPage> {
   bool _isFormValid = false;
   bool _isSubmitting = false;
   final CalendarHelper _calendarHelper = CalendarHelper();
+  bool _showNoResultsMessage = false;
 
   // 用于模糊搜索结果
   List<String> _matchingPresets = [];
@@ -389,18 +390,22 @@ class AddIngredientPageState extends State<AddIngredientPage> {
         setState(() {
           _matchingPresets = presets;
           _showDropdown = presets.isNotEmpty;
+          _showNoResultsMessage = presets.isEmpty;
         });
       } else {
         setState(() {
           _matchingPresets = [];
           _showDropdown = false;
+          _showNoResultsMessage = true;
         });
+        _showError("No related ingredients, please enter manually.");
       }
     } catch (e) {
       _showError('Error fetching matching presets: ${e.toString()}');
       setState(() {
         _matchingPresets = [];
         _showDropdown = false;
+        _showNoResultsMessage = true;
       });
     }
   }
@@ -442,6 +447,13 @@ class AddIngredientPageState extends State<AddIngredientPage> {
     }
   }
 
+  void _onSearchFieldChanged(String value) {
+    setState(() {
+      _showNoResultsMessage = false;
+    });
+    _validateName();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -455,7 +467,7 @@ class AddIngredientPageState extends State<AddIngredientPage> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // 食材名称输入框，使用控制器来管理文本
+              // 食材名称输入框，带搜索图标
               TextField(
                 controller: _ingredientNameController,
                 decoration: InputDecoration(
@@ -470,11 +482,20 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                     },
                   ),
                 ),
-                onChanged: (value) {
-                  _validateName(); // 验证name字段
-                },
+                onChanged: _onSearchFieldChanged,
               ),
-              // 如果有匹配结果，则显示下拉菜单
+
+              // 无匹配结果时显示提示
+              if (_showNoResultsMessage)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    "No related ingredients, please enter manually.",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+
+              // 显示匹配的食材下拉菜单
               if (_showDropdown)
                 ListView.builder(
                   shrinkWrap: true,
@@ -487,7 +508,10 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                     );
                   },
                 ),
+
               const SizedBox(height: 16),
+
+              // 图片选择器
               GestureDetector(
                 onTap: _pickImage,
                 child: _image != null
@@ -501,6 +525,8 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                       ),
               ),
               const SizedBox(height: 16),
+
+              // 分类选择
               DropdownButtonFormField<String>(
                 value: _selectedCategory,
                 items: foodCategories.map((String category) {
@@ -518,6 +544,8 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                 decoration: const InputDecoration(labelText: 'Category'),
               ),
               const SizedBox(height: 16),
+
+              // 存储方法选择
               DropdownButtonFormField<String>(
                 value: _selectedStorageMethod,
                 items: storageMethods.map((String method) {
@@ -535,20 +563,24 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                 decoration: const InputDecoration(labelText: 'Storage method'),
               ),
               const SizedBox(height: 16),
+
+              // 数量输入框
               TextField(
                 controller: _quantityController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   hintText: 'Quantity',
                   errorText: !_isQuantityValid
-                      ? 'Quantity must be greater than 0'
+                      ? quantityError
                       : null,
                 ),
                 onChanged: (value) {
-                  _validateQuantity(); // 验证quantity字段
+                  _validateQuantity();
                 },
               ),
               const SizedBox(height: 16),
+
+              // 单位输入框
               TextField(
                 controller: _unitController,
                 decoration: InputDecoration(
@@ -556,10 +588,12 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                   errorText: !_isUnitValid ? 'Unit is required' : null,
                 ),
                 onChanged: (value) {
-                  _validateUnit(); // 验证unit字段
+                  _validateUnit();
                 },
               ),
               const SizedBox(height: 16),
+
+              // 过期日期选择
               GestureDetector(
                 onTap: () => _selectExpirationDate(context),
                 child: Row(
@@ -572,17 +606,19 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                 ),
               ),
               const SizedBox(height: 16),
+
+              // 营养信息输入框
               TextField(
                 controller: _caloriesController,
                 decoration: InputDecoration(
                   hintText: 'Calories',
                   errorText: !_isCaloriesValid
-                      ? 'Calories must be a valid number'
+                      ? caloriesInvalidError
                       : null,
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
-                  _validateCalories(); // 验证calories字段
+                  _validateCalories();
                 },
               ),
               const SizedBox(height: 16),
@@ -591,12 +627,12 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                 decoration: InputDecoration(
                   hintText: 'Protein (g)',
                   errorText: !_isProteinValid
-                      ? 'Protein must be a valid number'
+                      ? proteinInvalidError
                       : null,
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
-                  _validateProtein(); // 验证protein字段
+                  _validateProtein();
                 },
               ),
               const SizedBox(height: 16),
@@ -604,11 +640,11 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                 controller: _fatController,
                 decoration: InputDecoration(
                   hintText: 'Fat (g)',
-                  errorText: !_isFatValid ? 'Fat must be a valid number' : null,
+                  errorText: !_isFatValid ? fatInvalidError : null,
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
-                  _validateFat(); // 验证fat字段
+                  _validateFat();
                 },
               ),
               const SizedBox(height: 16),
@@ -617,12 +653,12 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                 decoration: InputDecoration(
                   hintText: 'Carbohydrates (g)',
                   errorText: !_isCarbohydratesValid
-                      ? 'Carbohydrates must be a valid number'
+                      ? carbohydratesInvalidError
                       : null,
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
-                  _validateCarbohydrates(); // 验证carbohydrates字段
+                  _validateCarbohydrates();
                 },
               ),
               const SizedBox(height: 16),
@@ -631,14 +667,16 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                 decoration: InputDecoration(
                   hintText: 'Fiber (g)',
                   errorText:
-                      !_isFiberValid ? 'Fiber must be a valid number' : null,
+                      !_isFiberValid ? fiberInvalidError : null,
                 ),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
-                  _validateFiber(); // 验证fiber字段
+                  _validateFiber();
                 },
               ),
               const SizedBox(height: 16),
+
+              // 提交按钮
               ElevatedButton(
                 onPressed:
                     _isFormValid && !_isSubmitting ? _addIngredient : null,

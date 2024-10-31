@@ -1,5 +1,7 @@
 package com.foomyfood.foomyfood.database.db_service;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -91,5 +93,21 @@ public class UserIngredientService {
         }
 
         return ingredientDetailsList;  // List of list with ingredient details
+    }
+    public List<Ingredient> getExpiringIngredients(Long userId) {
+        List<UserIngredient> userIngredients = userIngredientRepository.findAllByUserId(userId);
+        List<Ingredient> expiringIngredients = new ArrayList<>();
+
+        for (UserIngredient userIngredient : userIngredients) {
+            Optional<Ingredient> optionalIngredient = ingredientRepository.findById(userIngredient.getIngredientId());
+            if (optionalIngredient.isPresent()) {
+                Ingredient ingredient = optionalIngredient.get();
+                LocalDate expirationDate = LocalDate.parse(ingredient.getExpirationDate());
+                if (ChronoUnit.DAYS.between(LocalDate.now(), expirationDate) <= 3) {
+                    expiringIngredients.add(ingredient);
+                }
+            }
+        }
+        return expiringIngredients;
     }
 }

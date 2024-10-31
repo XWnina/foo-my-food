@@ -36,10 +36,12 @@ class _RecipePageState extends State<RecipePage> {
 
   Future<void> _fetchUserRecipes() async {
     try {
-      final response = await http.get(Uri.parse('$baseApiUrl/myrecipes/user/$userId'));
+      final response =
+          await http.get(Uri.parse('$baseApiUrl/myrecipes/user/$userId'));
       if (response.statusCode == 200) {
         final List<dynamic> recipeData = json.decode(response.body);
-        List<Recipe> recipes = recipeData.map((data) => Recipe.fromJson(data)).toList();
+        List<Recipe> recipes =
+            recipeData.map((data) => Recipe.fromJson(data)).toList();
         setState(() {
           _recipes = recipes;
         });
@@ -109,7 +111,8 @@ class _RecipePageState extends State<RecipePage> {
           ? const Center(
               child: Text(
                 'You have no recipes! Click the + to add.',
-                style: TextStyle(color: Color.fromARGB(255, 0, 0, 0), fontSize: 16),
+                style: TextStyle(
+                    color: Color.fromARGB(255, 0, 0, 0), fontSize: 16),
                 textAlign: TextAlign.center,
               ),
             )
@@ -118,8 +121,8 @@ class _RecipePageState extends State<RecipePage> {
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 0.8,
+                mainAxisSpacing: 9,
+                childAspectRatio: 1,
               ),
               itemCount: _recipes.length,
               itemBuilder: (context, index) {
@@ -138,7 +141,7 @@ class _RecipePageState extends State<RecipePage> {
                             ),
                           ),
                         ).then((_) {
-                          _fetchUserRecipes(); // Refresh list after edit/delete
+                          _fetchUserRecipes(); // 刷新列表
                         });
                       },
                       child: Card(
@@ -149,11 +152,14 @@ class _RecipePageState extends State<RecipePage> {
                         child: Column(
                           children: [
                             Expanded(
-                              child: recipe.imageUrl != null &&
-                                      recipe.imageUrl!.isNotEmpty
-                                  ? Image.network(recipe.imageUrl!,
-                                      fit: BoxFit.cover)
-                                  : const Icon(Icons.image, size: 50),
+                              child: AspectRatio(
+                                aspectRatio: 1.5, // 固定宽高比为 1:1
+                                child: recipe.imageUrl != null &&
+                                        recipe.imageUrl!.isNotEmpty
+                                    ? Image.network(recipe.imageUrl!,
+                                        fit: BoxFit.cover)
+                                    : const Icon(Icons.image, size: 50),
+                              ),
                             ),
                             Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -173,7 +179,8 @@ class _RecipePageState extends State<RecipePage> {
                                   const SizedBox(height: 4),
                                   Text(
                                     'Calories: ${recipe.calories} kcal',
-                                    style: const TextStyle(color: cardexpirestext),
+                                    style:
+                                        const TextStyle(color: cardexpirestext),
                                     textAlign: TextAlign.center,
                                   ),
                                 ],
