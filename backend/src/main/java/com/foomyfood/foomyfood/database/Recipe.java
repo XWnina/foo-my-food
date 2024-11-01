@@ -38,7 +38,6 @@ public class Recipe {
     @Column(name = "ingredients", nullable = false)
     private String ingredients;
 
-
     @Column(name = "labels")
     private String labels = "";
 
@@ -105,7 +104,6 @@ public class Recipe {
         this.ingredients = ingredients;
     }
 
-
     public String getLabels() {
         return labels;
     }
@@ -136,10 +134,6 @@ public class Recipe {
 
     public List<String> getIngredientsAsList() {
         return Arrays.asList(ingredients.split(","));
-    }
-
-    public List<String> getLabelsAsList() {
-        return Arrays.asList(labels.split(","));
     }
 
     public void setIngredientsAsList(List<String> ingredients) {
