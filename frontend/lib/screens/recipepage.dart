@@ -213,7 +213,6 @@ class _RecipePageState extends State<RecipePage> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -403,8 +402,14 @@ class _RecipePageState extends State<RecipePage> {
             ElevatedButton.icon(
               onPressed: () {
                 if (_isSelecting) {
-                  // 计算总卡路里并退出选择模式
-                  if (_selectedRecipes.isNotEmpty) {
+                  // 如果未选择任何食谱，弹出提示
+                  if (_selectedRecipes.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('You have not selected any recipes')),
+                    );
+                  } else {
+                    // 计算总卡路里并退出选择模式
                     _showNutritionReport(_totalCalories);
                     setState(() {
                       _isSelecting = false;
