@@ -20,6 +20,18 @@ class _RecipePageState extends State<RecipePage> {
   bool _isSelecting = false; // 控制是否启用选择功能
   int _totalCalories = 0;
 
+  final Set<String> _selectedLabels = {}; // 存储选中的标签
+  List<Recipe> _filteredRecipes = []; // 存储筛选后的菜谱
+  final List<String> _labels = [
+    'breakfast',
+    'lunch',
+    'dinner',
+    'dessert',
+    'snack',
+    'vegan',
+    'vegetarian'
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -74,6 +86,7 @@ class _RecipePageState extends State<RecipePage> {
             recipeData.map((data) => Recipe.fromJson(data)).toList();
         setState(() {
           _recipes = recipes;
+          _applyFilters();
         });
       } else {
         throw Exception('Failed to load recipes');
@@ -129,6 +142,77 @@ class _RecipePageState extends State<RecipePage> {
     }
   }
 
+  void _applyFilters() {
+    // 如果没有选择任何标签，显示所有菜谱
+    if (_selectedLabels.isEmpty) {
+      _filteredRecipes = _recipes;
+    } else {
+      _filteredRecipes = _recipes.where((recipe) {
+        final recipeLabels = recipe.labels?.split(', ') ?? [];
+        return _selectedLabels.every((label) => recipeLabels.contains(label));
+      }).toList();
+    }
+    setState(() {});
+  }
+
+  void _showLabelFilterDialog() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return Column(
+              children: [
+                Expanded(
+                  child: ListView(
+                    children: _labels.map((String label) {
+                      return CheckboxListTile(
+                        title: Text(label),
+                        value: _selectedLabels.contains(label),
+                        onChanged: (bool? selected) {
+                          setModalState(() {
+                            if (selected == true) {
+                              _selectedLabels.add(label);
+                            } else {
+                              _selectedLabels.remove(label);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        setModalState(() {
+                          _selectedLabels.clear(); // 清空选中标签
+                        });
+                        _applyFilters(); // 应用过滤器，显示所有菜谱
+                        Navigator.pop(context); // 关闭弹窗
+                      },
+                      child: const Text('Clear'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context); // 关闭弹窗
+                        _applyFilters(); // 点击确认后应用过滤
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -136,14 +220,20 @@ class _RecipePageState extends State<RecipePage> {
       appBar: AppBar(
         title: const Text('My Recipes', style: TextStyle(color: Colors.white)),
         backgroundColor: appBarColor,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_list, color: Colors.white),
+            onPressed: _showLabelFilterDialog, // 显示筛选弹窗
+          ),
+        ],
       ),
       body: Column(
         children: [
           Expanded(
-            child: _recipes.isEmpty
+            child: _filteredRecipes.isEmpty
                 ? const Center(
                     child: Text(
-                      'You have no recipes! Click the + to add.',
+                      'No recipes match your filters. Click the + to add or adjust filters.',
                       style: TextStyle(
                           color: Color.fromARGB(255, 0, 0, 0), fontSize: 16),
                       textAlign: TextAlign.center,
@@ -158,9 +248,9 @@ class _RecipePageState extends State<RecipePage> {
                       mainAxisSpacing: 9,
                       childAspectRatio: 0.8,
                     ),
-                    itemCount: _recipes.length,
+                    itemCount: _filteredRecipes.length,
                     itemBuilder: (context, index) {
-                      final recipe = _recipes[index];
+                      final recipe = _filteredRecipes[index];
                       final isSelected = _selectedRecipes.contains(recipe);
 
                       return Stack(
@@ -223,7 +313,6 @@ class _RecipePageState extends State<RecipePage> {
                                       ],
                                     ),
                                   ),
-                                  // 显示选择框，用于选择菜谱
                                   if (_isSelecting)
                                     Checkbox(
                                       value: isSelected,
@@ -266,7 +355,7 @@ class _RecipePageState extends State<RecipePage> {
             ElevatedButton.icon(
               onPressed: () {
                 if (_isSelecting) {
-                  // In selection mode, calculate if any items are selected
+                  // 计算总卡路里并退出选择模式
                   if (_selectedRecipes.isNotEmpty) {
                     _showNutritionReport(_totalCalories);
                     setState(() {
@@ -276,7 +365,7 @@ class _RecipePageState extends State<RecipePage> {
                     });
                   }
                 } else {
-                  // Enter selection mode
+                  // 进入选择模式
                   setState(() {
                     _isSelecting = true;
                     _selectedRecipes.clear();
@@ -289,8 +378,10 @@ class _RecipePageState extends State<RecipePage> {
                     ? Colors.grey
                     : buttonBackgroundColor,
               ),
-              icon: Icon(_isSelecting ? Icons.calculate : Icons.select_all,
-                  color: Colors.white),
+              icon: Icon(
+                _isSelecting ? Icons.calculate : Icons.select_all,
+                color: Colors.white,
+              ),
               label: Text(
                 _isSelecting ? 'Calculate' : 'Select Recipes',
                 style: const TextStyle(color: Colors.white),
@@ -301,9 +392,9 @@ class _RecipePageState extends State<RecipePage> {
                 icon: const Icon(Icons.close, color: Colors.red),
                 onPressed: () {
                   setState(() {
-                    _isSelecting = false; // Exit selection mode
+                    _isSelecting = false; // 退出选择模式
                     _selectedRecipes.clear();
-                    _totalCalories = 0; // Reset total calories
+                    _totalCalories = 0; // 重置总卡路里
                   });
                 },
                 tooltip: 'Exit selection mode',
