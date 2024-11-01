@@ -310,6 +310,46 @@ class _RecipePageState extends State<RecipePage> {
                                               color: cardexpirestext),
                                           textAlign: TextAlign.center,
                                         ),
+                                        const SizedBox(height: 4),
+                                        Wrap(
+                                          spacing: 4,
+                                          runSpacing: 4,
+                                          alignment: WrapAlignment.center,
+                                          children: recipe.labels != null &&
+                                                  recipe.labels!.isNotEmpty
+                                              ? recipe.labels!
+                                                  .split(', ')
+                                                  .map((label) {
+                                                  return Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        vertical: 2,
+                                                        horizontal: 6),
+                                                    decoration: BoxDecoration(
+                                                      color: lablebackground,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              4),
+                                                    ),
+                                                    child: Text(
+                                                      label,
+                                                      style: const TextStyle(
+                                                        color: cardexpirestext,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                  );
+                                                }).toList()
+                                              : [
+                                                  const Text(
+                                                    "No label in this Recipes",
+                                                    style: TextStyle(
+                                                      color: cardexpirestext,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -335,8 +375,16 @@ class _RecipePageState extends State<RecipePage> {
                             top: 8,
                             right: 8,
                             child: IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _confirmDeleteRecipe(recipe.id),
+                              icon: Icon(
+                                Icons.delete_forever_rounded,
+                                color: _isSelecting
+                                    ? Colors.grey
+                                    : Colors.red, // 在选择模式下使用灰色图标
+                              ),
+                              onPressed: _isSelecting
+                                  ? null
+                                  : () => _confirmDeleteRecipe(
+                                      recipe.id), // 禁用点击事件但保持图标显示
                             ),
                           ),
                         ],

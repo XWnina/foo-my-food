@@ -248,6 +248,58 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                   ),
             const SizedBox(height: 16),
             _isEditing
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      DropdownButtonFormField<String>(
+                        items: _options.map((String label) {
+                          return DropdownMenuItem(
+                            value: label,
+                            child: Container(
+                              width: MediaQuery.of(context).size.width *
+                                  0.7, // 设置固定宽度
+                              child: StatefulBuilder(
+                                builder: (BuildContext context,
+                                    StateSetter setState) {
+                                  return CheckboxListTile(
+                                    title: Text(label),
+                                    value: _selectedLabels.contains(label),
+                                    onChanged: (bool? selected) {
+                                      setState(() {
+                                        if (selected == true) {
+                                          _selectedLabels.add(label);
+                                        } else {
+                                          _selectedLabels.remove(label);
+                                        }
+                                      });
+                                      // 更新外部状态以反映勾选情况
+                                      this.setState(() {});
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (_) {}, // 保持为空以阻止默认行为
+                        hint: const Text('Select Labels'),
+                        decoration: const InputDecoration(
+                          hintText: 'Labels:',
+                          filled: true, // 添加了这一行，使背景颜色填充
+                          fillColor: Colors.white, // 添加了这一行，设置填充颜色为白色
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Selected Labels: ${_selectedLabels.join(', ')}",
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  )
+                : Text('Labels: ${widget.recipe['labels']}'),
+            const SizedBox(height: 16),
+            _isEditing
                 ? TextField(
                     controller: _ingredientsController,
                     decoration: const InputDecoration(
@@ -259,47 +311,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                   )
                 : Text(
                     'Ingredients: ${widget.recipe['ingredients']?.join(', ')}'),
-            const SizedBox(height: 16),
-            _isEditing
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      DropdownButtonFormField<String>(
-                        items: _options.map((String label) {
-                          return DropdownMenuItem(
-                            value: label,
-                            child: Container(
-                              width: MediaQuery.of(context).size.width *
-                                  0.8, // 设置固定宽度
-                              child: CheckboxListTile(
-                                title: Text(label),
-                                value: _selectedLabels.contains(label),
-                                onChanged: (bool? selected) {
-                                  setState(() {
-                                    if (selected == true) {
-                                      _selectedLabels.add(label);
-                                    } else {
-                                      _selectedLabels.remove(label);
-                                    }
-                                  });
-                                },
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (_) {},
-                        decoration: const InputDecoration(
-                          hintText: 'Labels',
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Selected Labels: ${_selectedLabels.join(', ')}",
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ],
-                  )
-                : Text('Labels: ${widget.recipe['labels']}'),
             const SizedBox(height: 16),
             _isEditing
                 ? TextField(

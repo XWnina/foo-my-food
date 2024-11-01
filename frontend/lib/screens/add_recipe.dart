@@ -215,23 +215,29 @@ class _AddRecipePageState extends State<AddRecipePage> {
                   value: label,
                   child: Container(
                     width: MediaQuery.of(context).size.width * 0.8, // 设置固定宽度
-                    child: CheckboxListTile(
-                      value: _selectedLabels.contains(label),
-                      title: Text(label),
-                      onChanged: (selected) {
-                        setState(() {
-                          if (selected == true) {
-                            _selectedLabels.add(label);
-                          } else {
-                            _selectedLabels.remove(label);
-                          }
-                        });
+                    child: StatefulBuilder(
+                      builder: (BuildContext context, StateSetter setState) {
+                        return CheckboxListTile(
+                          title: Text(label),
+                          value: _selectedLabels.contains(label),
+                          onChanged: (bool? selected) {
+                            setState(() {
+                              if (selected == true) {
+                                _selectedLabels.add(label);
+                              } else {
+                                _selectedLabels.remove(label);
+                              }
+                            });
+                            // 更新外部状态以反映勾选情况
+                            this.setState(() {});
+                          },
+                        );
                       },
                     ),
                   ),
                 );
               }).toList(),
-              onChanged: (_) {}, // 不需要 onChanged 处理
+              onChanged: (_) {}, // 保持为空以阻止默认行为
               hint: const Text('Select Labels'),
               decoration: const InputDecoration(hintText: 'Labels:'),
             ),
@@ -240,7 +246,6 @@ class _AddRecipePageState extends State<AddRecipePage> {
               "Selected Labels: ${_selectedLabels.join(', ')}",
               style: const TextStyle(fontSize: 16),
             ),
-
             const SizedBox(height: 16),
             TextField(
               controller: _caloriesController,
