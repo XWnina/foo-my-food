@@ -68,13 +68,13 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           if (provider.shoppingList.isEmpty) {
             return const Center(
               child: Text(
-                  'Your shopping list is empty!',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                'Your shopping list is empty!',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
             );
           }
 
@@ -165,11 +165,41 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
               },
             ),
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
+              icon: const Icon(Icons.delete_forever, color: Colors.red),
               onPressed: () {
-                provider.deleteItem(item['foodId']);
+                // Show confirmation dialog before deleting
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Confirm Delete'),
+                      content: const Text(
+                          'Are you sure you want to delete this item?'),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the dialog
+                          },
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            provider.deleteItem(
+                                item['foodId']); // Proceed with deletion
+                            Navigator.of(context)
+                                .pop(); // Close the dialog after deletion
+                          },
+                          child: const Text(
+                            'Delete',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
               },
-            ),
+            )
           ],
         ),
       ),
