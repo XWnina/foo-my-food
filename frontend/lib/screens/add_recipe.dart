@@ -9,7 +9,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AddRecipePage extends StatefulWidget {
   const AddRecipePage({super.key});
-
   @override
   _AddRecipePageState createState() => _AddRecipePageState();
 }
@@ -22,6 +21,16 @@ class _AddRecipePageState extends State<AddRecipePage> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _videoLinkController = TextEditingController();
   final TextEditingController _labelsController = TextEditingController();
+  final List<String> _options = [
+    'breakfast',
+    'lunch',
+    'dinner',
+    'dessert',
+    'snack',
+    'vegan',
+    'vegetarian'
+  ];
+  final Set<String> _selectedLabels = {};
   String? userId;
   @override
   void initState() {
@@ -105,7 +114,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
         .split(',')
         .map((e) => e.trim())
         .toList(); // 确保是数组形式
-    final labels = _labelsController.text;
+    final labels = _selectedLabels.join(', ');
     final calories = _caloriesController.text;
     final description = _descriptionController.text;
     final videoLink = _videoLinkController.text;
@@ -200,12 +209,38 @@ class _AddRecipePageState extends State<AddRecipePage> {
               decoration: const InputDecoration(
                   hintText: 'Ingredients (comma-separated)'),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _labelsController,
-              decoration: const InputDecoration(
-                  hintText: 'Labels: (comma-separated)'),
+            DropdownButtonFormField<String>(
+              items: _options.map((String label) {
+                return DropdownMenuItem(
+                  value: label,
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.8, // 设置固定宽度
+                    child: CheckboxListTile(
+                      value: _selectedLabels.contains(label),
+                      title: Text(label),
+                      onChanged: (selected) {
+                        setState(() {
+                          if (selected == true) {
+                            _selectedLabels.add(label);
+                          } else {
+                            _selectedLabels.remove(label);
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (_) {}, // 不需要 onChanged 处理
+              hint: const Text('Select Labels'),
+              decoration: const InputDecoration(hintText: 'Labels:'),
             ),
+            const SizedBox(height: 16),
+            Text(
+              "Selected Labels: ${_selectedLabels.join(', ')}",
+              style: const TextStyle(fontSize: 16),
+            ),
+
             const SizedBox(height: 16),
             TextField(
               controller: _caloriesController,

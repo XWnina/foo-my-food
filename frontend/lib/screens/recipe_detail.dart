@@ -30,7 +30,16 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
   late TextEditingController _caloriesController;
   late TextEditingController _descriptionController;
   late TextEditingController _videoLinkController;
-  late TextEditingController _labelsController;
+  List<String> _options = [
+    'breakfast',
+    'lunch',
+    'dinner',
+    'dessert',
+    'snack',
+    'vegan',
+    'vegetarian'
+  ];
+  Set<String> _selectedLabels = {};
 
   String? _newImageUrl;
   File? _imageFile;
@@ -47,8 +56,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
         TextEditingController(text: widget.recipe['description'] ?? '');
     _videoLinkController =
         TextEditingController(text: widget.recipe['videoLink'] ?? '');
-    _labelsController =
-        TextEditingController(text: widget.recipe['labels'] ?? '');
+    _selectedLabels =
+        Set<String>.from(widget.recipe['labels']?.split(', ') ?? []);
   }
 
   @override
@@ -58,7 +67,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
     _caloriesController.dispose();
     _descriptionController.dispose();
     _videoLinkController.dispose();
-    _labelsController.dispose();
     super.dispose();
   }
 
@@ -73,7 +81,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
           .split(',')
           .map((e) => e.trim())
           .join(', '), // 将数组转为逗号分隔字符串
-      'labels': _labelsController.text,
+      'labels': _selectedLabels.join(', '),
       'calories': int.tryParse(_caloriesController.text) ?? 0,
       'description': _descriptionController.text,
       'videoLink': _videoLinkController.text,
@@ -253,14 +261,43 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                     'Ingredients: ${widget.recipe['ingredients']?.join(', ')}'),
             const SizedBox(height: 16),
             _isEditing
-                ? TextField(
-                    controller: _labelsController,
-                    decoration: const InputDecoration(
-                      labelText: 'Labels: (comma-separated)',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(),
-                    ),
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      DropdownButtonFormField<String>(
+                        items: _options.map((String label) {
+                          return DropdownMenuItem(
+                            value: label,
+                            child: Container(
+                              width: MediaQuery.of(context).size.width *
+                                  0.8, // 设置固定宽度
+                              child: CheckboxListTile(
+                                title: Text(label),
+                                value: _selectedLabels.contains(label),
+                                onChanged: (bool? selected) {
+                                  setState(() {
+                                    if (selected == true) {
+                                      _selectedLabels.add(label);
+                                    } else {
+                                      _selectedLabels.remove(label);
+                                    }
+                                  });
+                                },
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (_) {},
+                        decoration: const InputDecoration(
+                          hintText: 'Labels',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Selected Labels: ${_selectedLabels.join(', ')}",
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
                   )
                 : Text('Labels: ${widget.recipe['labels']}'),
             const SizedBox(height: 16),
