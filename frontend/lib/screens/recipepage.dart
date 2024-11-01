@@ -143,13 +143,13 @@ class _RecipePageState extends State<RecipePage> {
   }
 
   void _applyFilters() {
-    // 如果没有选择任何标签，显示所有菜谱
     if (_selectedLabels.isEmpty) {
       _filteredRecipes = _recipes;
     } else {
       _filteredRecipes = _recipes.where((recipe) {
         final recipeLabels = recipe.labels?.split(', ') ?? [];
-        return _selectedLabels.every((label) => recipeLabels.contains(label));
+        return _selectedLabels.every((label) =>
+            recipeLabels.contains(label) && label.isNotEmpty); // 确保过滤掉空标签
       }).toList();
     }
     setState(() {});
@@ -188,17 +188,17 @@ class _RecipePageState extends State<RecipePage> {
                     ElevatedButton(
                       onPressed: () {
                         setModalState(() {
-                          _selectedLabels.clear(); // 清空选中标签
+                          _selectedLabels.clear();
                         });
-                        _applyFilters(); // 应用过滤器，显示所有菜谱
-                        Navigator.pop(context); // 关闭弹窗
+                        Navigator.pop(context);
+                        _applyFilters(); // 应用更改
                       },
                       child: const Text('Clear'),
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context); // 关闭弹窗
-                        _applyFilters(); // 点击确认后应用过滤
+                        Navigator.pop(context);
+                        _applyFilters(); // 应用过滤器
                       },
                       child: const Text('OK'),
                     ),
@@ -318,6 +318,8 @@ class _RecipePageState extends State<RecipePage> {
                                                   recipe.labels!.isNotEmpty
                                               ? recipe.labels!
                                                   .split(', ')
+                                                  .where((label) => label
+                                                      .isNotEmpty) // 确保标签不为空
                                                   .map((label) {
                                                   return Container(
                                                     padding: const EdgeInsets
@@ -333,19 +335,18 @@ class _RecipePageState extends State<RecipePage> {
                                                     child: Text(
                                                       label,
                                                       style: const TextStyle(
-                                                        color: cardexpirestext,
-                                                        fontSize: 12,
-                                                      ),
+                                                          color:
+                                                              cardexpirestext,
+                                                          fontSize: 12),
                                                     ),
                                                   );
                                                 }).toList()
                                               : [
                                                   const Text(
-                                                    "No label in this Recipes",
+                                                    "No label in this Recipe",
                                                     style: TextStyle(
-                                                      color: cardexpirestext,
-                                                      fontSize: 12,
-                                                    ),
+                                                        color: cardexpirestext,
+                                                        fontSize: 12),
                                                   ),
                                                 ],
                                         ),

@@ -114,7 +114,8 @@ class _AddRecipePageState extends State<AddRecipePage> {
         .split(',')
         .map((e) => e.trim())
         .toList(); // 确保是数组形式
-    final labels = _selectedLabels.join(', ');
+    final labels =
+        _selectedLabels.where((label) => label.isNotEmpty).join(', ');
     final calories = _caloriesController.text;
     final description = _descriptionController.text;
     final videoLink = _videoLinkController.text;

@@ -75,13 +75,17 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
       await _uploadImage(); // 上传图片并更新 _newImageUrl
     }
 
+    // 过滤掉空标签
+    final filteredLabels =
+        _selectedLabels.where((label) => label.isNotEmpty).join(', ');
+
     final updatedRecipe = {
       'dishName': _nameController.text,
       'ingredients': _ingredientsController.text
           .split(',')
           .map((e) => e.trim())
           .join(', '), // 将数组转为逗号分隔字符串
-      'labels': _selectedLabels.join(', '),
+      'labels': filteredLabels, // 使用过滤后的标签
       'calories': int.tryParse(_caloriesController.text) ?? 0,
       'description': _descriptionController.text,
       'videoLink': _videoLinkController.text,
@@ -292,7 +296,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        "Selected Labels: ${_selectedLabels.join(', ')}",
+                        "Selected Labels: ${_selectedLabels.where((label) => label.isNotEmpty).join(', ')}",
                         style: const TextStyle(fontSize: 16),
                       ),
                     ],
