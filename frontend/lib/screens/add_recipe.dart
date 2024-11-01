@@ -21,6 +21,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
   final TextEditingController _caloriesController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _videoLinkController = TextEditingController();
+  final TextEditingController _labelsController = TextEditingController();
   String? userId;
   @override
   void initState() {
@@ -104,6 +105,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
         .split(',')
         .map((e) => e.trim())
         .toList(); // 确保是数组形式
+    final labels = _labelsController.text;
     final calories = _caloriesController.text;
     final description = _descriptionController.text;
     final videoLink = _videoLinkController.text;
@@ -131,7 +133,8 @@ class _AddRecipePageState extends State<AddRecipePage> {
 
       final recipeData = {
         'dishName': recipeName, // 修改了这里的字段名
-         'ingredients': ingredients.join(', '), 
+        'ingredients': ingredients.join(', '),
+        'labels': labels,
         'calories': int.tryParse(calories) ?? 0,
         'description': description,
         'userId': userId, // 新增 userId 字段
@@ -177,7 +180,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
             GestureDetector(
               onTap: _pickImage,
               child: _image != null
-                   ? Image.file(_image!,
+                  ? Image.file(_image!,
                       height: 100, width: 100, fit: BoxFit.cover)
                   : Container(
                       height: 100,
@@ -196,6 +199,12 @@ class _AddRecipePageState extends State<AddRecipePage> {
               controller: _ingredientsController,
               decoration: const InputDecoration(
                   hintText: 'Ingredients (comma-separated)'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _labelsController,
+              decoration: const InputDecoration(
+                  hintText: 'Labels: (comma-separated)'),
             ),
             const SizedBox(height: 16),
             TextField(

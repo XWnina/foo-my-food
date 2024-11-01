@@ -30,6 +30,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
   late TextEditingController _caloriesController;
   late TextEditingController _descriptionController;
   late TextEditingController _videoLinkController;
+  late TextEditingController _labelsController;
 
   String? _newImageUrl;
   File? _imageFile;
@@ -46,6 +47,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
         TextEditingController(text: widget.recipe['description'] ?? '');
     _videoLinkController =
         TextEditingController(text: widget.recipe['videoLink'] ?? '');
+    _labelsController =
+        TextEditingController(text: widget.recipe['labels'] ?? '');
   }
 
   @override
@@ -55,6 +58,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
     _caloriesController.dispose();
     _descriptionController.dispose();
     _videoLinkController.dispose();
+    _labelsController.dispose();
     super.dispose();
   }
 
@@ -69,6 +73,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
           .split(',')
           .map((e) => e.trim())
           .join(', '), // 将数组转为逗号分隔字符串
+      'labels': _labelsController.text,
       'calories': int.tryParse(_caloriesController.text) ?? 0,
       'description': _descriptionController.text,
       'videoLink': _videoLinkController.text,
@@ -246,6 +251,18 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                   )
                 : Text(
                     'Ingredients: ${widget.recipe['ingredients']?.join(', ')}'),
+            const SizedBox(height: 16),
+            _isEditing
+                ? TextField(
+                    controller: _labelsController,
+                    decoration: const InputDecoration(
+                      labelText: 'Labels: (comma-separated)',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(),
+                    ),
+                  )
+                : Text('Labels: ${widget.recipe['labels']}'),
             const SizedBox(height: 16),
             _isEditing
                 ? TextField(
