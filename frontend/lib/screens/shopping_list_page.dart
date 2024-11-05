@@ -13,6 +13,16 @@ class ShoppingListPage extends StatefulWidget {
 }
 
 class _ShoppingListPageState extends State<ShoppingListPage> {
+
+  @override
+  void initState() {
+    super.initState();
+    // 使用 addPostFrameCallback 确保在 widget 树构建完成后再调用
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ShoppingListProvider>(context, listen: false).initializeShoppingList();
+    });
+  }
+
   void _navigateToAddShoppingItem() {
     showDialog(
       context: context,
@@ -29,8 +39,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     });
   }
 
-  Future<void> _editItem(
-      BuildContext context, Map<String, dynamic> item) async {
+  Future<void> _editItem(BuildContext context, Map<String, dynamic> item) async {
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -51,8 +60,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title:
-            const Text('Shopping List', style: TextStyle(color: Colors.white)),
+        title: const Text('Shopping List', style: TextStyle(color: Colors.white)),
         backgroundColor: appBarColor,
       ),
       body: Consumer<ShoppingListProvider>(
