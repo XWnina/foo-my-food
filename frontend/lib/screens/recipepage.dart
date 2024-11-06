@@ -54,6 +54,13 @@ class _RecipePageState extends State<RecipePage> {
           content: Text('Total Calories: $totalCalories kcal'),
           actions: [
             TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop(); // 关闭当前对话框
+                await _showMarkAsCookedDialog(); // 直接在这里调用对话框
+              },
+              child: const Text('Mark as Cooked'),
+            ),
+            TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -63,6 +70,75 @@ class _RecipePageState extends State<RecipePage> {
         );
       },
     );
+  }
+
+  Future<void> _showMarkAsCookedDialog() async {
+    bool confirmed = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Mark Recipes as Cooked Today'),
+          content: const Text(
+              'Would you like to mark these selected recipes as cooked today?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('No'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Yes'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // 如果用户点击了“是”，则调用存储方法
+    if (confirmed) {
+      await _markSelectedRecipesAsCooked();
+    }
+  }
+
+  Future<void> _markSelectedRecipesAsCooked() async {
+    if (_selectedRecipes.isEmpty) {
+      print('No recipes selected to mark as cooked.');
+      return;
+    }
+
+    DateTime today = DateTime.now();
+    String formattedDate = "${today.year}-${today.month}-${today.day}";
+
+    for (var recipe in _selectedRecipes) {
+      print('Marking recipe as cooked:');
+      print('User ID: $userId');
+      print('Recipe ID: ${recipe.id}');
+      print('Cooking Date: $formattedDate');
+
+      final response = await http.post(
+        Uri.parse('$baseApiUrl/api/cooking_history'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'userId': userId,
+          'recipeId': recipe.id.toString(),
+          'cookingDate': formattedDate,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Marked ${recipe.name} as cooked today.')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to mark ${recipe.name} as cooked.')),
+        );
+        print('Error: ${response.statusCode} - ${response.body}');
+      }
+    }
+    _fetchUserRecipes(); // 刷新菜谱列表以更新制作次数
   }
 
   Future<void> _loadUserId() async {
@@ -364,6 +440,8 @@ class _RecipePageState extends State<RecipePage> {
                                             _selectedRecipes.remove(recipe);
                                           }
                                           _calculateTotalCalories(); // 更新总卡路里
+                                          print(
+                                              'Selected recipes: $_selectedRecipes');
                                         });
                                       },
                                     ),
