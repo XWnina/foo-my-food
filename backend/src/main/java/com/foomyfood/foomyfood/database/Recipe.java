@@ -41,9 +41,6 @@ public class Recipe {
     @Column(name = "labels")
     private String labels = "";
 
-    @Column(name = "user_cooked_times")
-    private Integer userCookedTimes;
-
     @Column(name = "user_id")
     private Long userId;
 
@@ -112,10 +109,6 @@ public class Recipe {
         this.labels = labels;
     }
 
-    public Integer getUserCookedTimes() {
-        return userCookedTimes;
-    }
-
     public Long getUserId() {
         return userId;
     }
@@ -126,10 +119,6 @@ public class Recipe {
 
     public void getRecipeById(Long userId) {
         this.userId = userId;
-    }
-
-    public void setUserCookedTimes(Integer userCookedTimes) {
-        this.userCookedTimes = userCookedTimes;
     }
 
     public List<String> getIngredientsAsList() {
