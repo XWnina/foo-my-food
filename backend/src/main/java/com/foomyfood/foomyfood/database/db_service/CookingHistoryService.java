@@ -22,16 +22,31 @@ public class CookingHistoryService {
     private RecipeRepository recipeRepository;
 
     // Add a new CookingHistory entry
+//    public CookingHistory addCookingHistory(Long userId, Long recipeId, LocalDate cookingDate) {
+//        Optional<Recipe> recipe = recipeRepository.findById(recipeId);
+//        if (recipe.isPresent()) {
+//            CookingHistory cookingHistory = new CookingHistory(userId, recipe.get(), cookingDate);
+//            return cookingHistoryRepository.save(cookingHistory);
+//        } else {
+//            throw new IllegalArgumentException("Recipe not found with id: " + recipeId);
+//        }
+//    }
     public CookingHistory addCookingHistory(Long userId, Long recipeId, LocalDate cookingDate) {
         Optional<Recipe> recipe = recipeRepository.findById(recipeId);
         if (recipe.isPresent()) {
             CookingHistory cookingHistory = new CookingHistory(userId, recipe.get(), cookingDate);
-            return cookingHistoryRepository.save(cookingHistory);
+            cookingHistory = cookingHistoryRepository.save(cookingHistory);
+
+            // 增加菜谱表中的制作次数
+            Recipe updatedRecipe = recipe.get();
+            updatedRecipe.setCookCount(updatedRecipe.getCookCount() + 1);
+            recipeRepository.save(updatedRecipe);
+
+            return cookingHistory;
         } else {
             throw new IllegalArgumentException("Recipe not found with id: " + recipeId);
         }
     }
-
     // Retrieve all CookingHistory entries by user ID
     public List<CookingHistory> getAllCookingHistoryByUserId(Long userId) {
         return cookingHistoryRepository.findByUserId(userId);
@@ -58,5 +73,6 @@ public class CookingHistoryService {
         return cookingHistoryRepository.countByRecipeIdAndCookingDateBetween(recipeId, startDate, endDate);
 
     }
+
 
 }

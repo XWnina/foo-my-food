@@ -31,6 +31,10 @@ public class CookingHistoryController {
             @RequestParam Long recipeId,
             @RequestParam String cookingDate // Pass date as a string in 'yyyy-MM-dd' format
     ) {
+        System.out.println("Received userId: " + userId);
+        System.out.println("Received recipeId: " + recipeId);
+        System.out.println("Received cookingDate: " + cookingDate);
+
         LocalDate date = LocalDate.parse(cookingDate);
         CookingHistory cookingHistory = cookingHistoryService.addCookingHistory(userId, recipeId, date);
         return new ResponseEntity<>(cookingHistory, HttpStatus.CREATED);

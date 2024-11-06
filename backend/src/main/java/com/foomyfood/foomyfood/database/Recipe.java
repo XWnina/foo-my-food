@@ -44,6 +44,9 @@ public class Recipe {
     @Column(name = "user_id")
     private Long userId;
 
+    @Column(name = "cook_count", nullable = false) // 添加注解，确保持久化到数据库
+    private int cookCount = 0; // 默认值设为 0
+
     // Getters and Setters
     public Long getId() {
         return id;
@@ -119,6 +122,15 @@ public class Recipe {
 
     public void getRecipeById(Long userId) {
         this.userId = userId;
+    }
+
+    public int getCookCount() {
+        return cookCount;
+    }
+
+    // Setter 方法
+    public void setCookCount(int cookCount) {
+        this.cookCount = cookCount;
     }
 
     public List<String> getIngredientsAsList() {
