@@ -13,6 +13,16 @@ class ShoppingListPage extends StatefulWidget {
 }
 
 class _ShoppingListPageState extends State<ShoppingListPage> {
+
+  @override
+  void initState() {
+    super.initState();
+    // 使用 addPostFrameCallback 确保在 widget 树构建完成后再调用
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ShoppingListProvider>(context, listen: false).initializeShoppingList();
+    });
+  }
+
   void _navigateToAddShoppingItem() {
     showDialog(
       context: context,
@@ -29,8 +39,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     });
   }
 
-  Future<void> _editItem(
-      BuildContext context, Map<String, dynamic> item) async {
+  Future<void> _editItem(BuildContext context, Map<String, dynamic> item) async {
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -51,8 +60,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title:
-            const Text('Shopping List', style: TextStyle(color: Colors.white)),
+        title: const Text('Shopping List', style: TextStyle(color: Colors.white)),
         backgroundColor: appBarColor,
       ),
       body: Consumer<ShoppingListProvider>(
@@ -68,13 +76,13 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           if (provider.shoppingList.isEmpty) {
             return const Center(
               child: Text(
-                  'Your shopping list is empty!',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                'Your shopping list is empty!',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
             );
           }
 
@@ -165,11 +173,41 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
               },
             ),
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
+              icon: const Icon(Icons.delete_forever, color: Colors.red),
               onPressed: () {
-                provider.deleteItem(item['foodId']);
+                // Show confirmation dialog before deleting
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Confirm Delete'),
+                      content: const Text(
+                          'Are you sure you want to delete this item?'),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the dialog
+                          },
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            provider.deleteItem(
+                                item['foodId']); // Proceed with deletion
+                            Navigator.of(context)
+                                .pop(); // Close the dialog after deletion
+                          },
+                          child: const Text(
+                            'Delete',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
               },
-            ),
+            )
           ],
         ),
       ),

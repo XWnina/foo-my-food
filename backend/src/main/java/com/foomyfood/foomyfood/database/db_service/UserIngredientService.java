@@ -110,4 +110,15 @@ public class UserIngredientService {
         }
         return expiringIngredients;
     }
+    public Optional<Ingredient> checkUserCreatedIngredient(Long userId, String name) {
+        List<UserIngredient> userIngredients = userIngredientRepository.findAllByUserId(userId);
+        for (UserIngredient userIngredient : userIngredients) {
+            Optional<Ingredient> ingredient = ingredientRepository.findById(userIngredient.getIngredientId());
+            if (ingredient.isPresent() && ingredient.get().getName().equalsIgnoreCase(name)) {
+                return ingredient;
+            }
+        }
+        return Optional.empty();
+    }
+
 }

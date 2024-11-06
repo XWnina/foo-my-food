@@ -30,6 +30,16 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
   late TextEditingController _caloriesController;
   late TextEditingController _descriptionController;
   late TextEditingController _videoLinkController;
+  List<String> _options = [
+    'breakfast',
+    'lunch',
+    'dinner',
+    'dessert',
+    'snack',
+    'vegan',
+    'vegetarian'
+  ];
+  Set<String> _selectedLabels = {};
 
   String? _newImageUrl;
   File? _imageFile;
@@ -46,6 +56,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
         TextEditingController(text: widget.recipe['description'] ?? '');
     _videoLinkController =
         TextEditingController(text: widget.recipe['videoLink'] ?? '');
+    _selectedLabels =
+        Set<String>.from(widget.recipe['labels']?.split(', ') ?? []);
   }
 
   @override
@@ -63,12 +75,17 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
       await _uploadImage(); // 上传图片并更新 _newImageUrl
     }
 
+    // 过滤掉空标签
+    final filteredLabels =
+        _selectedLabels.where((label) => label.isNotEmpty).join(', ');
+
     final updatedRecipe = {
       'dishName': _nameController.text,
       'ingredients': _ingredientsController.text
           .split(',')
           .map((e) => e.trim())
           .join(', '), // 将数组转为逗号分隔字符串
+      'labels': filteredLabels, // 使用过滤后的标签
       'calories': int.tryParse(_caloriesController.text) ?? 0,
       'description': _descriptionController.text,
       'videoLink': _videoLinkController.text,
@@ -235,6 +252,58 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                   ),
             const SizedBox(height: 16),
             _isEditing
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      DropdownButtonFormField<String>(
+                        items: _options.map((String label) {
+                          return DropdownMenuItem(
+                            value: label,
+                            child: Container(
+                              width: MediaQuery.of(context).size.width *
+                                  0.7, // 设置固定宽度
+                              child: StatefulBuilder(
+                                builder: (BuildContext context,
+                                    StateSetter setState) {
+                                  return CheckboxListTile(
+                                    title: Text(label),
+                                    value: _selectedLabels.contains(label),
+                                    onChanged: (bool? selected) {
+                                      setState(() {
+                                        if (selected == true) {
+                                          _selectedLabels.add(label);
+                                        } else {
+                                          _selectedLabels.remove(label);
+                                        }
+                                      });
+                                      // 更新外部状态以反映勾选情况
+                                      this.setState(() {});
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (_) {}, // 保持为空以阻止默认行为
+                        hint: const Text('Select Labels'),
+                        decoration: const InputDecoration(
+                          hintText: 'Labels:',
+                          filled: true, // 添加了这一行，使背景颜色填充
+                          fillColor: Colors.white, // 添加了这一行，设置填充颜色为白色
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Selected Labels: ${_selectedLabels.where((label) => label.isNotEmpty).join(', ')}",
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  )
+                : Text('Labels: ${widget.recipe['labels']}'),
+            const SizedBox(height: 16),
+            _isEditing
                 ? TextField(
                     controller: _ingredientsController,
                     decoration: const InputDecoration(
@@ -287,6 +356,10 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                         widget.recipe['videoLink'].isNotEmpty
                     ? Text('Video Link: ${widget.recipe['videoLink']}')
                     : const SizedBox(),
+            Text(
+              'Total Times Cooked: ${widget.recipe['cookCount'] ?? 0}',
+              style: const TextStyle(fontSize: 16), // 设置与其他文本相同的字体大小
+            ),
           ],
         ),
       ),

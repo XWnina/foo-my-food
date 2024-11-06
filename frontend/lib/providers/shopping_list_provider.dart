@@ -8,47 +8,84 @@ class ShoppingListProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _shoppingList = [];
   List<Map<String, dynamic>> get shoppingList => _shoppingList;
 
-  String? _userId;
-
-  ShoppingListProvider() {
-    _initializeUserIdAndFetchList();
+  // 从 SharedPreferences 动态获取 userId
+  Future<String?> _getUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userId');
   }
 
-  Future<void> _initializeUserIdAndFetchList() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    _userId = prefs.getString('userId');
-    if (_userId != null) {
-      await fetchItems();
+  // 初始化购物清单，清空之前的数据并加载当前用户的数据
+  Future<void> initializeShoppingList() async {
+    _shoppingList.clear(); // 清空旧用户的数据
+    notifyListeners(); // 通知 UI 更新为空列表
+
+    // 获取当前用户的数据
+    String? userId = await _getUserId();
+    if (userId != null) {
+      await fetchItems(); // 加载当前用户的购物清单数据
     }
   }
 
   Future<void> fetchItems() async {
-    if (_userId == null) return;
+    String? userId = await _getUserId();
+    if (userId == null) return;
 
     try {
       final response = await http.get(
-        Uri.parse('$baseApiUrl/shopping-list/user/$_userId'),
+        Uri.parse('$baseApiUrl/my-shopping-list/user/$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         _shoppingList = List<Map<String, dynamic>>.from(data);
+        print("Fetched shopping list from backend: $_shoppingList"); // 调试输出
         notifyListeners();
+      } else {
+        print("Failed to fetch items. Status code: ${response.statusCode}");
       }
     } catch (e) {
       print("Error fetching items: $e");
     }
   }
 
-  Future<void> addItem(Map<String, dynamic> newItem) async {
+  // ShoppingListProvider中的addItem方法
+  Future<http.Response?> addItem(Map<String, dynamic> newItem) async {
+    String? userId = await _getUserId();
+    if (userId == null) return null;
+
     try {
       final response = await http.post(
-        Uri.parse('$baseApiUrl/shopping-list'),
+        Uri.parse('$baseApiUrl/my-shopping-list'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           ...newItem,
-          'userId': _userId,
+          'userId': userId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        _shoppingList.add(newItem);
+        notifyListeners();
+      }
+      return response; // 返回完整的响应对象
+    } catch (e) {
+      print("Error adding item: $e");
+      return null;
+    }
+  }
+
+  Future<void> forceAddItem(Map<String, dynamic> newItem) async {
+    String? userId = await _getUserId();
+    if (userId == null) return;
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseApiUrl/my-shopping-list/force-add'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          ...newItem,
+          'userId': userId,
         }),
       );
 
@@ -57,12 +94,15 @@ class ShoppingListProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print("Error adding item: $e");
+      print("Error force-adding item: $e");
     }
   }
 
   Future<void> togglePurchasedStatus(int foodId,
       {bool isPurchased = true}) async {
+    String? userId = await _getUserId();
+    if (userId == null) return;
+
     final itemIndex =
         _shoppingList.indexWhere((item) => item['foodId'] == foodId);
     if (itemIndex == -1) {
@@ -75,18 +115,18 @@ class ShoppingListProvider extends ChangeNotifier {
 
     try {
       final response = await http.put(
-        Uri.parse('$baseApiUrl/shopping-list/$foodId/isPurchased'),
+        Uri.parse(
+            '$baseApiUrl/my-shopping-list/$foodId/user/$userId/isPurchased'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(isPurchased), // 更新购买状态
+        body: jsonEncode(isPurchased),
       );
 
       if (response.statusCode == 200) {
-        // 更新后将物品移动到对应的状态部分
         _shoppingList.removeAt(itemIndex);
         if (isPurchased) {
-          _shoppingList.add(item); // 如果已购买，将其放到列表末尾
+          _shoppingList.add(item);
         } else {
-          _shoppingList.insert(0, item); // 如果未购买，将其放到列表开头
+          _shoppingList.insert(0, item);
         }
         notifyListeners();
       } else {
@@ -99,6 +139,9 @@ class ShoppingListProvider extends ChangeNotifier {
   }
 
   Future<void> updateItem(Map<String, dynamic> updatedFields) async {
+    String? userId = await _getUserId();
+    if (userId == null) return;
+
     final itemIndex = _shoppingList
         .indexWhere((item) => item['foodId'] == updatedFields['foodId']);
     if (itemIndex == -1) {
@@ -119,7 +162,8 @@ class ShoppingListProvider extends ChangeNotifier {
 
     try {
       final response = await http.put(
-        Uri.parse('$baseApiUrl/shopping-list/${updatedItem['foodId']}'),
+        Uri.parse(
+            '$baseApiUrl/my-shopping-list/${updatedItem['foodId']}/user/$userId'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(updatedItem),
       );
@@ -127,7 +171,6 @@ class ShoppingListProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         _shoppingList[itemIndex] = updatedItem;
         notifyListeners();
-        print("Item updated successfully in backend and list.");
       } else {
         print(
             "Failed to update item in backend. Status code: ${response.statusCode}");
@@ -138,6 +181,9 @@ class ShoppingListProvider extends ChangeNotifier {
   }
 
   Future<void> deleteItem(int foodId) async {
+    String? userId = await _getUserId();
+    if (userId == null) return;
+
     final itemIndex =
         _shoppingList.indexWhere((item) => item['foodId'] == foodId);
     if (itemIndex == -1) {
@@ -147,14 +193,13 @@ class ShoppingListProvider extends ChangeNotifier {
 
     try {
       final response = await http.delete(
-        Uri.parse('$baseApiUrl/shopping-list/$foodId'),
+        Uri.parse('$baseApiUrl/my-shopping-list/$foodId/user/$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 204) {
         _shoppingList.removeAt(itemIndex);
         notifyListeners();
-        print("Item deleted successfully from backend and list.");
       } else {
         print(
             "Failed to delete item in backend. Status code: ${response.statusCode}");

@@ -620,7 +620,7 @@ class _MyFoodPageState extends State<MyFoodPage> {
                                     top: 0,
                                     right: 0,
                                     child: IconButton(
-                                      icon: const Icon(Icons.delete,
+                                      icon: const Icon(Icons.delete_forever_rounded,
                                           color: Colors.red),
                                       onPressed: () async {
                                         bool confirmDelete = await showDialog(

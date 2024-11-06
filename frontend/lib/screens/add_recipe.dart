@@ -9,7 +9,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AddRecipePage extends StatefulWidget {
   const AddRecipePage({super.key});
-
   @override
   _AddRecipePageState createState() => _AddRecipePageState();
 }
@@ -21,6 +20,17 @@ class _AddRecipePageState extends State<AddRecipePage> {
   final TextEditingController _caloriesController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _videoLinkController = TextEditingController();
+  final TextEditingController _labelsController = TextEditingController();
+  final List<String> _options = [
+    'breakfast',
+    'lunch',
+    'dinner',
+    'dessert',
+    'snack',
+    'vegan',
+    'vegetarian'
+  ];
+  final Set<String> _selectedLabels = {};
   String? userId;
   @override
   void initState() {
@@ -104,6 +114,8 @@ class _AddRecipePageState extends State<AddRecipePage> {
         .split(',')
         .map((e) => e.trim())
         .toList(); // 确保是数组形式
+    final labels =
+        _selectedLabels.where((label) => label.isNotEmpty).join(', ');
     final calories = _caloriesController.text;
     final description = _descriptionController.text;
     final videoLink = _videoLinkController.text;
@@ -131,7 +143,8 @@ class _AddRecipePageState extends State<AddRecipePage> {
 
       final recipeData = {
         'dishName': recipeName, // 修改了这里的字段名
-         'ingredients': ingredients.join(', '), 
+        'ingredients': ingredients.join(', '),
+        'labels': labels,
         'calories': int.tryParse(calories) ?? 0,
         'description': description,
         'userId': userId, // 新增 userId 字段
@@ -177,7 +190,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
             GestureDetector(
               onTap: _pickImage,
               child: _image != null
-                   ? Image.file(_image!,
+                  ? Image.file(_image!,
                       height: 100, width: 100, fit: BoxFit.cover)
                   : Container(
                       height: 100,
@@ -196,6 +209,43 @@ class _AddRecipePageState extends State<AddRecipePage> {
               controller: _ingredientsController,
               decoration: const InputDecoration(
                   hintText: 'Ingredients (comma-separated)'),
+            ),
+            DropdownButtonFormField<String>(
+              items: _options.map((String label) {
+                return DropdownMenuItem(
+                  value: label,
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.8, // 设置固定宽度
+                    child: StatefulBuilder(
+                      builder: (BuildContext context, StateSetter setState) {
+                        return CheckboxListTile(
+                          title: Text(label),
+                          value: _selectedLabels.contains(label),
+                          onChanged: (bool? selected) {
+                            setState(() {
+                              if (selected == true) {
+                                _selectedLabels.add(label);
+                              } else {
+                                _selectedLabels.remove(label);
+                              }
+                            });
+                            // 更新外部状态以反映勾选情况
+                            this.setState(() {});
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (_) {}, // 保持为空以阻止默认行为
+              hint: const Text('Select Labels'),
+              decoration: const InputDecoration(hintText: 'Labels:'),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "Selected Labels: ${_selectedLabels.join(', ')}",
+              style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 16),
             TextField(

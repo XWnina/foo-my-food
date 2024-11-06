@@ -12,6 +12,7 @@ const card = Color.fromARGB(255, 255, 248, 235);
 const cardexpirestext = Color(0xFF598F83);
 const cardnametext = Color(0xFF265f60);
 final greyIconColor = Colors.grey.shade700; // 灰色图标颜色（上传图标）
+const lablebackground = Color.fromARGB(255, 244, 244, 177);
 
 const whiteFillColor = Colors.white; // 输入框填充背景色
 const blueBorderColor = Colors.blue; // 蓝色边框颜色
