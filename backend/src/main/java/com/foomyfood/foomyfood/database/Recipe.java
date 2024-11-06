@@ -41,11 +41,11 @@ public class Recipe {
     @Column(name = "labels")
     private String labels = "";
 
-    @Column(name = "user_cooked_times")
-    private Integer userCookedTimes;
-
     @Column(name = "user_id")
     private Long userId;
+
+    @Column(name = "cook_count", nullable = false) // 添加注解，确保持久化到数据库
+    private int cookCount = 0; // 默认值设为 0
 
     // Getters and Setters
     public Long getId() {
@@ -112,10 +112,6 @@ public class Recipe {
         this.labels = labels;
     }
 
-    public Integer getUserCookedTimes() {
-        return userCookedTimes;
-    }
-
     public Long getUserId() {
         return userId;
     }
@@ -128,8 +124,13 @@ public class Recipe {
         this.userId = userId;
     }
 
-    public void setUserCookedTimes(Integer userCookedTimes) {
-        this.userCookedTimes = userCookedTimes;
+    public int getCookCount() {
+        return cookCount;
+    }
+
+    // Setter 方法
+    public void setCookCount(int cookCount) {
+        this.cookCount = cookCount;
     }
 
     public List<String> getIngredientsAsList() {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:foo_my_food_app/providers/shopping_list_provider.dart';
+import 'dart:convert';
 
 class AddShoppingItemPage extends StatefulWidget {
   const AddShoppingItemPage({super.key});
@@ -55,7 +56,6 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
   }
 
   Future<void> _saveItem() async {
-    // 调用各字段的验证方法
     _validateItemName();
     _validateQuantity();
     _validateUnit();
@@ -73,9 +73,94 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
       'isPurchased': false,
     };
 
+    final response =
+        await Provider.of<ShoppingListProvider>(context, listen: false)
+            .addItem(newItem);
+
+    if (response == null) {
+      print("Failed to add item to backend.");
+      return;
+    }
+
+    if (response.statusCode == 409) {
+      print("Item already exists on the backend.");
+
+      // 解析冲突项的详细信息
+      Map<String, dynamic> conflictingItem = jsonDecode(response.body);
+      _showConflictDialog(conflictingItem);
+    } else if (response.statusCode == 200) {
+      print("Item successfully added to backend.");
+      Navigator.pop(context, newItem);
+    } else {
+      print("Unexpected status code from backend: ${response.statusCode}");
+    }
+  }
+
+  Future<void> _addItemToShoppingList(Map<String, dynamic> newItem) async {
     await Provider.of<ShoppingListProvider>(context, listen: false)
         .addItem(newItem);
     Navigator.pop(context, newItem);
+  }
+
+  Future<void> _forceAddItemToShoppingList(Map<String, dynamic> newItem) async {
+    await Provider.of<ShoppingListProvider>(context, listen: false)
+        .forceAddItem(newItem);
+    Navigator.pop(context, newItem);
+  }
+
+  void _showConflictDialog(Map<String, dynamic> conflictingItem) {
+    print("Showing conflict dialog for item: ${conflictingItem['name']}");
+
+    // 保存用户输入的数据
+    Map<String, dynamic> userInputItem = {
+      'name': _itemController.text.trim(),
+      'baseQuantity': int.parse(_quantityController.text.trim()),
+      'unit': _unitController.text.trim(),
+      'isPurchased': false,
+      // 如果需要还可以添加其他字段，例如用户ID
+    };
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text("Item Already Exists"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                  "You already have this item in your shopping list. Details:"),
+              SizedBox(height: 8),
+              Text("Name: ${conflictingItem['name']}"),
+              Text("Category: ${conflictingItem['category'] ?? 'N/A'}"),
+              Text(
+                  "Storage Method: ${conflictingItem['storageMethod'] ?? 'N/A'}"),
+              Text(
+                  "Expiration Date: ${conflictingItem['expirationDate'] ?? 'N/A'}"),
+              Text(
+                  "Quantity: ${conflictingItem['baseQuantity']} ${conflictingItem['unit']}"),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Close dialog
+                Navigator.of(context).pop(); // 返回购物清单页Ï面
+              },
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Close dialog
+                _forceAddItemToShoppingList(userInputItem); // 使用用户输入的数据
+              },
+              child: Text("Add Anyway"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
