@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'add_recipe.dart';
 import 'recipe_detail.dart';
+import 'smart_menu_page.dart';
 
 class RecipePage extends StatefulWidget {
   @override
@@ -478,6 +479,17 @@ class _RecipePageState extends State<RecipePage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SmartMenuPage(userId: userId),
+                  ),
+                );
+              },
+              child: Text("Don't know what to eat?"),
+            ),
             ElevatedButton.icon(
               onPressed: () {
                 if (_isSelecting) {
