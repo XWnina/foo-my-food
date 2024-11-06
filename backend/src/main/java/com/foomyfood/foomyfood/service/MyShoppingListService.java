@@ -3,6 +3,8 @@ package com.foomyfood.foomyfood.service;
 import java.util.List;
 import java.util.Optional;
 
+import com.foomyfood.foomyfood.database.Ingredient;
+import com.foomyfood.foomyfood.database.db_service.UserIngredientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +16,9 @@ public class MyShoppingListService {
 
     @Autowired
     private ShoppingListRepository shoppingListRepository;
+
+    @Autowired
+    private UserIngredientService userIngredientService;
 
     // 根据 userId 获取所有项目
     public List<ShoppingList> getItemsByUserId(Long userId) {
@@ -66,5 +71,9 @@ public class MyShoppingListService {
             throw new RuntimeException("Item with ID " + foodId + " and userId " + userId + " not found");
         }
     }
-}
 
+    public Optional<Ingredient> checkIfItemExists(Long userId, String name) {
+        return userIngredientService.checkUserCreatedIngredient(userId, name);
+    }
+
+}

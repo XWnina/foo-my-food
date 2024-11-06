@@ -3,7 +3,9 @@ package com.foomyfood.foomyfood.controller;
 import java.util.List;
 import java.util.Optional;
 
+import com.foomyfood.foomyfood.database.Ingredient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,9 +35,25 @@ public class MyShoppingListController {
 
     // 添加新项目
     @PostMapping
-    public ShoppingList addItem(@RequestBody ShoppingList shoppingList) {
-        return myShoppingListService.createItem(shoppingList);
+    public ResponseEntity<?> addItem(@RequestBody ShoppingList shoppingList) {
+        Optional<Ingredient> existingIngredient = myShoppingListService.checkIfItemExists(shoppingList.getUserId(), shoppingList.getName());
+        if (existingIngredient.isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(existingIngredient.get()); // 返回完整的冲突项信息
+        }
+        ShoppingList createdItem = myShoppingListService.createItem(shoppingList);
+        return ResponseEntity.ok(createdItem);
     }
+
+
+
+    // 无重复检查的添加方法
+    @PostMapping("/force-add")
+    public ResponseEntity<ShoppingList> forceAddItem(@RequestBody ShoppingList shoppingList) {
+        ShoppingList createdItem = myShoppingListService.createItem(shoppingList);
+        return ResponseEntity.ok(createdItem);
+    }
+
+
 
     // 更新项目，根据 foodId 和 userId
     @PutMapping("/{foodId}/user/{userId}")
