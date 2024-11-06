@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:foo_my_food_app/providers/shopping_list_provider.dart';
+import 'package:foo_my_food_app/screens/personal_main_page.dart';
 import 'package:foo_my_food_app/screens/shopping_list_page.dart';
 import 'package:foo_my_food_app/screens/add_shopping_item_page.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
@@ -72,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
       MyFoodPage(fetchUserIngredientsCallback: _fetchUserIngredients),
       RecipePage(), // 替换为 RecipePage
       const ShoppingListPage(),
-      UserProfile(),
+      UserMainPage(),
     ];
   }
 
