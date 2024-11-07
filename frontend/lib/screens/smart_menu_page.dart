@@ -33,6 +33,11 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
   bool _showNoResultsMessage = false;
   TextEditingController _searchController = TextEditingController();
   List<String> _selectedIngredients = [];
+  final Map<String, String> _modeDisplayNames = {
+    'what_i_have': 'What I Have',
+    'expires_soon': 'Expires Soon',
+    'usually_cooked': 'Usually Cooked',
+  };
   @override
   void initState() {
     super.initState();
@@ -215,6 +220,16 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
         title: const Text('Smart Menu', style: TextStyle(color: Colors.white)),
         backgroundColor: appBarColor,
         actions: [
+          // Add current mode display
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(
+                'Mode: ${_modeDisplayNames[_sortBy] ?? ""}',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.sort, color: Colors.white),
             onPressed: _showSortOptions,
@@ -512,7 +527,35 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
       ),
     );
   }
-
+    Widget _buildModeButton() {
+    return TextButton(
+      onPressed: _showSortOptions,
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        backgroundColor: Colors.white.withOpacity(0.1),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            _modeDisplayNames[_sortBy] ?? '',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          SizedBox(width: 4),
+          Icon(
+            Icons.arrow_drop_down,
+            color: Colors.white,
+          ),
+        ],
+      ),
+    );
+  }
   void _showSortOptions() {
     showModalBottomSheet(
       context: context,
