@@ -358,7 +358,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                     : const SizedBox(),
             Text(
               'Total Times Cooked: ${widget.recipe['cookCount'] ?? 0}',
-              style: const TextStyle(fontSize: 16), // 设置与其他文本相同的字体大小
             ),
           ],
         ),

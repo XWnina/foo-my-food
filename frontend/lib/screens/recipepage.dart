@@ -8,6 +8,7 @@ import 'dart:convert';
 import 'add_recipe.dart';
 import 'recipe_detail.dart';
 import 'smart_menu_page.dart';
+import 'package:intl/intl.dart';
 
 class RecipePage extends StatefulWidget {
   @override
@@ -63,7 +64,12 @@ class _RecipePageState extends State<RecipePage> {
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // 关闭对话框
+                setState(() {
+                  _selectedRecipes.clear(); // 清空选中的菜谱
+                  _isSelecting = false; // 退出选择模式
+                  _totalCalories = 0; // 重置总卡路里
+                });
               },
               child: const Text('Close'),
             ),
@@ -83,11 +89,11 @@ class _RecipePageState extends State<RecipePage> {
               'Would you like to mark these selected recipes as cooked today?'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
+              onPressed: () => Navigator.of(context).pop(false), // 不标记
               child: const Text('No'),
             ),
             TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
+              onPressed: () => Navigator.of(context).pop(true), // 标记
               child: const Text('Yes'),
             ),
           ],
@@ -95,10 +101,17 @@ class _RecipePageState extends State<RecipePage> {
       },
     );
 
-    // 如果用户点击了“是”，则调用存储方法
+    // 判断用户的选择
     if (confirmed) {
-      await _markSelectedRecipesAsCooked();
+      await _markSelectedRecipesAsCooked(); // 标记选中的菜谱
     }
+
+    // 无论是否标记，都清空_selectedRecipes并退出选择模式
+    setState(() {
+      _selectedRecipes.clear();
+      _isSelecting = false;
+      _totalCalories = 0;
+    });
   }
 
   Future<void> _markSelectedRecipesAsCooked() async {
@@ -108,7 +121,8 @@ class _RecipePageState extends State<RecipePage> {
     }
 
     DateTime today = DateTime.now();
-    String formattedDate = "${today.year}-${today.month}-${today.day}";
+    //String formattedDate = "${today.year}-${today.month}-${today.day}";
+    String formattedDate = DateFormat('yyyy-MM-dd').format(today);
 
     for (var recipe in _selectedRecipes) {
       print('Marking recipe as cooked:');
@@ -117,15 +131,15 @@ class _RecipePageState extends State<RecipePage> {
       print('Cooking Date: $formattedDate');
 
       final response = await http.post(
-        Uri.parse('$baseApiUrl/api/cooking_history'),
+        Uri.parse('$baseApiUrl/cooking_history'),
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: jsonEncode({
+        body: {
           'userId': userId,
           'recipeId': recipe.id.toString(),
           'cookingDate': formattedDate,
-        }),
+        },
       );
 
       if (response.statusCode == 201) {
@@ -142,14 +156,17 @@ class _RecipePageState extends State<RecipePage> {
     _fetchUserRecipes(); // 刷新菜谱列表以更新制作次数
   }
 
-  Future<void> _loadUserId() async {
+  void _loadUserId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? savedUserId = prefs.getString('userId');
     if (savedUserId != null) {
       setState(() {
         userId = savedUserId;
       });
+      print('Loaded userId: $userId'); // 检查userId是否成功加载
       _fetchUserRecipes();
+    } else {
+      print('User ID not found in shared preferences.');
     }
   }
 
@@ -159,12 +176,15 @@ class _RecipePageState extends State<RecipePage> {
           await http.get(Uri.parse('$baseApiUrl/myrecipes/user/$userId'));
       if (response.statusCode == 200) {
         final List<dynamic> recipeData = json.decode(response.body);
+        print('Raw recipe data from backend: $recipeData');
         List<Recipe> recipes =
             recipeData.map((data) => Recipe.fromJson(data)).toList();
         setState(() {
           _recipes = recipes;
           _applyFilters();
         });
+        _recipes.forEach((recipe) =>
+            print('Recipe ID: ${recipe.id}, Cook Count: ${recipe.cookCount}'));
       } else {
         throw Exception('Failed to load recipes');
       }
@@ -502,11 +522,11 @@ class _RecipePageState extends State<RecipePage> {
                   } else {
                     // 计算总卡路里并退出选择模式
                     _showNutritionReport(_totalCalories);
-                    setState(() {
-                      _isSelecting = false;
-                      _selectedRecipes.clear();
-                      _totalCalories = 0;
-                    });
+                    // setState(() {
+                    //   _isSelecting = false;
+                    //   _selectedRecipes.clear();
+                    //   _totalCalories = 0;
+                    // });
                   }
                 } else {
                   // 进入选择模式

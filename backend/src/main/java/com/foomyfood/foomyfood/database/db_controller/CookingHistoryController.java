@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 
 import com.foomyfood.foomyfood.database.CookingHistory;
 import com.foomyfood.foomyfood.database.db_service.CookingHistoryService;
@@ -34,8 +37,15 @@ public class CookingHistoryController {
         System.out.println("Received userId: " + userId);
         System.out.println("Received recipeId: " + recipeId);
         System.out.println("Received cookingDate: " + cookingDate);
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                .appendPattern("yyyy-MM-dd")
+                .optionalStart()
+                .appendValue(ChronoField.MONTH_OF_YEAR, 1) // 允许月份和日期的单个数字格式
+                .optionalEnd()
+                .toFormatter();
 
-        LocalDate date = LocalDate.parse(cookingDate);
+        LocalDate date = LocalDate.parse(cookingDate, formatter);
+        //LocalDate date = LocalDate.parse(cookingDate);
         CookingHistory cookingHistory = cookingHistoryService.addCookingHistory(userId, recipeId, date);
         return new ResponseEntity<>(cookingHistory, HttpStatus.CREATED);
     }
