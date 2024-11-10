@@ -2,6 +2,9 @@ package com.foomyfood.foomyfood.database;
 
 import java.time.LocalDate;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -22,8 +25,9 @@ public class CookingHistory {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @ManyToOne
+    @ManyToOne()
     @JoinColumn(name = "recipe_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Recipe recipe;
 
     @Column(name = "cooking_date", nullable = false)
