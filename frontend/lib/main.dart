@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'screens/login_page.dart';
 import 'package:provider/provider.dart';
 import 'providers/ingredient_provider.dart';
-import 'providers/shopping_list_provider.dart'; // 引入 ShoppingListProvider
-
-import 'package:device_calendar/device_calendar.dart';
+import 'providers/shopping_list_provider.dart';
+import 'providers/theme_provider.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => IngredientProvider()),
-        ChangeNotifierProvider(create: (context) => ShoppingListProvider()), // 添加 ShoppingListProvider
+        ChangeNotifierProvider(create: (context) => ShoppingListProvider()),
+        ChangeNotifierProvider(
+            create: (context) => ThemeProvider()), // 添加 ThemeProvider
       ],
       child: const MyApp(),
     ),
@@ -23,13 +24,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
-      title: 'Foo my food Demo ',
+      title: 'Foo My Food Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color.fromARGB(255, 30, 108, 168),
+        scaffoldBackgroundColor: themeProvider.theme.backgroundColor,
+        appBarTheme: AppBarTheme(
+          color: themeProvider.theme.appBarColor,
         ),
-        useMaterial3: true,
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: themeProvider.theme.buttonBackgroundColor,
+          ),
+        ),
       ),
       home: const LoginPage(),
     );
