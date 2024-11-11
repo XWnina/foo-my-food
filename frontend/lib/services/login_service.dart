@@ -29,7 +29,7 @@ class LoginService {
       throw Exception('Failed to send login request: $e');
     }
   }
-  
+
 
   // 检查邮箱验证状态的方法
   Future<http.Response> checkVerificationStatus(String emailAddress) async {

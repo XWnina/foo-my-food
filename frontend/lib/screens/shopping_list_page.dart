@@ -13,13 +13,13 @@ class ShoppingListPage extends StatefulWidget {
 }
 
 class _ShoppingListPageState extends State<ShoppingListPage> {
-
   @override
   void initState() {
     super.initState();
     // 使用 addPostFrameCallback 确保在 widget 树构建完成后再调用
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ShoppingListProvider>(context, listen: false).initializeShoppingList();
+      Provider.of<ShoppingListProvider>(context, listen: false)
+          .initializeShoppingList();
     });
   }
 
@@ -39,7 +39,8 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     });
   }
 
-  Future<void> _editItem(BuildContext context, Map<String, dynamic> item) async {
+  Future<void> _editItem(
+      BuildContext context, Map<String, dynamic> item) async {
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -58,10 +59,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.backgroundColor(context),
       appBar: AppBar(
-        title: const Text('Shopping List', style: TextStyle(color: Colors.white)),
-        backgroundColor: appBarColor,
+        title: Text('Shopping List',
+            style: TextStyle(color: AppColors.textColor(context))),
+        backgroundColor: AppColors.appBarColor(context),
       ),
       body: Consumer<ShoppingListProvider>(
         builder: (context, provider, child) {
@@ -136,7 +138,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       ShoppingListProvider provider,
       {bool isPurchasedSection = false}) {
     return Card(
-      color: card,
+      color: AppColors.cardColor(context),
       child: ListTile(
         title: Text(
           item['name'],

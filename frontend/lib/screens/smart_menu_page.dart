@@ -46,16 +46,22 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
 
   Future<void> _fetchRecipes() async {
     try {
-      final myRecipesResponse = await http.get(Uri.parse('$baseApiUrl/myrecipes/user/${widget.userId}'));
-      final presetRecipesResponse = await http.get(Uri.parse('$baseApiUrl/preset-recipes'));
+      final myRecipesResponse = await http
+          .get(Uri.parse('$baseApiUrl/myrecipes/user/${widget.userId}'));
+      final presetRecipesResponse =
+          await http.get(Uri.parse('$baseApiUrl/preset-recipes'));
 
-      if (myRecipesResponse.statusCode == 200 && presetRecipesResponse.statusCode == 200) {
+      if (myRecipesResponse.statusCode == 200 &&
+          presetRecipesResponse.statusCode == 200) {
         final List<dynamic> myRecipeData = json.decode(myRecipesResponse.body);
-        final List<dynamic> presetRecipeData = json.decode(presetRecipesResponse.body);
+        final List<dynamic> presetRecipeData =
+            json.decode(presetRecipesResponse.body);
 
         setState(() {
-          _myRecipes = myRecipeData.map((data) => Recipe.fromJson(data)).toList();
-          _presetRecipes = presetRecipeData.map((data) => Recipe.fromJson(data)).toList();
+          _myRecipes =
+              myRecipeData.map((data) => Recipe.fromJson(data)).toList();
+          _presetRecipes =
+              presetRecipeData.map((data) => Recipe.fromJson(data)).toList();
           /*test*/
           print('\nMapped Preset Recipes:');
           _presetRecipes.forEach((recipe) => print(recipe.toJson()));
@@ -78,18 +84,20 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
         _filteredPresetRecipes = _presetRecipes;
       } else {
         _filteredMyRecipes = _myRecipes.where((recipe) {
-          return _selectedIngredients.every((ingredient) =>
-            recipe.ingredients.any((recipeIngredient) =>
-              recipeIngredient.toLowerCase().contains(ingredient.toLowerCase())));
+          return _selectedIngredients.every((ingredient) => recipe.ingredients
+              .any((recipeIngredient) => recipeIngredient
+                  .toLowerCase()
+                  .contains(ingredient.toLowerCase())));
         }).toList();
 
         _filteredPresetRecipes = _presetRecipes.where((recipe) {
-          return _selectedIngredients.every((ingredient) =>
-            recipe.ingredients.any((recipeIngredient) =>
-              recipeIngredient.toLowerCase().contains(ingredient.toLowerCase())));
+          return _selectedIngredients.every((ingredient) => recipe.ingredients
+              .any((recipeIngredient) => recipeIngredient
+                  .toLowerCase()
+                  .contains(ingredient.toLowerCase())));
         }).toList();
       }
-      
+
       switch (_sortBy) {
         case 'what_i_have':
           // No need to sort
@@ -103,6 +111,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
       }
     });
   }
+
   void _addIngredient(String ingredient) {
     if (ingredient.isNotEmpty && !_selectedIngredients.contains(ingredient)) {
       setState(() {
@@ -136,9 +145,11 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
       }).toList(),
     );
   }
+
   void _calculateTotalCalories() {
     setState(() {
-      _totalCalories = _selectedRecipes.fold(0, (sum, recipe) => sum + (recipe.calories ?? 0));
+      _totalCalories = _selectedRecipes.fold(
+          0, (sum, recipe) => sum + (recipe.calories ?? 0));
     });
   }
 
@@ -170,9 +181,15 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
       return;
     }
 
-    final breakfast = _filteredMyRecipes.where((recipe) => recipe.labels?.contains('breakfast') ?? false).toList();
-    final lunch = _filteredMyRecipes.where((recipe) => recipe.labels?.contains('lunch') ?? false).toList();
-    final dinner = _filteredMyRecipes.where((recipe) => recipe.labels?.contains('dinner') ?? false).toList();
+    final breakfast = _filteredMyRecipes
+        .where((recipe) => recipe.labels?.contains('breakfast') ?? false)
+        .toList();
+    final lunch = _filteredMyRecipes
+        .where((recipe) => recipe.labels?.contains('lunch') ?? false)
+        .toList();
+    final dinner = _filteredMyRecipes
+        .where((recipe) => recipe.labels?.contains('dinner') ?? false)
+        .toList();
 
     breakfast.shuffle();
     lunch.shuffle();
@@ -193,7 +210,8 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
       );
 
       if (response.statusCode == 200) {
-        final List<String> ingredients = List<String>.from(jsonDecode(response.body));
+        final List<String> ingredients =
+            List<String>.from(jsonDecode(response.body));
         setState(() {
           _matchingIngredients = ingredients;
           _showDropdown = ingredients.isNotEmpty;
@@ -217,13 +235,14 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
   }
 
   @override
-   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.backgroundColor(context),
       appBar: AppBar(
-        title: const Text('Smart Menu', style: TextStyle(color: Colors.white)),
-        backgroundColor: appBarColor,
+        title: Text('Smart Menu',
+            style: TextStyle(color: AppColors.textColor(context))),
+        backgroundColor: AppColors.appBarColor(context),
         actions: [
           // Add current mode display
           Center(
@@ -231,7 +250,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Text(
                 'Mode: ${_modeDisplayNames[_sortBy] ?? ""}',
-                style: TextStyle(color: Colors.white),
+                style:TextStyle(color: AppColors.textColor(context)),
               ),
             ),
           ),
@@ -305,8 +324,8 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                   );
                 },
               ),
-            ),          
-            if (_showNoResultsMessage)
+            ),
+          if (_showNoResultsMessage)
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
@@ -326,7 +345,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
         ],
       ),
       bottomNavigationBar: Container(
-        color: backgroundColor,
+        color: AppColors.backgroundColor(context),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -342,14 +361,15 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                   _fetchRecipes();
                 });
               },
-              child: Text('Add Recipe'),
+              child: Text('Add Recipe', style:TextStyle(color: AppColors.textColor(context))),
             ),
             ElevatedButton.icon(
               onPressed: () {
                 if (_isSelecting) {
                   if (_selectedRecipes.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('You have not selected any recipes')),
+                      const SnackBar(
+                          content: Text('You have not selected any recipes')),
                     );
                   } else {
                     _showNutritionReport(_totalCalories);
@@ -370,7 +390,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: _isSelecting && _selectedRecipes.isEmpty
                     ? Colors.grey
-                    : buttonBackgroundColor,
+                    : AppColors.appBarColor(context),
               ),
               icon: Icon(
                 _isSelecting ? Icons.calculate : Icons.select_all,
@@ -416,8 +436,8 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
 
             return GestureDetector(
               onTap: () {
-              // print('Recipe being passed to RecipeDetailPage:');
-              // print(recipe.toJson());
+                // print('Recipe being passed to RecipeDetailPage:');
+                // print(recipe.toJson());
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -433,7 +453,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                 });
               },
               child: Card(
-                color: card,
+                color: AppColors.cardColor(context),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -442,8 +462,10 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                         children: [
                           AspectRatio(
                             aspectRatio: 1.5,
-                            child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
-                                ? Image.network(recipe.imageUrl!, fit: BoxFit.cover)
+                            child: recipe.imageUrl != null &&
+                                    recipe.imageUrl!.isNotEmpty
+                                ? Image.network(recipe.imageUrl!,
+                                    fit: BoxFit.cover)
                                 : const Icon(Icons.image, size: 50),
                           ),
                           if (_isSelecting)
@@ -484,24 +506,28 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                           ),
                           Text(
                             'Calories: ${recipe.calories} kcal',
-                            style: const TextStyle(color: cardexpirestext, fontSize: 12),
+                            style: const TextStyle(
+                                color: cardexpirestext, fontSize: 12),
                           ),
                           Wrap(
                             spacing: 4,
                             runSpacing: 4,
                             children: recipe.labels?.split(', ').map((label) {
-                              return Container(
-                                padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
-                                decoration: BoxDecoration(
-                                  color: lablebackground,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  label,
-                                  style: const TextStyle(color: cardexpirestext, fontSize: 10),
-                                ),
-                              );
-                            }).toList() ?? [],
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 2, horizontal: 4),
+                                    decoration: BoxDecoration(
+                                      color: lablebackground,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      label,
+                                      style: const TextStyle(
+                                          color: cardexpirestext, fontSize: 10),
+                                    ),
+                                  );
+                                }).toList() ??
+                                [],
                           ),
                         ],
                       ),
@@ -527,17 +553,19 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 8),
-          Text(_mealPlan.isNotEmpty ? _mealPlan : 'No meal plan generated yet.'),
+          Text(
+              _mealPlan.isNotEmpty ? _mealPlan : 'No meal plan generated yet.'),
           SizedBox(height: 16),
           ElevatedButton(
             onPressed: _generateMealPlan,
-            child: Text('Generate Meal Plan'),
+            child: Text('Generate Meal Plan',style:TextStyle(color: AppColors.textColor(context))),
           ),
         ],
       ),
     );
   }
-    Widget _buildModeButton() {
+
+  Widget _buildModeButton() {
     return TextButton(
       onPressed: _showSortOptions,
       style: TextButton.styleFrom(
@@ -566,6 +594,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
       ),
     );
   }
+
   void _showSortOptions() {
     showModalBottomSheet(
       context: context,

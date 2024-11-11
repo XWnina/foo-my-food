@@ -229,15 +229,15 @@ class _MyHomePageState extends State<MyHomePage> {
         selectedCategories;
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.backgroundColor(context),
       appBar: _selectedIndex == 0
           ? AppBar(
-              title: Text(widget.title, style: const TextStyle(color: text)),
-              backgroundColor: buttonBackgroundColor,
+              title: Text(widget.title,
+                  style: TextStyle(color: AppColors.textColor(context))),
+              backgroundColor: AppColors.appBarColor(context),
             )
           : null,
       body: Column(
@@ -332,7 +332,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   _navigateToAddShoppingItem();
                 }
               },
-              backgroundColor: buttonBackgroundColor,
+              backgroundColor: AppColors.appBarColor(context),
               tooltip: 'Add Item',
               child: _selectedIndex == 2
                   ? const Icon(Icons.shopping_cart_checkout_outlined,
@@ -360,9 +360,9 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: text,
+        selectedItemColor: AppColors.textColor(context),
         onTap: _onItemTapped,
-        backgroundColor: buttonBackgroundColor,
+        backgroundColor: AppColors.appBarColor(context),
         type: BottomNavigationBarType.fixed,
       ),
     );
@@ -430,7 +430,9 @@ class _MyFoodPageState extends State<MyFoodPage> {
     ingredientProvider.addListener(_updateIngredients);
     _updateIngredients(); // 初始化时更新食材数据
   }
-  void _navigateToFoodItemDetail(Ingredient ingredient, String userId, int index) {
+
+  void _navigateToFoodItemDetail(
+      Ingredient ingredient, String userId, int index) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -449,6 +451,7 @@ class _MyFoodPageState extends State<MyFoodPage> {
       ),
     );
   }
+
   Future<void> _deleteIngredient(
       BuildContext context, String userId, int ingredientId, int index) async {
     try {
@@ -529,9 +532,10 @@ class _MyFoodPageState extends State<MyFoodPage> {
                         _sortIngredients();
                       });
                     },
-                    child: Text(_sortByExpirationDate
-                        ? 'Unsort'
-                        : 'Sort by Expiration'),
+                    child: Text(
+                      _sortByExpirationDate ? 'Unsort' : 'Sort by Expiration',
+                      style: TextStyle(color: AppColors.textColor(context)),
+                    ),
                   ),
                   ElevatedButton(
                     onPressed: () {
@@ -539,9 +543,11 @@ class _MyFoodPageState extends State<MyFoodPage> {
                         _showExpiringIn7Days = !_showExpiringIn7Days;
                       });
                     },
-                    child: Text(_showExpiringIn7Days
-                        ? 'Show All'
-                        : 'Expiring in 7 Days'),
+                    child: Text(
+                        _showExpiringIn7Days
+                            ? 'Show All'
+                            : 'Expiring in 7 Days',
+                        style: TextStyle(color: AppColors.textColor(context))),
                   ),
                 ],
               ),
@@ -568,13 +574,15 @@ class _MyFoodPageState extends State<MyFoodPage> {
                           final ingredient = filteredIngredients[index];
                           return GestureDetector(
                             onTap: () async {
-                              SharedPreferences prefs = await SharedPreferences.getInstance();
+                              SharedPreferences prefs =
+                                  await SharedPreferences.getInstance();
                               String userId = prefs.getString('userId') ?? '';
-                              _navigateToFoodItemDetail(ingredient, userId, index);
+                              _navigateToFoodItemDetail(
+                                  ingredient, userId, index);
                             },
                             child: Card(
                               margin: const EdgeInsets.all(8.0),
-                              color: card,
+                              color: AppColors.cardColor(context),
                               child: Stack(
                                 children: [
                                   Align(
@@ -621,7 +629,8 @@ class _MyFoodPageState extends State<MyFoodPage> {
                                     top: 0,
                                     right: 0,
                                     child: IconButton(
-                                      icon: const Icon(Icons.delete_forever_rounded,
+                                      icon: const Icon(
+                                          Icons.delete_forever_rounded,
                                           color: Colors.red),
                                       onPressed: () async {
                                         bool confirmDelete = await showDialog(
