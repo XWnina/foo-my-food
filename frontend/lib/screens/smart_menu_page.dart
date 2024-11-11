@@ -56,8 +56,13 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
         setState(() {
           _myRecipes = myRecipeData.map((data) => Recipe.fromJson(data)).toList();
           _presetRecipes = presetRecipeData.map((data) => Recipe.fromJson(data)).toList();
+          /*test*/
+          print('\nMapped Preset Recipes:');
+          _presetRecipes.forEach((recipe) => print(recipe.toJson()));
+          /*test*/
           _applyFilters();
         });
+        //print(_presetRecipes);
       } else {
         throw Exception('Failed to load recipes');
       }
@@ -84,7 +89,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
               recipeIngredient.toLowerCase().contains(ingredient.toLowerCase())));
         }).toList();
       }
-
+      
       switch (_sortBy) {
         case 'what_i_have':
           // No need to sort
@@ -405,10 +410,14 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
           itemCount: recipes.length,
           itemBuilder: (context, index) {
             final recipe = recipes[index];
+            // print("Nooooooooo");
+            // print(recipe.toJson());
             final isSelected = _selectedRecipes.contains(recipe);
 
             return GestureDetector(
               onTap: () {
+              // print('Recipe being passed to RecipeDetailPage:');
+              // print(recipe.toJson());
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -416,6 +425,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                       recipe: recipe.toJson(),
                       userId: widget.userId,
                       index: index,
+                      isPresetRecipe: title == 'Preset Recipes',
                     ),
                   ),
                 ).then((_) {
