@@ -1,17 +1,13 @@
 package com.foomyfood.foomyfood.controller;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.foomyfood.foomyfood.database.User;
@@ -101,4 +97,25 @@ public class UserInfoController {
             return new ResponseEntity<>("An unexpected error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @PutMapping("{userId}/tracking-days")
+    public ResponseEntity<?> updateUserTrackingDays(
+            @PathVariable Long userId,
+            @RequestBody Map<String, Integer> request) {  // 确保使用 @RequestBody
+        Integer trackingDays = request.get("trackingDays");
+        System.out.println("Received request: " + request);
+        if (trackingDays == null) {
+            return new ResponseEntity<>("trackingDays parameter is missing", HttpStatus.BAD_REQUEST);
+        }
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setUserRecipeTrackingTime(Long.valueOf(trackingDays));
+            userRepository.save(user);
+            return new ResponseEntity<>("Tracking days updated successfully", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+        }
+    }
+
+
 }

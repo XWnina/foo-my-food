@@ -59,4 +59,11 @@ public class UserInfoService {
         }
 
     }
+    public boolean updateUserTrackingDays(Long userId, Integer trackingDays) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        user.setUserRecipeTrackingTime(Long.valueOf(trackingDays));
+        userRepository.save(user);
+        return true;
+    }
+
 }
