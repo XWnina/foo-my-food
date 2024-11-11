@@ -28,7 +28,10 @@ public class UserController {
                 user.getEmailVerified(),
                 user.getSecurityQuestion(),
                 user.getSecurityQuestAnswer(),
-                user.getLogInStatus()
+                user.getLogInStatus(),
+                user.getUserIngredientExpirationTime(),
+                user.getUserRecipeTrackingTime(),
+                user.getUserTheme()
         );
     }
 }
