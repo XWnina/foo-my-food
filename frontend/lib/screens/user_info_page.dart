@@ -79,7 +79,6 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   // 选择图片（相机或图库）
-  // 选择图片（相机或图库）
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await ImagePicker().pickImage(source: source);
     if (pickedFile != null) {
@@ -172,22 +171,21 @@ class _UserProfileState extends State<UserProfile> {
 
   // 检查所有表单是否有效
   void _checkIfFormIsValid() {
-    // 如果头像已更改，或者表单字段无错误且非空，启用保存按钮
-    if ((_image != null || _avatarUrl != null) || // 检查头像是否已更改或存在
-        _usernameError == null &&
-            _emailError == null &&
-            _phoneError == null &&
-            _usernameController.text.isNotEmpty &&
-            _emailController.text.isNotEmpty &&
-            _phoneController.text.isNotEmpty) {
-      setState(() {
-        _isSaveButtonEnabled = true;
-      });
-    } else {
-      setState(() {
-        _isSaveButtonEnabled = false;
-      });
-    }
+    // 检查所有字段是否非空并无错误
+    bool areFieldsFilled = _usernameController.text.isNotEmpty &&
+        _emailController.text.isNotEmpty &&
+        _phoneController.text.isNotEmpty &&
+        _firstNameController.text.isNotEmpty &&
+        _lastNameController.text.isNotEmpty;
+
+    // 如果头像已更改或存在，且所有表单字段无错误且非空，启用保存按钮
+    bool noErrors =
+        _usernameError == null && _emailError == null && _phoneError == null;
+
+    setState(() {
+      _isSaveButtonEnabled =
+          areFieldsFilled && noErrors && (_image != null || _avatarUrl != null);
+    });
   }
 
   Future<void> _saveProfile() async {
@@ -367,7 +365,7 @@ class _UserProfileState extends State<UserProfile> {
           ),
         ],
       ),
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.backgroundColor(context),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
@@ -391,6 +389,7 @@ class _UserProfileState extends State<UserProfile> {
             // First Name Input Field
             TextField(
               controller: _firstNameController,
+              onChanged: (value) => _checkIfFormIsValid(),
               decoration: const InputDecoration(
                 labelText: 'First Name',
                 filled: true,
@@ -407,6 +406,7 @@ class _UserProfileState extends State<UserProfile> {
             // Last Name Input Field
             TextField(
               controller: _lastNameController,
+              onChanged: (value) => _checkIfFormIsValid(),
               decoration: const InputDecoration(
                 labelText: 'Last Name',
                 filled: true,
