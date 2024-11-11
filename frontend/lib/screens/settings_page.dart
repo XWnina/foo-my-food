@@ -140,11 +140,8 @@ class _SettingsPageState extends State<SettingsPage> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            FoodExpiryReminderSettingsPage()));
+                //添加跳转
+
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.buttonBackgroundColor(context),
@@ -157,10 +154,7 @@ class _SettingsPageState extends State<SettingsPage> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => CookingReminderSettingsPage()));
+                // 添加跳转
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.buttonBackgroundColor(context),
@@ -271,40 +265,3 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 
-class FoodExpiryReminderSettingsPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundColor(context),
-      appBar: AppBar(
-        title: Text('Food Expiry Reminder Settings'),
-        backgroundColor: AppColors.appBarColor(context),
-      ),
-      body: Center(
-        child: Text(
-          'Food Expiry Reminder Settings Page',
-          style: TextStyle(color: AppColors.textColor(context)),
-        ),
-      ),
-    );
-  }
-}
-
-class CookingReminderSettingsPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundColor(context),
-      appBar: AppBar(
-        title: Text('Cooking Reminder Settings'),
-        backgroundColor: AppColors.appBarColor(context),
-      ),
-      body: Center(
-        child: Text(
-          'Cooking Reminder Settings Page',
-          style: TextStyle(color: AppColors.textColor(context)),
-        ),
-      ),
-    );
-  }
-}
