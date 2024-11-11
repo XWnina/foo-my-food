@@ -281,17 +281,18 @@ class _MyHomePageState extends State<MyHomePage> {
                         );
                       }).toList();
                     },
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           'Filter Categories', // 使用文字作为按钮
                           style: TextStyle(
-                            color: cardnametext, // 设置文字颜色
+                            color:
+                                AppColors.cardNameTextColor(context), // 设置文字颜色
                             fontSize: 16, // 设置文字大小
                           ),
                         ),
-                        Icon(
+                        const Icon(
                           Icons.arrow_drop_down, // 倒三角图标
                           color: Colors.black, // 设置图标颜色
                         ),
@@ -304,8 +305,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       selectedCategories.isNotEmpty
                           ? selectedCategories.join(', ') // 显示选中类别
                           : 'All categories of food ', // 如果没有选中类别
-                      style: const TextStyle(
-                        color: Color.fromARGB(255, 50, 98, 99),
+                      style: TextStyle(
+                        color: AppColors.cardNameTextColor(context),
                         fontSize: 14,
                       ),
                       overflow: TextOverflow.ellipsis, // 处理过长的文字
@@ -602,8 +603,9 @@ class _MyFoodPageState extends State<MyFoodPage> {
                                         const SizedBox(height: 10),
                                         Text(
                                           ingredient.name,
-                                          style: const TextStyle(
-                                            color: cardnametext,
+                                          style: TextStyle(
+                                            color: AppColors.cardNameTextColor(
+                                                context),
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -612,14 +614,18 @@ class _MyFoodPageState extends State<MyFoodPage> {
                                         ),
                                         Text(
                                           'Expires: ${ingredient.expirationDate}',
-                                          style: const TextStyle(
-                                              color: cardexpirestext),
+                                          style: TextStyle(
+                                              color: AppColors
+                                                  .cardExpiresTextColor(
+                                                      context)),
                                           textAlign: TextAlign.center,
                                         ),
                                         Text(
                                           'Category: ${ingredient.category}',
-                                          style: const TextStyle(
-                                              color: cardexpirestext),
+                                          style: TextStyle(
+                                              color: AppColors
+                                                  .cardExpiresTextColor(
+                                                      context)),
                                           textAlign: TextAlign.center,
                                         ),
                                       ],
