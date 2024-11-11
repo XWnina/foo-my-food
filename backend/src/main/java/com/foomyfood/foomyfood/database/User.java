@@ -51,6 +51,15 @@ public class User {
     @Column(name = "log_in_status")
     private Boolean logInStatus;
 
+    @Column(name = "user_ingredient_expiration_time", nullable = true)
+    private Long userIngredientExpirationTime;
+
+    @Column(name = "user_recipe_tracking_time", nullable = true)
+    private Long userRecipeTrackingTime;
+
+    @Column(name = "user_theme", nullable = true)
+    private String userTheme;
+
     // Constructors
     public User() {
     }
@@ -173,5 +182,29 @@ public class User {
 
     public void setLogInStatus(Boolean logInStatus) {
         this.logInStatus = logInStatus;
+    }
+
+    public Long getUserIngredientExpirationTime() {
+        return userIngredientExpirationTime;
+    }
+
+    public void setUserIngredientExpirationTime(Long userIngredientExpirationTime) {
+        this.userIngredientExpirationTime = userIngredientExpirationTime;
+    }
+
+    public Long getUserRecipeTrackingTime() {
+        return userRecipeTrackingTime;
+    }
+
+    public void setUserRecipeTrackingTime(Long userRecipeTrackingTime) {
+        this.userRecipeTrackingTime = userRecipeTrackingTime;
+    }
+
+    public String getUserTheme() {
+        return userTheme;
+    }
+
+    public void setUserTheme(String userTheme) {
+        this.userTheme = userTheme;
     }
 }
