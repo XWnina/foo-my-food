@@ -1,13 +1,13 @@
 class Recipe {
-  final int id; // Handles long values in Dart
+  final int id;
   final String name;
   final int cookCount;
   final List<String> ingredients;
   final int calories;
-  final String? labels; // Default value
-  final String? description; // Make nullable
-  final String? videoLink; // Make nullable
-  final String? imageUrl; // Make nullable
+  final String? labels;
+  final String? description;
+  final String? videoLink;
+  final String? imageUrl;
 
   Recipe({
     required this.id,
@@ -15,35 +15,52 @@ class Recipe {
     required this.name,
     required this.ingredients,
     required this.calories,
-    this.labels, // Default value
-    this.description, // Nullable field
-    this.videoLink, // Nullable field
-    this.imageUrl, // Nullable field
+    this.labels,
+    this.description,
+    this.videoLink,
+    this.imageUrl,
   });
 
   factory Recipe.fromJson(Map<String, dynamic> json) {
+    // Highlight: Added helper function to handle different ingredient formats
+    List<String> parseIngredients(dynamic ingredientsData) {
+      if (ingredientsData is List) {
+        return List<String>.from(ingredientsData);
+      } else if (ingredientsData is String) {
+        return ingredientsData.split(',').map((e) => e.trim()).toList();
+      }
+      return [];
+    }
+
     return Recipe(
+      // Highlight: Handle both 'id' and '_id' fields
       id: json['id'] is int
           ? json['id']
-          : int.parse(json['id'].toString()), // Ensure it's handled as int
-      cookCount: json['cookCount'] ?? 0, // 设置默认值为0
-      name: json['dishName'] ?? 'Unknown', // Provide default value if null
-      ingredients: List<String>.from(json['ingredientsAsList'] ?? []),
-      labels: json['labels'] ?? '', // Default to empty string if null
-      calories: json['calories'] ?? 0,
-      description: json['description'] ?? '', // Default to empty string if null
-      videoLink: json['videoLink'] ?? '', // Default to empty string if null
-      imageUrl: json['imageURL'] ?? '', // Default to empty string if null
+          : int.parse((json['id'] ?? json['_id'] ?? '0').toString()),
+      // Highlight: Handle both 'cookCount' and 'cook_count' fields
+      cookCount: json['cookCount'] ?? json['cook_count'] ?? 0,
+      // Highlight: Handle both 'name' and 'dishName' fields
+      name: json['name'] ?? json['dishName'] ?? 'Unknown',
+      // Highlight: Handle different ingredient formats
+      ingredients: parseIngredients(json['ingredients'] ?? json['ingredientsAsList'] ?? json['ingredient']),
+      // Highlight: Handle both 'labels' and 'label' fields
+      labels: json['labels'] ?? json['label'] ?? '',
+      // Highlight: Handle both 'calories' and 'calorie' fields
+      calories: json['calories'] ?? json['calorie'] ?? 0,
+      description: json['description'] ?? '',
+      videoLink: json['videoLink'] ?? '',
+      // Highlight: Handle both 'imageURL' and 'image' fields
+      imageUrl: json['imageURL'] ?? json['image'] ?? '',
     );
   }
 
-  // Method to convert a Recipe instance into a JSON object
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'cookCount': cookCount, // 确保字段名与后端一致
+      'cookCount': cookCount,
       'name': name,
-      'ingredients': ingredients,
+      // Highlight: Join ingredients list into a comma-separated string
+      'ingredients': ingredients.join(', '),
       'labels': labels,
       'calories': calories,
       'description': description,

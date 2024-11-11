@@ -11,12 +11,13 @@ class RecipeDetailPage extends StatefulWidget {
   final Map<String, dynamic> recipe;
   final String userId;
   final int index;
-
+  final bool isPresetRecipe;
   const RecipeDetailPage({
     super.key,
     required this.recipe,
     required this.userId,
     required this.index,
+    required this.isPresetRecipe,
   });
 
   @override
@@ -48,8 +49,9 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.recipe['name']);
-    _ingredientsController =
-        TextEditingController(text: widget.recipe['ingredients']?.join(', '));
+     _ingredientsController = TextEditingController(
+      text: _getIngredientsString(),
+    );
     _caloriesController = TextEditingController(
         text: widget.recipe['calories']?.toString() ?? '');
     _descriptionController =
@@ -58,8 +60,28 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
         TextEditingController(text: widget.recipe['videoLink'] ?? '');
     _selectedLabels =
         Set<String>.from(widget.recipe['labels']?.split(', ') ?? []);
+    /*test*/
+    print('Recipe Details:');
+    widget.recipe.forEach((key, value) {
+      print('$key: $value');
+    });
+    /*test*/
   }
-
+   String _getIngredientsString() {
+    var ingredients = widget.recipe['ingredients'];
+    //print(ingredients);
+    if (ingredients is List) {
+      return ingredients.join(', ');
+    } else if (ingredients is String) {
+      return ingredients;
+    } else if (widget.isPresetRecipe && widget.recipe['ingredient'] is String) {
+      // Highlight: Handle the case where preset recipes use 'ingredient' instead of 'ingredients'
+      return widget.recipe['ingredient'];
+    } else {
+      return '';
+    }
+    
+  }
   @override
   void dispose() {
     _nameController.dispose();
@@ -314,7 +336,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                     ),
                   )
                 : Text(
-                    'Ingredients: ${widget.recipe['ingredients']?.join(', ')}'),
+                    'Ingredients: ${widget.recipe['ingredients'] is List ? widget.recipe['ingredients'].join(', ') : widget.recipe['ingredients'] ?? 'No ingredients'}',
+                  ),
             const SizedBox(height: 16),
             _isEditing
                 ? TextField(

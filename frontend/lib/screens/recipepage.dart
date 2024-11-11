@@ -360,6 +360,7 @@ class _RecipePageState extends State<RecipePage> {
                                     recipe: recipe.toJson(),
                                     userId: userId,
                                     index: index,
+                                    isPresetRecipe: false,
                                   ),
                                 ),
                               ).then((_) {
