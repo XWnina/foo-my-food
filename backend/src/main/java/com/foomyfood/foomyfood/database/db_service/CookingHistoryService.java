@@ -37,7 +37,7 @@ public class CookingHistoryService {
             CookingHistory cookingHistory = new CookingHistory(userId, recipe.get(), cookingDate);
             cookingHistory = cookingHistoryRepository.save(cookingHistory);
 
-            // 增加菜谱表中的制作次数
+            // 更新菜谱的制作总次数
             Recipe updatedRecipe = recipe.get();
             updatedRecipe.setCookCount(updatedRecipe.getCookCount() + 1);
             recipeRepository.save(updatedRecipe);
