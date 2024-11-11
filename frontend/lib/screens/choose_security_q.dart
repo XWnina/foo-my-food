@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:foo_my_food_app/services/security_api_service.dart'; // 引入 API 服务
+import 'package:foo_my_food_app/utils/colors.dart';
 import 'login_page.dart'; // 引入登录页面
 
 class SecurityQuestionSelectionPage extends StatefulWidget {
@@ -76,7 +77,7 @@ class _SecurityQuestionSelectionPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 18, 32, 47),
+      backgroundColor: AppColors.backgroundColor(context),
       body: Center(
         child: Container(
           width: 360,

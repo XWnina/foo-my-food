@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/providers/theme_provider.dart';
 import 'package:foo_my_food_app/screens/components/text_field.dart'; // 导入 text_field.dart
+import 'package:foo_my_food_app/services/user_theme_service.dart';
 import 'package:foo_my_food_app/utils/colors.dart'; // 导入 color.dart 文件
 import 'package:foo_my_food_app/services/login_service.dart'; // 导入 login_service.dart
 import 'package:foo_my_food_app/services/account_api_service.dart'; // 导入 account_api_service.dart
 import 'package:foo_my_food_app/utils/constants.dart'; // 导入 constants.dart 文件
+import 'package:provider/provider.dart';
 import 'homepage.dart'; // 导入主页
 import 'create_account_page.dart'; // 导入创建账户页面
 import 'security_or_email.dart'; // 导入密码重置页面
@@ -32,7 +35,6 @@ class LoginPageState extends State<LoginPage> {
 
   final LoginService loginService = LoginService(); // 实例化 LoginService
 
-  // 登录服务方法
   Future<void> login() async {
     if (_isProcessing) return; // 防止重复点击
     _isProcessing = true;
@@ -50,6 +52,24 @@ class LoginPageState extends State<LoginPage> {
 
         // 保存 userId 到 SharedPreferences
         await saveUserId(userId);
+
+        // 获取用户的主题并应用到 ThemeProvider
+        String? userTheme = await UserThemeService.fetchUserTheme(userId);
+        if (userTheme != null) {
+          final themeProvider =
+              Provider.of<ThemeProvider>(context, listen: false);
+          switch (userTheme) {
+            case "yellowGreenTheme":
+              themeProvider.switchTheme(ThemeProvider.yellowGreenTheme);
+              break;
+            case "blueTheme":
+              themeProvider.switchTheme(ThemeProvider.blueTheme);
+              break;
+            default:
+              themeProvider
+                  .switchTheme(ThemeProvider.yellowGreenTheme); // 设置默认主题
+          }
+        }
 
         if (!mounted) return;
 

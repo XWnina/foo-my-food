@@ -312,10 +312,11 @@ class _RecipePageState extends State<RecipePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.backgroundColor(context),
       appBar: AppBar(
-        title: const Text('My Recipes', style: TextStyle(color: Colors.white)),
-        backgroundColor: appBarColor,
+        title: Text('My Recipes',
+            style: TextStyle(color: AppColors.textColor(context))),
+        backgroundColor: AppColors.appBarColor(context),
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list, color: Colors.white),
@@ -368,7 +369,7 @@ class _RecipePageState extends State<RecipePage> {
                               });
                             },
                             child: Card(
-                              color: card,
+                              color: AppColors.cardColor(context),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
@@ -495,7 +496,7 @@ class _RecipePageState extends State<RecipePage> {
         ],
       ),
       bottomNavigationBar: Container(
-        color: backgroundColor,
+        color: AppColors.backgroundColor(context),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -509,7 +510,7 @@ class _RecipePageState extends State<RecipePage> {
                   ),
                 );
               },
-              child: Text("Don't know what to eat?"),
+              child: Text("Don't know what to eat?", style:TextStyle(color: AppColors.textColor(context))),
             ),
             ElevatedButton.icon(
               onPressed: () {
@@ -541,7 +542,7 @@ class _RecipePageState extends State<RecipePage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: _isSelecting && _selectedRecipes.isEmpty
                     ? Colors.grey
-                    : buttonBackgroundColor,
+                    : AppColors.appBarColor(context),
               ),
               icon: Icon(
                 _isSelecting ? Icons.calculate : Icons.select_all,
@@ -576,7 +577,7 @@ class _RecipePageState extends State<RecipePage> {
             _fetchUserRecipes();
           });
         },
-        backgroundColor: buttonBackgroundColor,
+        backgroundColor: AppColors.appBarColor(context),
         child: const Icon(Icons.add, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,

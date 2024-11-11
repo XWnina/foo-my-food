@@ -3,6 +3,7 @@ import 'package:foo_my_food_app/screens/settings_page.dart';
 import 'package:provider/provider.dart';
 import 'package:foo_my_food_app/providers/theme_provider.dart';
 import 'package:foo_my_food_app/screens/user_info_page.dart'; // 确保路径正确
+import 'package:foo_my_food_app/utils/colors.dart'; // 导入 AppColors
 
 class UserMainPage extends StatefulWidget {
   @override
@@ -15,16 +16,13 @@ class _UserMainPageState extends State<UserMainPage> {
 
   @override
   Widget build(BuildContext context) {
-    // 获取当前的 ThemeProvider 实例
-    final themeProvider = Provider.of<ThemeProvider>(context);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'User Main Page',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: themeProvider.theme.appBarColor, // 使用动态主题色
+        backgroundColor: AppColors.appBarColor(context), // 使用 AppColors 获取动态主题色
         actions: [
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.white),
@@ -45,7 +43,7 @@ class _UserMainPageState extends State<UserMainPage> {
             children: [
               Container(
                 height: 250,
-                color: themeProvider.theme.appBarColor, // 使用动态主题色
+                color: AppColors.appBarColor(context), // 使用 AppColors 获取动态主题色
               ),
               Positioned(
                 bottom: 0,
@@ -93,7 +91,7 @@ class _UserMainPageState extends State<UserMainPage> {
               itemCount: 6, // Example count, replace with your data
               itemBuilder: (context, index) {
                 return Container(
-                  color: themeProvider.theme.backgroundColor, // 动态背景色
+                  color: AppColors.backgroundColor(context), // 使用 AppColors 获取动态背景色
                   child: Column(
                     children: [
                       Padding(

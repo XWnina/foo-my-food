@@ -284,7 +284,7 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
     } catch (e) {
       _showError('Error occurred while updating the ingredient');
     }
-}
+  }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -401,18 +401,18 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.backgroundColor(context),
       appBar: AppBar(
         title: Text(widget.ingredient.name,
-            style: const TextStyle(
-              color: text,
+            style: TextStyle(
+              color: AppColors.textColor(context),
             )),
-        backgroundColor: appBarColor,
+        backgroundColor: AppColors.appBarColor(context),
         actions: [
           IconButton(
             icon: Icon(
               _isEditing ? Icons.save : Icons.edit,
-              color: text,
+              color: AppColors.textColor(context),
             ),
             onPressed: () {
               if (_isEditing) {

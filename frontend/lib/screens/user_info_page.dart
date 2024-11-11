@@ -173,13 +173,13 @@ class _UserProfileState extends State<UserProfile> {
   // 检查所有表单是否有效
   void _checkIfFormIsValid() {
     // 如果头像已更改，或者表单字段无错误且非空，启用保存按钮
-    if ((_image != null || _avatarUrl != null)|| // 检查头像是否已更改或存在
+    if ((_image != null || _avatarUrl != null) || // 检查头像是否已更改或存在
         _usernameError == null &&
-        _emailError == null &&
-        _phoneError == null &&
-        _usernameController.text.isNotEmpty &&
-        _emailController.text.isNotEmpty &&
-        _phoneController.text.isNotEmpty) {
+            _emailError == null &&
+            _phoneError == null &&
+            _usernameController.text.isNotEmpty &&
+            _emailController.text.isNotEmpty &&
+            _phoneController.text.isNotEmpty) {
       setState(() {
         _isSaveButtonEnabled = true;
       });
@@ -273,50 +273,49 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   Future<void> _logout() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  final userId = prefs.getString('userId');
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
 
-  if (userId == null) {
-    _showError('User ID not found');
-    return;
-  }
+    if (userId == null) {
+      _showError('User ID not found');
+      return;
+    }
 
-  const url = '$baseApiUrl/logout';
+    const url = '$baseApiUrl/logout';
 
-  try {
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'userId': userId}),
-    );
-
-    if (response.statusCode == 200) {
-      await prefs.clear();
-
-      // 在显示登出成功信息后再导航到登录页面
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Logout successful'),
-          duration: Duration(seconds: 1),
-        ),
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'userId': userId}),
       );
 
-      // 等待2秒后再导航
-      Future.delayed(const Duration(seconds: 1), () {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-          (route) => false,
-        );
-      });
-    } else {
-      _showError('Logout failed: ${response.body}');
-    }
-  } catch (e) {
-    _showError('An error occurred: $e');
-  }
-}
+      if (response.statusCode == 200) {
+        await prefs.clear();
 
+        // 在显示登出成功信息后再导航到登录页面
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Logout successful'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+
+        // 等待2秒后再导航
+        Future.delayed(const Duration(seconds: 1), () {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+            (route) => false,
+          );
+        });
+      } else {
+        _showError('Logout failed: ${response.body}');
+      }
+    } catch (e) {
+      _showError('An error occurred: $e');
+    }
+  }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -328,15 +327,17 @@ class _UserProfileState extends State<UserProfile> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           "User Profile",
-          style: TextStyle(color: text), // 将文字颜色设置为白色
+          style: TextStyle(color: AppColors.textColor(context)), // 将文字颜色设置为白色
         ),
-        backgroundColor: appBarColor,
+        backgroundColor: AppColors.appBarColor(context),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout,
-            color: text,),
+            icon: Icon(
+              Icons.logout,
+              color: AppColors.textColor(context),
+            ),
             onPressed: () {
               showDialog(
                 context: context,
@@ -491,7 +492,7 @@ class _UserProfileState extends State<UserProfile> {
               onPressed: _isSaveButtonEnabled ? _saveProfile : null, // 按钮是否可点击
               style: ElevatedButton.styleFrom(
                 backgroundColor: _isSaveButtonEnabled
-                    ? buttonBackgroundColor
+                    ? AppColors.appBarColor(context)
                     : Colors.grey, // 动态设置颜色
                 foregroundColor: whiteFillColor,
               ),
