@@ -38,6 +38,14 @@ class _RecipePageState extends State<RecipePage> {
   void initState() {
     super.initState();
     _loadUserId();
+    _ensureTrackingDaysSet().then((_) => _checkForRecipeReminder());
+  }
+
+  Future<void> _ensureTrackingDaysSet() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (!prefs.containsKey('user_recipe_tracking_time')) {
+      prefs.setInt('user_recipe_tracking_time', 30); // 默认值设置为30
+    }
   }
 
   void _calculateTotalCalories() {
@@ -309,6 +317,69 @@ class _RecipePageState extends State<RecipePage> {
     );
   }
 
+  Future<int> _getRecipeCookCountInPeriod(int recipeId, int days) async {
+    final response = await http.get(Uri.parse(
+        '$baseApiUrl/cooking_history/$recipeId/cookCount?days=$days'));
+    if (response.statusCode == 200) {
+      final count = jsonDecode(response.body)['cookCount'];
+      print(
+          'Cook count for recipe ID $recipeId in last $days days: $count'); // 打印调试
+      return count;
+    } else {
+      throw Exception('Failed to load cook count');
+    }
+  }
+
+  void _showReminderDialog(Recipe recipe, int trackingDays) {
+    print(
+        'Showing reminder dialog for recipe: ${recipe.name}, trackingDays: $trackingDays'); // 添加调试信息
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Recipe Reminder"),
+          content: Text(
+              "You have cooked ${recipe.name} more than 10 times in the past $trackingDays days."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("OK"),
+            ),
+            TextButton(
+              onPressed: () async {
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                prefs.setBool('showRecipeReminder_${recipe.id}', false);
+                Navigator.of(context).pop();
+              },
+              child: Text("Don't show again"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _checkForRecipeReminder() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int trackingDays = prefs.getInt('user_recipe_tracking_time') ?? 30;
+
+    // 检查每个 recipe 在 trackingDays 天内的做菜次数是否 >=10
+    for (var recipe in _recipes) {
+      bool shouldShowReminder =
+          prefs.getBool('showRecipeReminder_${recipe.id}') ?? true;
+      if (shouldShowReminder) {
+        final cookCount =
+            await _getRecipeCookCountInPeriod(recipe.id, trackingDays);
+        if (cookCount >= 5) {
+          //测试5次
+          _showReminderDialog(recipe, trackingDays); // 将 trackingDays 传入
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -510,7 +581,8 @@ class _RecipePageState extends State<RecipePage> {
                   ),
                 );
               },
-              child: Text("Don't know what to eat?", style:TextStyle(color: AppColors.textColor(context))),
+              child: Text("Don't know what to eat?",
+                  style: TextStyle(color: AppColors.textColor(context))),
             ),
             ElevatedButton.icon(
               onPressed: () {

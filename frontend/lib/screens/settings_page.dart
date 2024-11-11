@@ -101,6 +101,89 @@ class _SettingsPageState extends State<SettingsPage> {
     ));
   }
 
+  // 显示输入天数的对话框
+  void _showDaysInputDialog() {
+    final _daysController = TextEditingController();
+    String? errorText;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text("Set Cooking Reminder Days"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _daysController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: "Days",
+                      errorText: errorText,
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        if (int.tryParse(value) == null) {
+                          errorText = "Please enter a valid integer.";
+                        } else {
+                          errorText = null;
+                        }
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (int.tryParse(_daysController.text) != null) {
+                      int days = int.parse(_daysController.text);
+                      await _saveTrackingDays(days); // 保存到 SharedPreferences
+                      await _saveTrackingDaysToDatabase(days); // 保存到数据库
+                      Navigator.pop(context);
+                    } else {
+                      setState(() {
+                        errorText = "Please enter a valid integer.";
+                      });
+                    }
+                  },
+                  child: Text("Save"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _saveTrackingDaysToDatabase(int days) async {
+    final url =
+        '$baseApiUrl/user/$userId/tracking-days'; // 请确保使用正确的 API 基础 URL 和 userId
+    final response = await http.put(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'trackingDays': days}),
+    );
+    if (response.statusCode == 200) {
+      print("Tracking days saved to database: $days");
+    } else {
+      print("Failed to save tracking days to database: ${response.statusCode}");
+    }
+  }
+
+  Future<void> _saveTrackingDays(int days) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setInt('user_recipe_tracking_time', days);
+    print("Tracking days saved: $days"); // 检查是否成功保存
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -139,23 +222,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                //添加跳转
-
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.buttonBackgroundColor(context),
-              ),
-              child: Text(
-                'Set Food Expiry Reminder',
-                style: TextStyle(color: AppColors.textColor(context)),
-              ),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                // 添加跳转
-              },
+              onPressed: _showDaysInputDialog, // 显示输入天数的对话框
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.buttonBackgroundColor(context),
               ),
@@ -264,4 +331,3 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 }
-
