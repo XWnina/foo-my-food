@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/services/recipe_collection_service.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:foo_my_food_app/models/recipe.dart';
 import 'package:foo_my_food_app/utils/constants.dart';
@@ -18,6 +19,9 @@ class SmartMenuPage extends StatefulWidget {
 }
 
 class _SmartMenuPageState extends State<SmartMenuPage> {
+  final RecipeCollectionService _recipeCollectionService =
+      RecipeCollectionService(baseApiUrl: baseApiUrl);
+  Set<String> _favoriteRecipes = {};
   List<Recipe> _myRecipes = [];
   List<Recipe> _presetRecipes = [];
   List<Recipe> _filteredMyRecipes = [];
@@ -41,8 +45,69 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
   @override
   void initState() {
     super.initState();
-    _fetchRecipes();
+    _initializeData();
   }
+
+  Future<void> _initializeData() async {
+    await Future.wait([
+      _fetchRecipes(),
+      _fetchUserFavorites(),
+    ]);
+  }
+
+  void _toggleFavorite(Recipe recipe, bool isPresetRecipe) async {
+    final String key =
+        isPresetRecipe ? 'preset_${recipe.id}' : 'my_${recipe.id}';
+    final bool isFavorited = _favoriteRecipes.contains(key);
+
+    try {
+      if (isFavorited) {
+        await _recipeCollectionService.removeFavorite(
+            widget.userId,
+            isPresetRecipe ? null : recipe.id.toString(),
+            isPresetRecipe ? recipe.id.toString() : null);
+        setState(() {
+          _favoriteRecipes.remove(key);
+        });
+      } else {
+        await _recipeCollectionService.addFavorite(
+            widget.userId,
+            isPresetRecipe ? null : recipe.id.toString(),
+            isPresetRecipe ? recipe.id.toString() : null);
+        setState(() {
+          _favoriteRecipes.add(key);
+        });
+      }
+    } catch (e) {
+      print('Error in toggle favorite: $e');
+      // 可以添加错误提示，如：SnackBar通知用户操作失败
+    }
+  }
+
+  // 获取用户的收藏
+  Future<void> _fetchUserFavorites() async {
+    try {
+      final favoritesData =
+          await _recipeCollectionService.getUserFavorites(widget.userId);
+      setState(() {
+        for (var item in favoritesData) {
+          final isPreset = item['presetRecipeId'] != null;
+          final id = item[isPreset ? 'presetRecipeId' : 'recipeId'].toString();
+          _favoriteRecipes.add(isPreset ? 'preset_$id' : 'my_$id');
+        }
+      });
+    } catch (e) {
+      print('Error fetching favorites: $e');
+      // 可以使用 SnackBar 或对话框提示用户
+    }
+  }
+  // 检查菜谱是否已收藏
+bool _isRecipeFavorited(Recipe recipe, bool isPresetRecipe) {
+  final String key = isPresetRecipe ? 'preset_${recipe.id}' : 'my_${recipe.id}';
+  return _favoriteRecipes.contains(key);
+}
+
+
 
   Future<void> _fetchRecipes() async {
     try {
@@ -235,7 +300,6 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor(context),
@@ -250,12 +314,12 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Text(
                 'Mode: ${_modeDisplayNames[_sortBy] ?? ""}',
-                style:TextStyle(color: AppColors.textColor(context)),
+                style: TextStyle(color: AppColors.textColor(context)),
               ),
             ),
           ),
           IconButton(
-            icon: Icon(Icons.sort, color:AppColors.textColor(context)),
+            icon: Icon(Icons.sort, color: AppColors.textColor(context)),
             onPressed: _showSortOptions,
           ),
         ],
@@ -361,7 +425,8 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                   _fetchRecipes();
                 });
               },
-              child: Text('Add Recipe', style:TextStyle(color: AppColors.textColor(context))),
+              child: Text('Add Recipe',
+                  style: TextStyle(color: AppColors.textColor(context))),
             ),
             ElevatedButton.icon(
               onPressed: () {
@@ -392,10 +457,8 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                     ? Colors.grey
                     : AppColors.appBarColor(context),
               ),
-              icon: Icon(
-                _isSelecting ? Icons.calculate : Icons.select_all,
-                color: AppColors.textColor(context)
-              ),
+              icon: Icon(_isSelecting ? Icons.calculate : Icons.select_all,
+                  color: AppColors.textColor(context)),
               label: Text(
                 _isSelecting ? 'Calculate' : 'Select Recipes',
                 style: TextStyle(color: AppColors.textColor(context)),
@@ -408,6 +471,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
   }
 
   Widget _buildRecipeSection(String title, List<Recipe> recipes) {
+    final bool isPresetRecipe = title == 'Preset Recipes';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -445,7 +509,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                       recipe: recipe.toJson(),
                       userId: widget.userId,
                       index: index,
-                      isPresetRecipe: title == 'Preset Recipes',
+                      isPresetRecipe: isPresetRecipe,
                     ),
                   ),
                 ).then((_) {
@@ -468,6 +532,23 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                                     fit: BoxFit.cover)
                                 : const Icon(Icons.image, size: 50),
                           ),
+                          // 添加星形图标
+                          Positioned(
+                          top: 8,
+                          right: 8,
+                          child: IconButton(
+                            icon: Icon(
+                              _isRecipeFavorited(recipe, isPresetRecipe)
+                                  ? Icons.star
+                                  : Icons.star_border,
+                              color: _isRecipeFavorited(recipe, isPresetRecipe)
+                                  ? Colors.yellow
+                                  : Colors.grey,
+                            ),
+                            onPressed: () =>
+                                _toggleFavorite(recipe, isPresetRecipe),
+                          ),
+                        ),
                           if (_isSelecting)
                             Positioned(
                               top: 8,
@@ -507,7 +588,8 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                           Text(
                             'Calories: ${recipe.calories} kcal',
                             style: TextStyle(
-                                color: AppColors.cardExpiresTextColor(context), fontSize: 12),
+                                color: AppColors.cardExpiresTextColor(context),
+                                fontSize: 12),
                           ),
                           Wrap(
                             spacing: 4,
@@ -523,7 +605,9 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                                     child: Text(
                                       label,
                                       style: TextStyle(
-                                          color: AppColors.cardExpiresTextColor(context), fontSize: 10),
+                                          color: AppColors.cardExpiresTextColor(
+                                              context),
+                                          fontSize: 10),
                                     ),
                                   );
                                 }).toList() ??
@@ -558,7 +642,8 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
           SizedBox(height: 16),
           ElevatedButton(
             onPressed: _generateMealPlan,
-            child: Text('Generate Meal Plan',style:TextStyle(color: AppColors.textColor(context))),
+            child: Text('Generate Meal Plan',
+                style: TextStyle(color: AppColors.textColor(context))),
           ),
         ],
       ),
