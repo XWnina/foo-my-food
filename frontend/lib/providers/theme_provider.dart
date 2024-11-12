@@ -8,38 +8,50 @@ class AppTheme {
   final Color cardColor;
   final Color cardExpiresTextColor;
   final Color cardNameTextColor;
+  final Color lablebackground;
 
-  AppTheme({
-    required this.backgroundColor,
-    required this.appBarColor,
-    required this.buttonBackgroundColor,
-    required this.textColor,
-    required this.cardColor,
-    required this.cardExpiresTextColor,
-    required this.cardNameTextColor,
-  });
+  AppTheme(
+      {required this.backgroundColor,
+      required this.appBarColor,
+      required this.buttonBackgroundColor,
+      required this.textColor,
+      required this.cardColor,
+      required this.cardExpiresTextColor,
+      required this.cardNameTextColor,
+      required this.lablebackground});
 }
 
 class ThemeProvider extends ChangeNotifier {
   // 定义多个主题组
   static final AppTheme yellowGreenTheme = AppTheme(
-    backgroundColor: Color(0xFFEEE7DA),
-    appBarColor: Color(0xFF598F83),
-    buttonBackgroundColor: Color(0xFF598F83),
-    textColor: Color(0xFFe6f3ec),
-    cardColor: Color.fromARGB(255, 255, 248, 235),
-    cardExpiresTextColor: Color(0xFF598F83),
-    cardNameTextColor: Color(0xFF265f60),
+    backgroundColor: const Color(0xFFEEE7DA),
+    appBarColor: const Color(0xFF598F83),
+    buttonBackgroundColor: const Color(0xFF598F83),
+    textColor: const Color(0xFFe6f3ec),
+    cardColor: const Color.fromARGB(255, 255, 248, 235),
+    cardExpiresTextColor: const Color(0xFF598F83),
+    cardNameTextColor: const Color(0xFF265f60),
+    lablebackground: const Color.fromARGB(255, 244, 244, 177),
   );
 
   static final AppTheme blueTheme = AppTheme(
-    backgroundColor: Color(0xFFDAE7FF),
-    appBarColor: Color(0xFF4A83C5),
-    buttonBackgroundColor: Color(0xFF4A83C5),
-    textColor: Color(0xFFEFF6FF),
-    cardColor: Color.fromARGB(255, 235, 248, 255),
-    cardExpiresTextColor: Color(0xFF4A83C5),
-    cardNameTextColor: Color(0xFF264A7D),
+      backgroundColor: const Color(0xFFDAE7FF),
+      appBarColor: const Color(0xFF4A83C5),
+      buttonBackgroundColor: const Color(0xFF4A83C5),
+      textColor: const Color(0xFFEFF6FF),
+      cardColor: const Color.fromARGB(255, 235, 248, 255),
+      cardExpiresTextColor: const Color(0xFF4A83C5),
+      cardNameTextColor: const Color(0xFF264A7D),
+      lablebackground: const Color.fromARGB(255, 213, 243, 197));
+  static final AppTheme pinkTheme = AppTheme(
+    backgroundColor: const Color(0xFFFFE6E6),
+    appBarColor: const Color(0xFFD46A6A),
+    buttonBackgroundColor: const Color(0xFFD46A6A),
+    textColor: const Color(0xFFFFF1F1),
+    cardColor: const Color.fromARGB(255, 255, 230, 235),
+    cardExpiresTextColor: const Color(0xFFD46A6A),
+    cardNameTextColor: const Color(0xFFAD4D4D),
+    lablebackground: const Color.fromARGB(255, 255, 209, 220),
   );
 
   AppTheme _currentTheme = yellowGreenTheme;

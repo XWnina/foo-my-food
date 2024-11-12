@@ -69,14 +69,14 @@ class _UserMainPageState extends State<UserMainPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'User Main Page',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: AppColors.textColor(context)),
         ),
         backgroundColor: AppColors.appBarColor(context), // 使用 AppColors 获取动态主题色
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings, color: Colors.white),
+            icon: Icon(Icons.settings, color: AppColors.textColor(context)),
             onPressed: () {
               Navigator.push(
                 context,
@@ -109,10 +109,10 @@ class _UserMainPageState extends State<UserMainPage> {
                 const SizedBox(height: 10),
                 Text(
                   _username ?? 'Loading...',
-                  style: const TextStyle(
+                  style:  TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: AppColors.textColor(context),
                   ),
                 ),
               ],
@@ -139,8 +139,7 @@ class _UserMainPageState extends State<UserMainPage> {
               itemCount: 6, // Example count, replace with your data
               itemBuilder: (context, index) {
                 return Card(
-                  color: AppColors.cardColor(
-                      context), // 使用 AppColors 获取动态背景色
+                  color: AppColors.cardColor(context), // 使用 AppColors 获取动态背景色
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),

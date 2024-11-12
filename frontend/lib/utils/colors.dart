@@ -49,4 +49,7 @@ class AppColors {
   // 动态获取卡片名称文本颜色
   static Color cardNameTextColor(BuildContext context) =>
       Provider.of<ThemeProvider>(context).theme.cardNameTextColor;
+
+  static Color lablebackground(BuildContext context) =>
+      Provider.of<ThemeProvider>(context).theme.lablebackground;
 }

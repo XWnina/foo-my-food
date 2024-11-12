@@ -65,12 +65,14 @@ class LoginPageState extends State<LoginPage> {
             case "blueTheme":
               themeProvider.switchTheme(ThemeProvider.blueTheme);
               break;
+            case "pinkTheme":
+              themeProvider.switchTheme(ThemeProvider.pinkTheme);
+              break;
             default:
               themeProvider
                   .switchTheme(ThemeProvider.yellowGreenTheme); // 设置默认主题
           }
         }
-
         if (!mounted) return;
 
         // 成功登录后跳转到主页

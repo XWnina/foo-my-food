@@ -91,11 +91,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           return ListView(
             children: [
               if (unpurchasedItems.isNotEmpty) ...[
-                const Padding(
+                 Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Text(
                     'Items to Purchase',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.cardNameTextColor(context)),
                   ),
                 ),
                 ListView.builder(
@@ -109,11 +109,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                 ),
               ],
               if (purchasedItems.isNotEmpty) ...[
-                const Padding(
+                 Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Text(
                     'Purchased Items',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.cardNameTextColor(context)),
                   ),
                 ),
                 ListView.builder(
@@ -142,11 +142,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       child: ListTile(
         title: Text(
           item['name'],
-          style: const TextStyle(color: cardnametext),
+          style:  TextStyle(color: AppColors.cardNameTextColor(context)),
         ),
         subtitle: Text(
           'Quantity: ${item['baseQuantity']} ${item['unit']}',
-          style: const TextStyle(color: cardexpirestext),
+          style: TextStyle(color: AppColors.cardExpiresTextColor(context)),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,

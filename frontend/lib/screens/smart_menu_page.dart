@@ -255,7 +255,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.sort, color: Colors.white),
+            icon: Icon(Icons.sort, color:AppColors.textColor(context)),
             onPressed: _showSortOptions,
           ),
         ],
@@ -394,11 +394,11 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
               ),
               icon: Icon(
                 _isSelecting ? Icons.calculate : Icons.select_all,
-                color: Colors.white,
+                color: AppColors.textColor(context)
               ),
               label: Text(
                 _isSelecting ? 'Calculate' : 'Select Recipes',
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: AppColors.textColor(context)),
               ),
             ),
           ],
@@ -496,8 +496,8 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                         children: [
                           Text(
                             recipe.name,
-                            style: const TextStyle(
-                              color: cardnametext,
+                            style: TextStyle(
+                              color: AppColors.cardNameTextColor(context),
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -506,8 +506,8 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                           ),
                           Text(
                             'Calories: ${recipe.calories} kcal',
-                            style: const TextStyle(
-                                color: cardexpirestext, fontSize: 12),
+                            style: TextStyle(
+                                color: AppColors.cardExpiresTextColor(context), fontSize: 12),
                           ),
                           Wrap(
                             spacing: 4,
@@ -517,13 +517,13 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 2, horizontal: 4),
                                     decoration: BoxDecoration(
-                                      color: lablebackground,
+                                      color: AppColors.lablebackground(context),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
                                       label,
-                                      style: const TextStyle(
-                                          color: cardexpirestext, fontSize: 10),
+                                      style: TextStyle(
+                                          color: AppColors.cardExpiresTextColor(context), fontSize: 10),
                                     ),
                                   );
                                 }).toList() ??

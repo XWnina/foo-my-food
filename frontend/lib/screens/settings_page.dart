@@ -47,6 +47,9 @@ class _SettingsPageState extends State<SettingsPage> {
       case "blueTheme":
         themeProvider.switchTheme(ThemeProvider.blueTheme);
         break;
+      case "pinkTheme":
+        themeProvider.switchTheme(ThemeProvider.pinkTheme);
+        break;
       default:
         themeProvider.switchTheme(ThemeProvider.yellowGreenTheme); // 默认主题
     }
@@ -112,7 +115,7 @@ class _SettingsPageState extends State<SettingsPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text("Set Cooking Reminder Days"),
+              title: const Text("Set Cooking Reminder Days"),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -138,7 +141,7 @@ class _SettingsPageState extends State<SettingsPage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text("Cancel"),
+                  child: const Text("Cancel"),
                 ),
                 TextButton(
                   onPressed: () async {
@@ -153,7 +156,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       });
                     }
                   },
-                  child: Text("Save"),
+                  child: const Text("Save"),
                 ),
               ],
             );
@@ -194,71 +197,102 @@ class _SettingsPageState extends State<SettingsPage> {
         title: Text('Settings',
             style: TextStyle(color: AppColors.textColor(context))),
         backgroundColor: AppColors.appBarColor(context),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: whiteTextColor),
-            onPressed: () {
-              _confirmLogout();
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildCustomButton(
+            icon: Icons.person,
+            text: 'Set User Information',
+            color: AppColors.cardColor(context),
+            onTap: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => UserProfile()));
             },
+          ),
+          _buildCustomButton(
+            icon: Icons.timer,
+            text: 'Set Cooking Reminder',
+            color: AppColors.cardColor(context),
+            onTap: _showDaysInputDialog,
+          ),
+          _buildCustomButton(
+            icon: Icons.event,
+            text: 'Set Expiration Date Reminder',
+            color: AppColors.cardColor(context),
+            onTap: () {
+              // 实现到期提醒逻辑
+            },
+          ),
+          _buildCustomButton(
+            icon: Icons.color_lens,
+            text: 'Set Theme Color',
+            color: AppColors.cardColor(context),
+            onTap: () {
+              if (userId != null) {
+                _showThemeDialog(context, themeProvider);
+              } else {
+                print("User ID not available");
+              }
+            },
+          ),
+          const SizedBox(height: 10),
+          Divider(thickness: 2, color: AppColors.cardNameTextColor(context)),
+          _buildCustomButton(
+            icon: Icons.logout,
+            iconColor: AppColors.textColor(context),
+            text: 'Logout',
+            textColor: AppColors.textColor(context),
+            color: const Color.fromARGB(255, 180, 11, 45),
+            onTap: _confirmLogout,
+            trailingIconColor: AppColors.textColor(context),
           ),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => UserProfile()));
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.buttonBackgroundColor(context),
-              ),
-              child: Text(
-                'Set User Information',
-                style: TextStyle(color: AppColors.textColor(context)),
-              ),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _showDaysInputDialog, // 显示输入天数的对话框
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.buttonBackgroundColor(context),
-              ),
-              child: Text(
-                'Set Cooking Reminder',
-                style: TextStyle(color: AppColors.textColor(context)),
-              ),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                if (userId != null) {
-                  _showThemeDialog(context, themeProvider);
-                } else {
-                  print("User ID not available");
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.buttonBackgroundColor(context),
-              ),
-              child: Text(
-                'Set Theme Color',
-                style: TextStyle(color: AppColors.textColor(context)),
-              ),
-            ),
-            SizedBox(height: 20),
-            // 新增的文字登出按钮
-            TextButton(
-              onPressed: _confirmLogout,
-              child: Text(
-                "Logout",
-                style: TextStyle(color: Colors.red, fontSize: 16),
-              ),
-            ),
-          ],
+    );
+  }
+
+  Widget _buildCustomButton({
+    required IconData icon,
+    required String text,
+    required Color color,
+    required VoidCallback onTap,
+    Color? textColor,
+    Color? iconColor,
+    Color? trailingIconColor,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: color, // 背景色
+        borderRadius: BorderRadius.circular(10), // 圆角形状
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            offset: Offset(0, 4),
+            blurRadius: 4,
+          ),
+        ],
+      ),
+      child: ListTile(
+        leading: Icon(icon,
+            color: iconColor ??
+                AppColors.buttonBackgroundColor(context)), // 默认图标颜色
+        title: Text(
+          text,
+          style: TextStyle(
+            color:
+                textColor ?? AppColors.buttonBackgroundColor(context), // 默认颜色
+            fontWeight: FontWeight.bold,
+          ),
         ),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          color: trailingIconColor ??
+              AppColors.buttonBackgroundColor(context), // 默认向右箭头颜色
+          size: 16,
+        ),
+        onTap: onTap,
       ),
     );
   }
@@ -297,12 +331,12 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Select Theme Color"),
+          title: const Text("Select Theme Color"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                title: Text("Yellow Green Theme"),
+                title: const Text("Yellow Green Theme"),
                 onTap: () async {
                   themeProvider.switchTheme(ThemeProvider.yellowGreenTheme);
                   if (userId != null) {
@@ -313,12 +347,23 @@ class _SettingsPageState extends State<SettingsPage> {
                 },
               ),
               ListTile(
-                title: Text("Blue Theme"),
+                title: const Text("Blue Theme"),
                 onTap: () async {
                   themeProvider.switchTheme(ThemeProvider.blueTheme);
                   if (userId != null) {
                     await UserThemeService.updateUserTheme(
                         userId!, "blueTheme");
+                  }
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: const Text("Pink Theme"),
+                onTap: () async {
+                  themeProvider.switchTheme(ThemeProvider.pinkTheme);
+                  if (userId != null) {
+                    await UserThemeService.updateUserTheme(
+                        userId!, "pinkTheme");
                   }
                   Navigator.of(context).pop();
                 },
