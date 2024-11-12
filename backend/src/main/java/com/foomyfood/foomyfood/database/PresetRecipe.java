@@ -1,5 +1,9 @@
 package com.foomyfood.foomyfood.database;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -111,6 +115,12 @@ public class PresetRecipe {
 
     public void setLabels(String labels) {
         this.labels = labels;
+    }
+
+    public List<String> getIngredientsAsList() {
+        return Arrays.stream(ingredients.split(","))
+                .map(String::trim)
+                .collect(Collectors.toList());
     }
 
 }
