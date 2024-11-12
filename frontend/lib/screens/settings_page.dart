@@ -183,10 +183,6 @@ class _SettingsPageState extends State<SettingsPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setInt('user_recipe_tracking_time', days);
     print("Tracking days saved: $days"); // 检查是否成功保存
-  //   Navigator.pushReplacement(
-  //   context,
-  //   MaterialPageRoute(builder: (context) => RecipePage()),
-  // );
   }
 
   @override
