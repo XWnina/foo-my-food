@@ -179,6 +179,7 @@ class _RecipePageState extends State<RecipePage> {
   }
 
   Future<void> _fetchUserRecipes() async {
+    print("Fetching user recipes...");
     try {
       final response =
           await http.get(Uri.parse('$baseApiUrl/myrecipes/user/$userId'));
@@ -193,6 +194,7 @@ class _RecipePageState extends State<RecipePage> {
         });
         _recipes.forEach((recipe) =>
             print('Recipe ID: ${recipe.id}, Cook Count: ${recipe.cookCount}'));
+        await _checkForRecipeReminder();
       } else {
         throw Exception('Failed to load recipes');
       }
@@ -322,14 +324,18 @@ class _RecipePageState extends State<RecipePage> {
   }
 
   Future<int> _getRecipeCookCountInPeriod(int recipeId, int days) async {
+    print(
+        "Checking cook count for Recipe ID $recipeId for the past $days days");
     final response = await http.get(Uri.parse(
         '$baseApiUrl/cooking_history/$recipeId/cookCount?days=$days'));
+
     if (response.statusCode == 200) {
-      final count = jsonDecode(response.body)['cookCount'];
-      print(
-          'Cook count for recipe ID $recipeId in last $days days: $count'); // 打印调试
+      // 直接将响应体解析为整数
+      final count = int.parse(response.body);
+      print('Cook count for recipe ID $recipeId in last $days days: $count');
       return count;
     } else {
+      print('Failed to load cook count, status code: ${response.statusCode}');
       throw Exception('Failed to load cook count');
     }
   }
@@ -365,22 +371,42 @@ class _RecipePageState extends State<RecipePage> {
     );
   }
 
-  Future<void> _checkForRecipeReminder() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    int trackingDays = prefs.getInt('user_recipe_tracking_time') ?? 30;
+  Future<int> _getTrackingDaysFromDatabase() async {
+  final response = await http.get(Uri.parse('$baseApiUrl/user/$userId/tracking-days'));
+  
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    print("Fetched tracking days from database: ${data['trackingDays']}");
+    return data['trackingDays'];
+  } else {
+    print("Failed to fetch tracking days from database. Status code: ${response.statusCode}");
+    print("Response body: ${response.body}");
+    throw Exception('Failed to fetch tracking days from database');
+  }
+}
 
-    // 检查每个 recipe 在 trackingDays 天内的做菜次数是否 >=10
-    for (var recipe in _recipes) {
-      bool shouldShowReminder =
-          prefs.getBool('showRecipeReminder_${recipe.id}') ?? true;
-      if (shouldShowReminder) {
-        final cookCount =
-            await _getRecipeCookCountInPeriod(recipe.id, trackingDays);
-        if (cookCount >= 5) {
-          //测试5次
-          _showReminderDialog(recipe, trackingDays); // 将 trackingDays 传入
+
+  Future<void> _checkForRecipeReminder() async {
+    try {
+      // 从数据库中获取 trackingDays
+      int trackingDays = await _getTrackingDaysFromDatabase();
+      print("User-defined tracking days from database: $trackingDays");
+
+      // 检查每个 recipe 在 trackingDays 天内的做菜次数是否 >=5
+      for (var recipe in _recipes) {
+        bool shouldShowReminder = true; // 假设不使用 SharedPreferences 来控制弹窗频率
+        if (shouldShowReminder) {
+          final cookCount =
+              await _getRecipeCookCountInPeriod(recipe.id, trackingDays);
+          if (cookCount >= 5) {
+            print(
+                'Condition met: Recipe ${recipe.name} has been cooked $cookCount times in the last $trackingDays days.');
+            _showReminderDialog(recipe, trackingDays);
+          }
         }
       }
+    } catch (e) {
+      print('Error fetching tracking days: $e');
     }
   }
 
@@ -404,7 +430,8 @@ class _RecipePageState extends State<RecipePage> {
           Align(
             alignment: Alignment.topLeft,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 1.0, horizontal: 1.0),
+              padding:
+                  const EdgeInsets.symmetric(vertical: 1.0, horizontal: 1.0),
               child: TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -420,13 +447,12 @@ class _RecipePageState extends State<RecipePage> {
                     Text(
                       "Don't know what to eat?", // 文本
                       style: TextStyle(
-                          color: AppColors.cardNameTextColor(context),
-                          fontSize: 15,
-
-                          decoration: TextDecoration.underline,
-                          decorationStyle: TextDecorationStyle.wavy,
-                          decorationColor: AppColors.cardNameTextColor(context),
-                          ),
+                        color: AppColors.cardNameTextColor(context),
+                        fontSize: 15,
+                        decoration: TextDecoration.underline,
+                        decorationStyle: TextDecorationStyle.wavy,
+                        decorationColor: AppColors.cardNameTextColor(context),
+                      ),
                     ),
                   ],
                 ),
