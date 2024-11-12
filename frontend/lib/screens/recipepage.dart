@@ -298,14 +298,18 @@ class _RecipePageState extends State<RecipePage> {
                         Navigator.pop(context);
                         _applyFilters(); // 应用更改
                       },
-                      child: const Text('Clear'),
+                      child: Text('Clear',
+                          style:
+                              TextStyle(color: AppColors.textColor(context))),
                     ),
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
                         _applyFilters(); // 应用过滤器
                       },
-                      child: const Text('OK'),
+                      child: Text('OK',
+                          style:
+                              TextStyle(color: AppColors.textColor(context))),
                     ),
                   ],
                 ),
@@ -397,6 +401,38 @@ class _RecipePageState extends State<RecipePage> {
       ),
       body: Column(
         children: [
+          Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 1.0, horizontal: 1.0),
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SmartMenuPage(userId: userId),
+                    ),
+                  );
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Don't know what to eat?", // 文本
+                      style: TextStyle(
+                          color: AppColors.cardNameTextColor(context),
+                          fontSize: 15,
+
+                          decoration: TextDecoration.underline,
+                          decorationStyle: TextDecorationStyle.wavy,
+                          decorationColor: AppColors.cardNameTextColor(context),
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           Expanded(
             child: _filteredRecipes.isEmpty
                 ? const Center(
@@ -464,8 +500,9 @@ class _RecipePageState extends State<RecipePage> {
                                       children: [
                                         Text(
                                           recipe.name,
-                                          style: const TextStyle(
-                                            color: cardnametext,
+                                          style: TextStyle(
+                                            color: AppColors.cardNameTextColor(
+                                                context),
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -475,8 +512,10 @@ class _RecipePageState extends State<RecipePage> {
                                         const SizedBox(height: 4),
                                         Text(
                                           'Calories: ${recipe.calories} kcal',
-                                          style: const TextStyle(
-                                              color: cardexpirestext),
+                                          style: TextStyle(
+                                              color: AppColors
+                                                  .cardExpiresTextColor(
+                                                      context)),
                                           textAlign: TextAlign.center,
                                         ),
                                         const SizedBox(height: 4),
@@ -497,16 +536,19 @@ class _RecipePageState extends State<RecipePage> {
                                                         vertical: 2,
                                                         horizontal: 6),
                                                     decoration: BoxDecoration(
-                                                      color: lablebackground,
+                                                      color: AppColors
+                                                          .lablebackground(
+                                                              context),
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               4),
                                                     ),
                                                     child: Text(
                                                       label,
-                                                      style: const TextStyle(
-                                                          color:
-                                                              cardexpirestext,
+                                                      style: TextStyle(
+                                                          color: AppColors
+                                                              .cardExpiresTextColor(
+                                                                  context),
                                                           fontSize: 12),
                                                     ),
                                                   );
@@ -572,6 +614,7 @@ class _RecipePageState extends State<RecipePage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            /*
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -584,6 +627,7 @@ class _RecipePageState extends State<RecipePage> {
               child: Text("Don't know what to eat?",
                   style: TextStyle(color: AppColors.textColor(context))),
             ),
+            */
             ElevatedButton.icon(
               onPressed: () {
                 if (_isSelecting) {
