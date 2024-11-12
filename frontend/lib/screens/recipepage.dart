@@ -21,6 +21,7 @@ class _RecipePageState extends State<RecipePage> {
   final Set<Recipe> _selectedRecipes = {}; // 存储选中的菜谱
   bool _isSelecting = false; // 控制是否启用选择功能
   int _totalCalories = 0;
+  bool _isReminderShown = false; // 标志变量
 
   final Set<String> _selectedLabels = {}; // 存储选中的标签
   List<Recipe> _filteredRecipes = []; // 存储筛选后的菜谱
@@ -38,7 +39,9 @@ class _RecipePageState extends State<RecipePage> {
   void initState() {
     super.initState();
     _loadUserId();
-    _ensureTrackingDaysSet().then((_) => _checkForRecipeReminder());
+    _ensureTrackingDaysSet().then((_) {
+      _checkForRecipeReminder();
+    });
   }
 
   Future<void> _ensureTrackingDaysSet() async {
@@ -191,10 +194,11 @@ class _RecipePageState extends State<RecipePage> {
         setState(() {
           _recipes = recipes;
           _applyFilters();
+          _isReminderShown = false; // 重置弹窗显示标志
         });
         _recipes.forEach((recipe) =>
             print('Recipe ID: ${recipe.id}, Cook Count: ${recipe.cookCount}'));
-        await _checkForRecipeReminder();
+        //await _checkForRecipeReminder();
       } else {
         throw Exception('Failed to load recipes');
       }
@@ -340,30 +344,22 @@ class _RecipePageState extends State<RecipePage> {
     }
   }
 
-  void _showReminderDialog(Recipe recipe, int trackingDays) {
-    print(
-        'Showing reminder dialog for recipe: ${recipe.name}, trackingDays: $trackingDays'); // 添加调试信息
+  // 显示包含所有符合条件菜品的提醒弹窗
+  void _showReminderDialog(String message, int trackingDays) {
+    print('Showing reminder dialog for recipes cooked more than 5 times.');
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text("Recipe Reminder"),
           content: Text(
-              "You have cooked ${recipe.name} more than 10 times in the past $trackingDays days."),
+              "The following recipes have been cooked more than 5 times in the past $trackingDays days:\n\n$message"),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
               child: Text("OK"),
-            ),
-            TextButton(
-              onPressed: () async {
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                prefs.setBool('showRecipeReminder_${recipe.id}', false);
-                Navigator.of(context).pop();
-              },
-              child: Text("Don't show again"),
             ),
           ],
         );
@@ -372,38 +368,44 @@ class _RecipePageState extends State<RecipePage> {
   }
 
   Future<int> _getTrackingDaysFromDatabase() async {
-  final response = await http.get(Uri.parse('$baseApiUrl/user/$userId/tracking-days'));
-  
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
-    print("Fetched tracking days from database: ${data['trackingDays']}");
-    return data['trackingDays'];
-  } else {
-    print("Failed to fetch tracking days from database. Status code: ${response.statusCode}");
-    print("Response body: ${response.body}");
-    throw Exception('Failed to fetch tracking days from database');
-  }
-}
+    final response =
+        await http.get(Uri.parse('$baseApiUrl/user/$userId/tracking-days'));
 
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print("Fetched tracking days from database: ${data['trackingDays']}");
+      return data['trackingDays'];
+    } else {
+      print(
+          "Failed to fetch tracking days from database. Status code: ${response.statusCode}");
+      print("Response body: ${response.body}");
+      throw Exception('Failed to fetch tracking days from database');
+    }
+  }
 
   Future<void> _checkForRecipeReminder() async {
     try {
       // 从数据库中获取 trackingDays
       int trackingDays = await _getTrackingDaysFromDatabase();
+      trackingDays ??= 30;
       print("User-defined tracking days from database: $trackingDays");
 
-      // 检查每个 recipe 在 trackingDays 天内的做菜次数是否 >=5
+      // 存储符合条件的菜品名称及其次数
+      String reminderMessage = "";
       for (var recipe in _recipes) {
-        bool shouldShowReminder = true; // 假设不使用 SharedPreferences 来控制弹窗频率
-        if (shouldShowReminder) {
-          final cookCount =
-              await _getRecipeCookCountInPeriod(recipe.id, trackingDays);
-          if (cookCount >= 5) {
-            print(
-                'Condition met: Recipe ${recipe.name} has been cooked $cookCount times in the last $trackingDays days.');
-            _showReminderDialog(recipe, trackingDays);
-          }
+        final cookCount =
+            await _getRecipeCookCountInPeriod(recipe.id, trackingDays);
+        if (cookCount >= 5) {
+          print(
+              'Condition met: Recipe ${recipe.name} has been cooked $cookCount times in the last $trackingDays days.');
+          reminderMessage +=
+              "${recipe.name} has been cooked $cookCount times.\n";
         }
+      }
+
+      // 如果有符合条件的菜品，显示弹窗
+      if (reminderMessage.isNotEmpty) {
+        _showReminderDialog(reminderMessage, trackingDays);
       }
     } catch (e) {
       print('Error fetching tracking days: $e');
