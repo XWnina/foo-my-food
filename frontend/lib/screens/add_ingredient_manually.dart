@@ -453,10 +453,11 @@ class AddIngredientPageState extends State<AddIngredientPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.backgroundColor(context),
       appBar: AppBar(
-        title: const Text('Add food', style: TextStyle(color: Colors.white)),
-        backgroundColor: appBarColor,
+        title: Text('Add food',
+            style: TextStyle(color: AppColors.textColor(context))),
+        backgroundColor: AppColors.appBarColor(context),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -669,8 +670,9 @@ class AddIngredientPageState extends State<AddIngredientPage> {
                 onPressed:
                     _isFormValid && !_isSubmitting ? _addIngredient : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      _isFormValid ? buttonBackgroundColor : Colors.grey,
+                  backgroundColor: _isFormValid
+                      ? AppColors.buttonBackgroundColor(context)
+                      : Colors.grey,
                 ),
                 child: const Text('Add', style: TextStyle(color: Colors.white)),
               ),

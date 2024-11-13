@@ -70,5 +70,16 @@ public class CookingHistoryController {
         cookingHistoryService.deleteCookingHistoryById(id);
         return ResponseEntity.noContent().build();
     }
-    
+
+    // 新增一个 API：查询特定时间段内某菜品的做菜次数
+    @GetMapping("/{recipeId}/cookCount")
+    public ResponseEntity<Long> getCookCountInPastDays(
+            @PathVariable Long recipeId,
+            @RequestParam int days) {
+        long cookCount = cookingHistoryService.countCooksInPastDays(days, recipeId);
+        return ResponseEntity.ok(cookCount);
+    }
+
+
+
 }

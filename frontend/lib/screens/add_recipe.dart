@@ -178,10 +178,11 @@ class _AddRecipePageState extends State<AddRecipePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.backgroundColor(context),
       appBar: AppBar(
-        title: const Text('Add Recipe', style: TextStyle(color: Colors.white)),
-        backgroundColor: appBarColor,
+        title: Text('Add Recipe',
+            style: TextStyle(color: AppColors.textColor(context))),
+        backgroundColor: AppColors.appBarColor(context),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -268,7 +269,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
             ElevatedButton(
               onPressed: _addRecipe,
               style: ElevatedButton.styleFrom(
-                backgroundColor: buttonBackgroundColor,
+                backgroundColor: AppColors.appBarColor(context),
               ),
               child: const Text('Add Recipe',
                   style: TextStyle(color: Colors.white)),

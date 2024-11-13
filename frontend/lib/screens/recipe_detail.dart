@@ -49,7 +49,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.recipe['name']);
-     _ingredientsController = TextEditingController(
+    _ingredientsController = TextEditingController(
       text: _getIngredientsString(),
     );
     _caloriesController = TextEditingController(
@@ -67,7 +67,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
     });
     /*test*/
   }
-   String _getIngredientsString() {
+
+  String _getIngredientsString() {
     var ingredients = widget.recipe['ingredients'];
     //print(ingredients);
     if (ingredients is List) {
@@ -80,8 +81,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
     } else {
       return '';
     }
-    
   }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -205,13 +206,15 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.backgroundColor(context),
       appBar: AppBar(
-        title: Text(widget.recipe['name'], style: const TextStyle(color: text)),
-        backgroundColor: appBarColor,
+        title: Text(widget.recipe['name'],
+            style: TextStyle(color: AppColors.textColor(context))),
+        backgroundColor: AppColors.appBarColor(context),
         actions: [
           IconButton(
-            icon: Icon(_isEditing ? Icons.save : Icons.edit, color: text),
+            icon: Icon(_isEditing ? Icons.save : Icons.edit,
+                color: AppColors.textColor(context)),
             onPressed: () {
               if (_isEditing) {
                 _saveChanges();

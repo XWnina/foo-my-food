@@ -13,13 +13,13 @@ class ShoppingListPage extends StatefulWidget {
 }
 
 class _ShoppingListPageState extends State<ShoppingListPage> {
-
   @override
   void initState() {
     super.initState();
     // 使用 addPostFrameCallback 确保在 widget 树构建完成后再调用
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ShoppingListProvider>(context, listen: false).initializeShoppingList();
+      Provider.of<ShoppingListProvider>(context, listen: false)
+          .initializeShoppingList();
     });
   }
 
@@ -39,7 +39,8 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     });
   }
 
-  Future<void> _editItem(BuildContext context, Map<String, dynamic> item) async {
+  Future<void> _editItem(
+      BuildContext context, Map<String, dynamic> item) async {
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -58,10 +59,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.backgroundColor(context),
       appBar: AppBar(
-        title: const Text('Shopping List', style: TextStyle(color: Colors.white)),
-        backgroundColor: appBarColor,
+        title: Text('Shopping List',
+            style: TextStyle(color: AppColors.textColor(context))),
+        backgroundColor: AppColors.appBarColor(context),
       ),
       body: Consumer<ShoppingListProvider>(
         builder: (context, provider, child) {
@@ -89,11 +91,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           return ListView(
             children: [
               if (unpurchasedItems.isNotEmpty) ...[
-                const Padding(
+                 Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Text(
                     'Items to Purchase',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.cardNameTextColor(context)),
                   ),
                 ),
                 ListView.builder(
@@ -107,11 +109,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                 ),
               ],
               if (purchasedItems.isNotEmpty) ...[
-                const Padding(
+                 Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Text(
                     'Purchased Items',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.cardNameTextColor(context)),
                   ),
                 ),
                 ListView.builder(
@@ -136,15 +138,15 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       ShoppingListProvider provider,
       {bool isPurchasedSection = false}) {
     return Card(
-      color: card,
+      color: AppColors.cardColor(context),
       child: ListTile(
         title: Text(
           item['name'],
-          style: const TextStyle(color: cardnametext),
+          style:  TextStyle(color: AppColors.cardNameTextColor(context)),
         ),
         subtitle: Text(
           'Quantity: ${item['baseQuantity']} ${item['unit']}',
-          style: const TextStyle(color: cardexpirestext),
+          style: TextStyle(color: AppColors.cardExpiresTextColor(context)),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,

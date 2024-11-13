@@ -24,6 +24,7 @@ public class PresetRecipeInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         createInitializationPresets();
+        // printPresetRecipeInfo();
     }
 
     private void createInitializationPresets() {
@@ -142,5 +143,17 @@ public class PresetRecipeInitializer implements CommandLineRunner {
             }
         }
         return validLabels.toString();
+    }
+
+    private void printPresetRecipeInfo() {
+        System.out.println("Database Preset Recipes:");
+        presetRecipeService.getAllPresetRecipes().forEach(recipe -> {
+            System.out.println("Recipe Name: " + recipe.getDishName());
+            System.out.println("Calories: " + recipe.getCalories());
+            System.out.println("Labels: " + recipe.getLabels());
+            System.out.println("Ingredients: " + recipe.getIngredients());
+            System.out.println("Instructions: " + recipe.getDescription());
+            System.out.println("-----------------------------------");
+        });
     }
 }

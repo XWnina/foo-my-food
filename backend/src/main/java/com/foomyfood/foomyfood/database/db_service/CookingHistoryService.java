@@ -64,15 +64,14 @@ public class CookingHistoryService {
 
     // Method to count how many times a recipe was cooked in the past 'days' days
     public long countCooksInPastDays(int days, Long recipeId) {
-        LocalDate startDate = LocalDate.now().minusDays(days-1); // Calculate the start date
-        LocalDate endDate = LocalDate.now(); // Include the current date
-
-        // System.out.println(LocalDate.now());
-        // System.out.println(startDate);
-        // System.out.println(endDate);
-        return cookingHistoryRepository.countByRecipeIdAndCookingDateBetween(recipeId, startDate, endDate);
-
+        LocalDate startDate = LocalDate.now().minusDays(days - 1);
+        LocalDate endDate = LocalDate.now();
+        long cookCount = cookingHistoryRepository.countByRecipeIdAndCookingDateBetween(recipeId, startDate, endDate);
+        System.out.println("Recipe ID " + recipeId + " was cooked " + cookCount + " times in the last " + days + " days.");
+        return cookCount;
     }
+
+
 
 
 }

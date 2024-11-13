@@ -21,6 +21,7 @@ class _RecipePageState extends State<RecipePage> {
   final Set<Recipe> _selectedRecipes = {}; // 存储选中的菜谱
   bool _isSelecting = false; // 控制是否启用选择功能
   int _totalCalories = 0;
+  bool _isReminderShown = false; // 标志变量
 
   final Set<String> _selectedLabels = {}; // 存储选中的标签
   List<Recipe> _filteredRecipes = []; // 存储筛选后的菜谱
@@ -38,6 +39,16 @@ class _RecipePageState extends State<RecipePage> {
   void initState() {
     super.initState();
     _loadUserId();
+    _ensureTrackingDaysSet().then((_) {
+      _checkForRecipeReminder();
+    });
+  }
+
+  Future<void> _ensureTrackingDaysSet() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (!prefs.containsKey('user_recipe_tracking_time')) {
+      prefs.setInt('user_recipe_tracking_time', 30); // 默认值设置为30
+    }
   }
 
   void _calculateTotalCalories() {
@@ -171,6 +182,7 @@ class _RecipePageState extends State<RecipePage> {
   }
 
   Future<void> _fetchUserRecipes() async {
+    print("Fetching user recipes...");
     try {
       final response =
           await http.get(Uri.parse('$baseApiUrl/myrecipes/user/$userId'));
@@ -182,9 +194,11 @@ class _RecipePageState extends State<RecipePage> {
         setState(() {
           _recipes = recipes;
           _applyFilters();
+          _isReminderShown = false; // 重置弹窗显示标志
         });
         _recipes.forEach((recipe) =>
             print('Recipe ID: ${recipe.id}, Cook Count: ${recipe.cookCount}'));
+        //await _checkForRecipeReminder();
       } else {
         throw Exception('Failed to load recipes');
       }
@@ -290,14 +304,18 @@ class _RecipePageState extends State<RecipePage> {
                         Navigator.pop(context);
                         _applyFilters(); // 应用更改
                       },
-                      child: const Text('Clear'),
+                      child: Text('Clear',
+                          style:
+                              TextStyle(color: AppColors.textColor(context))),
                     ),
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
                         _applyFilters(); // 应用过滤器
                       },
-                      child: const Text('OK'),
+                      child: Text('OK',
+                          style:
+                              TextStyle(color: AppColors.textColor(context))),
                     ),
                   ],
                 ),
@@ -309,13 +327,99 @@ class _RecipePageState extends State<RecipePage> {
     );
   }
 
+  Future<int> _getRecipeCookCountInPeriod(int recipeId, int days) async {
+    print(
+        "Checking cook count for Recipe ID $recipeId for the past $days days");
+    final response = await http.get(Uri.parse(
+        '$baseApiUrl/cooking_history/$recipeId/cookCount?days=$days'));
+
+    if (response.statusCode == 200) {
+      // 直接将响应体解析为整数
+      final count = int.parse(response.body);
+      print('Cook count for recipe ID $recipeId in last $days days: $count');
+      return count;
+    } else {
+      print('Failed to load cook count, status code: ${response.statusCode}');
+      throw Exception('Failed to load cook count');
+    }
+  }
+
+  // 显示包含所有符合条件菜品的提醒弹窗
+  void _showReminderDialog(String message, int trackingDays) {
+    print('Showing reminder dialog for recipes cooked more than 5 times.');
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Recipe Reminder"),
+          content: Text(
+              "The following recipes have been cooked more than 5 times in the past $trackingDays days:\n\n$message"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<int> _getTrackingDaysFromDatabase() async {
+    final response =
+        await http.get(Uri.parse('$baseApiUrl/user/$userId/tracking-days'));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print("Fetched tracking days from database: ${data['trackingDays']}");
+      return data['trackingDays'];
+    } else {
+      print(
+          "Failed to fetch tracking days from database. Status code: ${response.statusCode}");
+      print("Response body: ${response.body}");
+      throw Exception('Failed to fetch tracking days from database');
+    }
+  }
+
+  Future<void> _checkForRecipeReminder() async {
+    try {
+      // 从数据库中获取 trackingDays
+      int trackingDays = await _getTrackingDaysFromDatabase();
+      trackingDays ??= 30;
+      print("User-defined tracking days from database: $trackingDays");
+
+      // 存储符合条件的菜品名称及其次数
+      String reminderMessage = "";
+      for (var recipe in _recipes) {
+        final cookCount =
+            await _getRecipeCookCountInPeriod(recipe.id, trackingDays);
+        if (cookCount >= 5) {
+          print(
+              'Condition met: Recipe ${recipe.name} has been cooked $cookCount times in the last $trackingDays days.');
+          reminderMessage +=
+              "${recipe.name} has been cooked $cookCount times.\n";
+        }
+      }
+
+      // 如果有符合条件的菜品，显示弹窗
+      if (reminderMessage.isNotEmpty) {
+        _showReminderDialog(reminderMessage, trackingDays);
+      }
+    } catch (e) {
+      print('Error fetching tracking days: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.backgroundColor(context),
       appBar: AppBar(
-        title: const Text('My Recipes', style: TextStyle(color: Colors.white)),
-        backgroundColor: appBarColor,
+        title: Text('My Recipes',
+            style: TextStyle(color: AppColors.textColor(context))),
+        backgroundColor: AppColors.appBarColor(context),
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list, color: Colors.white),
@@ -325,6 +429,38 @@ class _RecipePageState extends State<RecipePage> {
       ),
       body: Column(
         children: [
+          Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 1.0, horizontal: 1.0),
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SmartMenuPage(userId: userId),
+                    ),
+                  );
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Don't know what to eat?", // 文本
+                      style: TextStyle(
+                        color: AppColors.cardNameTextColor(context),
+                        fontSize: 15,
+                        decoration: TextDecoration.underline,
+                        decorationStyle: TextDecorationStyle.wavy,
+                        decorationColor: AppColors.cardNameTextColor(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           Expanded(
             child: _filteredRecipes.isEmpty
                 ? const Center(
@@ -368,7 +504,7 @@ class _RecipePageState extends State<RecipePage> {
                               });
                             },
                             child: Card(
-                              color: card,
+                              color: AppColors.cardColor(context),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
@@ -392,8 +528,9 @@ class _RecipePageState extends State<RecipePage> {
                                       children: [
                                         Text(
                                           recipe.name,
-                                          style: const TextStyle(
-                                            color: cardnametext,
+                                          style: TextStyle(
+                                            color: AppColors.cardNameTextColor(
+                                                context),
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -403,8 +540,10 @@ class _RecipePageState extends State<RecipePage> {
                                         const SizedBox(height: 4),
                                         Text(
                                           'Calories: ${recipe.calories} kcal',
-                                          style: const TextStyle(
-                                              color: cardexpirestext),
+                                          style: TextStyle(
+                                              color: AppColors
+                                                  .cardExpiresTextColor(
+                                                      context)),
                                           textAlign: TextAlign.center,
                                         ),
                                         const SizedBox(height: 4),
@@ -425,16 +564,19 @@ class _RecipePageState extends State<RecipePage> {
                                                         vertical: 2,
                                                         horizontal: 6),
                                                     decoration: BoxDecoration(
-                                                      color: lablebackground,
+                                                      color: AppColors
+                                                          .lablebackground(
+                                                              context),
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               4),
                                                     ),
                                                     child: Text(
                                                       label,
-                                                      style: const TextStyle(
-                                                          color:
-                                                              cardexpirestext,
+                                                      style: TextStyle(
+                                                          color: AppColors
+                                                              .cardExpiresTextColor(
+                                                                  context),
                                                           fontSize: 12),
                                                     ),
                                                   );
@@ -495,11 +637,12 @@ class _RecipePageState extends State<RecipePage> {
         ],
       ),
       bottomNavigationBar: Container(
-        color: backgroundColor,
+        color: AppColors.backgroundColor(context),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            /*
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -509,8 +652,10 @@ class _RecipePageState extends State<RecipePage> {
                   ),
                 );
               },
-              child: Text("Don't know what to eat?"),
+              child: Text("Don't know what to eat?",
+                  style: TextStyle(color: AppColors.textColor(context))),
             ),
+            */
             ElevatedButton.icon(
               onPressed: () {
                 if (_isSelecting) {
@@ -541,7 +686,7 @@ class _RecipePageState extends State<RecipePage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: _isSelecting && _selectedRecipes.isEmpty
                     ? Colors.grey
-                    : buttonBackgroundColor,
+                    : AppColors.appBarColor(context),
               ),
               icon: Icon(
                 _isSelecting ? Icons.calculate : Icons.select_all,
@@ -576,7 +721,7 @@ class _RecipePageState extends State<RecipePage> {
             _fetchUserRecipes();
           });
         },
-        backgroundColor: buttonBackgroundColor,
+        backgroundColor: AppColors.appBarColor(context),
         child: const Icon(Icons.add, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,

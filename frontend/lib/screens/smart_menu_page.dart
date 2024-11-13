@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/services/recipe_collection_service.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:foo_my_food_app/models/recipe.dart';
 import 'package:foo_my_food_app/utils/constants.dart';
@@ -18,6 +19,9 @@ class SmartMenuPage extends StatefulWidget {
 }
 
 class _SmartMenuPageState extends State<SmartMenuPage> {
+  final RecipeCollectionService _recipeCollectionService =
+      RecipeCollectionService(baseApiUrl: baseApiUrl);
+  Set<String> _favoriteRecipes = {};
   List<Recipe> _myRecipes = [];
   List<Recipe> _presetRecipes = [];
   List<Recipe> _filteredMyRecipes = [];
@@ -41,21 +45,88 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
   @override
   void initState() {
     super.initState();
-    _fetchRecipes();
+    _initializeData();
   }
+
+  Future<void> _initializeData() async {
+    await Future.wait([
+      _fetchRecipes(),
+      _fetchUserFavorites(),
+    ]);
+  }
+
+  void _toggleFavorite(Recipe recipe, bool isPresetRecipe) async {
+    final String key =
+        isPresetRecipe ? 'preset_${recipe.id}' : 'my_${recipe.id}';
+    final bool isFavorited = _favoriteRecipes.contains(key);
+
+    try {
+      if (isFavorited) {
+        await _recipeCollectionService.removeFavorite(
+            widget.userId,
+            isPresetRecipe ? null : recipe.id.toString(),
+            isPresetRecipe ? recipe.id.toString() : null);
+        setState(() {
+          _favoriteRecipes.remove(key);
+        });
+      } else {
+        await _recipeCollectionService.addFavorite(
+            widget.userId,
+            isPresetRecipe ? null : recipe.id.toString(),
+            isPresetRecipe ? recipe.id.toString() : null);
+        setState(() {
+          _favoriteRecipes.add(key);
+        });
+      }
+    } catch (e) {
+      print('Error in toggle favorite: $e');
+      // 可以添加错误提示，如：SnackBar通知用户操作失败
+    }
+  }
+
+  // 获取用户的收藏
+  Future<void> _fetchUserFavorites() async {
+    try {
+      final favoritesData =
+          await _recipeCollectionService.getUserFavorites(widget.userId);
+      setState(() {
+        for (var item in favoritesData) {
+          final isPreset = item['presetRecipeId'] != null;
+          final id = item[isPreset ? 'presetRecipeId' : 'recipeId'].toString();
+          _favoriteRecipes.add(isPreset ? 'preset_$id' : 'my_$id');
+        }
+      });
+    } catch (e) {
+      print('Error fetching favorites: $e');
+      // 可以使用 SnackBar 或对话框提示用户
+    }
+  }
+  // 检查菜谱是否已收藏
+bool _isRecipeFavorited(Recipe recipe, bool isPresetRecipe) {
+  final String key = isPresetRecipe ? 'preset_${recipe.id}' : 'my_${recipe.id}';
+  return _favoriteRecipes.contains(key);
+}
+
+
 
   Future<void> _fetchRecipes() async {
     try {
-      final myRecipesResponse = await http.get(Uri.parse('$baseApiUrl/myrecipes/user/${widget.userId}'));
-      final presetRecipesResponse = await http.get(Uri.parse('$baseApiUrl/preset-recipes'));
+      final myRecipesResponse = await http
+          .get(Uri.parse('$baseApiUrl/myrecipes/user/${widget.userId}'));
+      final presetRecipesResponse =
+          await http.get(Uri.parse('$baseApiUrl/preset-recipes'));
 
-      if (myRecipesResponse.statusCode == 200 && presetRecipesResponse.statusCode == 200) {
+      if (myRecipesResponse.statusCode == 200 &&
+          presetRecipesResponse.statusCode == 200) {
         final List<dynamic> myRecipeData = json.decode(myRecipesResponse.body);
-        final List<dynamic> presetRecipeData = json.decode(presetRecipesResponse.body);
+        final List<dynamic> presetRecipeData =
+            json.decode(presetRecipesResponse.body);
 
         setState(() {
-          _myRecipes = myRecipeData.map((data) => Recipe.fromJson(data)).toList();
-          _presetRecipes = presetRecipeData.map((data) => Recipe.fromJson(data)).toList();
+          _myRecipes =
+              myRecipeData.map((data) => Recipe.fromJson(data)).toList();
+          _presetRecipes =
+              presetRecipeData.map((data) => Recipe.fromJson(data)).toList();
           /*test*/
           print('\nMapped Preset Recipes:');
           _presetRecipes.forEach((recipe) => print(recipe.toJson()));
@@ -78,18 +149,20 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
         _filteredPresetRecipes = _presetRecipes;
       } else {
         _filteredMyRecipes = _myRecipes.where((recipe) {
-          return _selectedIngredients.every((ingredient) =>
-            recipe.ingredients.any((recipeIngredient) =>
-              recipeIngredient.toLowerCase().contains(ingredient.toLowerCase())));
+          return _selectedIngredients.every((ingredient) => recipe.ingredients
+              .any((recipeIngredient) => recipeIngredient
+                  .toLowerCase()
+                  .contains(ingredient.toLowerCase())));
         }).toList();
 
         _filteredPresetRecipes = _presetRecipes.where((recipe) {
-          return _selectedIngredients.every((ingredient) =>
-            recipe.ingredients.any((recipeIngredient) =>
-              recipeIngredient.toLowerCase().contains(ingredient.toLowerCase())));
+          return _selectedIngredients.every((ingredient) => recipe.ingredients
+              .any((recipeIngredient) => recipeIngredient
+                  .toLowerCase()
+                  .contains(ingredient.toLowerCase())));
         }).toList();
       }
-      
+
       switch (_sortBy) {
         case 'what_i_have':
           // No need to sort
@@ -103,6 +176,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
       }
     });
   }
+
   void _addIngredient(String ingredient) {
     if (ingredient.isNotEmpty && !_selectedIngredients.contains(ingredient)) {
       setState(() {
@@ -136,9 +210,11 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
       }).toList(),
     );
   }
+
   void _calculateTotalCalories() {
     setState(() {
-      _totalCalories = _selectedRecipes.fold(0, (sum, recipe) => sum + (recipe.calories ?? 0));
+      _totalCalories = _selectedRecipes.fold(
+          0, (sum, recipe) => sum + (recipe.calories ?? 0));
     });
   }
 
@@ -170,9 +246,15 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
       return;
     }
 
-    final breakfast = _filteredMyRecipes.where((recipe) => recipe.labels?.contains('breakfast') ?? false).toList();
-    final lunch = _filteredMyRecipes.where((recipe) => recipe.labels?.contains('lunch') ?? false).toList();
-    final dinner = _filteredMyRecipes.where((recipe) => recipe.labels?.contains('dinner') ?? false).toList();
+    final breakfast = _filteredMyRecipes
+        .where((recipe) => recipe.labels?.contains('breakfast') ?? false)
+        .toList();
+    final lunch = _filteredMyRecipes
+        .where((recipe) => recipe.labels?.contains('lunch') ?? false)
+        .toList();
+    final dinner = _filteredMyRecipes
+        .where((recipe) => recipe.labels?.contains('dinner') ?? false)
+        .toList();
 
     breakfast.shuffle();
     lunch.shuffle();
@@ -193,7 +275,8 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
       );
 
       if (response.statusCode == 200) {
-        final List<String> ingredients = List<String>.from(jsonDecode(response.body));
+        final List<String> ingredients =
+            List<String>.from(jsonDecode(response.body));
         setState(() {
           _matchingIngredients = ingredients;
           _showDropdown = ingredients.isNotEmpty;
@@ -217,13 +300,13 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
   }
 
   @override
-   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.backgroundColor(context),
       appBar: AppBar(
-        title: const Text('Smart Menu', style: TextStyle(color: Colors.white)),
-        backgroundColor: appBarColor,
+        title: Text('Smart Menu',
+            style: TextStyle(color: AppColors.textColor(context))),
+        backgroundColor: AppColors.appBarColor(context),
         actions: [
           // Add current mode display
           Center(
@@ -231,12 +314,12 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Text(
                 'Mode: ${_modeDisplayNames[_sortBy] ?? ""}',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: AppColors.textColor(context)),
               ),
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.sort, color: Colors.white),
+            icon: Icon(Icons.sort, color: AppColors.textColor(context)),
             onPressed: _showSortOptions,
           ),
         ],
@@ -305,8 +388,8 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                   );
                 },
               ),
-            ),          
-            if (_showNoResultsMessage)
+            ),
+          if (_showNoResultsMessage)
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
@@ -326,7 +409,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
         ],
       ),
       bottomNavigationBar: Container(
-        color: backgroundColor,
+        color: AppColors.backgroundColor(context),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -342,14 +425,16 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                   _fetchRecipes();
                 });
               },
-              child: Text('Add Recipe'),
+              child: Text('Add Recipe',
+                  style: TextStyle(color: AppColors.textColor(context))),
             ),
             ElevatedButton.icon(
               onPressed: () {
                 if (_isSelecting) {
                   if (_selectedRecipes.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('You have not selected any recipes')),
+                      const SnackBar(
+                          content: Text('You have not selected any recipes')),
                     );
                   } else {
                     _showNutritionReport(_totalCalories);
@@ -370,15 +455,13 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: _isSelecting && _selectedRecipes.isEmpty
                     ? Colors.grey
-                    : buttonBackgroundColor,
+                    : AppColors.appBarColor(context),
               ),
-              icon: Icon(
-                _isSelecting ? Icons.calculate : Icons.select_all,
-                color: Colors.white,
-              ),
+              icon: Icon(_isSelecting ? Icons.calculate : Icons.select_all,
+                  color: AppColors.textColor(context)),
               label: Text(
                 _isSelecting ? 'Calculate' : 'Select Recipes',
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: AppColors.textColor(context)),
               ),
             ),
           ],
@@ -388,6 +471,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
   }
 
   Widget _buildRecipeSection(String title, List<Recipe> recipes) {
+    final bool isPresetRecipe = title == 'Preset Recipes';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -416,8 +500,8 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
 
             return GestureDetector(
               onTap: () {
-              // print('Recipe being passed to RecipeDetailPage:');
-              // print(recipe.toJson());
+                // print('Recipe being passed to RecipeDetailPage:');
+                // print(recipe.toJson());
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -425,7 +509,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                       recipe: recipe.toJson(),
                       userId: widget.userId,
                       index: index,
-                      isPresetRecipe: title == 'Preset Recipes',
+                      isPresetRecipe: isPresetRecipe,
                     ),
                   ),
                 ).then((_) {
@@ -433,7 +517,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                 });
               },
               child: Card(
-                color: card,
+                color: AppColors.cardColor(context),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -442,10 +526,29 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                         children: [
                           AspectRatio(
                             aspectRatio: 1.5,
-                            child: recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty
-                                ? Image.network(recipe.imageUrl!, fit: BoxFit.cover)
+                            child: recipe.imageUrl != null &&
+                                    recipe.imageUrl!.isNotEmpty
+                                ? Image.network(recipe.imageUrl!,
+                                    fit: BoxFit.cover)
                                 : const Icon(Icons.image, size: 50),
                           ),
+                          // 添加星形图标
+                          Positioned(
+                          top: 8,
+                          right: 8,
+                          child: IconButton(
+                            icon: Icon(
+                              _isRecipeFavorited(recipe, isPresetRecipe)
+                                  ? Icons.star
+                                  : Icons.star_border,
+                              color: _isRecipeFavorited(recipe, isPresetRecipe)
+                                  ? Colors.yellow
+                                  : Colors.grey,
+                            ),
+                            onPressed: () =>
+                                _toggleFavorite(recipe, isPresetRecipe),
+                          ),
+                        ),
                           if (_isSelecting)
                             Positioned(
                               top: 8,
@@ -474,8 +577,8 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                         children: [
                           Text(
                             recipe.name,
-                            style: const TextStyle(
-                              color: cardnametext,
+                            style: TextStyle(
+                              color: AppColors.cardNameTextColor(context),
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -484,24 +587,31 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
                           ),
                           Text(
                             'Calories: ${recipe.calories} kcal',
-                            style: const TextStyle(color: cardexpirestext, fontSize: 12),
+                            style: TextStyle(
+                                color: AppColors.cardExpiresTextColor(context),
+                                fontSize: 12),
                           ),
                           Wrap(
                             spacing: 4,
                             runSpacing: 4,
                             children: recipe.labels?.split(', ').map((label) {
-                              return Container(
-                                padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
-                                decoration: BoxDecoration(
-                                  color: lablebackground,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  label,
-                                  style: const TextStyle(color: cardexpirestext, fontSize: 10),
-                                ),
-                              );
-                            }).toList() ?? [],
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 2, horizontal: 4),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.lablebackground(context),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      label,
+                                      style: TextStyle(
+                                          color: AppColors.cardExpiresTextColor(
+                                              context),
+                                          fontSize: 10),
+                                    ),
+                                  );
+                                }).toList() ??
+                                [],
                           ),
                         ],
                       ),
@@ -527,17 +637,20 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 8),
-          Text(_mealPlan.isNotEmpty ? _mealPlan : 'No meal plan generated yet.'),
+          Text(
+              _mealPlan.isNotEmpty ? _mealPlan : 'No meal plan generated yet.'),
           SizedBox(height: 16),
           ElevatedButton(
             onPressed: _generateMealPlan,
-            child: Text('Generate Meal Plan'),
+            child: Text('Generate Meal Plan',
+                style: TextStyle(color: AppColors.textColor(context))),
           ),
         ],
       ),
     );
   }
-    Widget _buildModeButton() {
+
+  Widget _buildModeButton() {
     return TextButton(
       onPressed: _showSortOptions,
       style: TextButton.styleFrom(
@@ -566,6 +679,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
       ),
     );
   }
+
   void _showSortOptions() {
     showModalBottomSheet(
       context: context,

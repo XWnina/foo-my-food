@@ -124,14 +124,14 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: Text("Item Already Exists"),
+          title: const Text("Item Already Exists"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                   "You already have this item in your shopping list. Details:"),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text("Name: ${conflictingItem['name']}"),
               Text("Category: ${conflictingItem['category'] ?? 'N/A'}"),
               Text(
@@ -148,14 +148,14 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
                 Navigator.of(dialogContext).pop(); // Close dialog
                 Navigator.of(context).pop(); // 返回购物清单页Ï面
               },
-              child: Text("Cancel"),
+              child: const Text("Cancel"),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop(); // Close dialog
                 _forceAddItemToShoppingList(userInputItem); // 使用用户输入的数据
               },
-              child: Text("Add Anyway"),
+              child: const Text("Add Anyway"),
             ),
           ],
         );
@@ -172,6 +172,7 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
         right: 16.0,
         top: 16.0,
       ),
+
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -179,7 +180,7 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
             controller: _itemController,
             decoration: InputDecoration(
               labelText: 'Enter item name',
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
               fillColor: whiteFillColor,
               filled: true,
               errorText: itemError,
@@ -197,7 +198,7 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
             controller: _quantityController,
             decoration: InputDecoration(
               labelText: 'Enter quantity',
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
               fillColor: whiteFillColor,
               filled: true,
               errorText: quantityError,
@@ -216,7 +217,7 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
             controller: _unitController,
             decoration: InputDecoration(
               labelText: 'Enter unit',
-              border: OutlineInputBorder(),
+              border: const OutlineInputBorder(),
               fillColor: whiteFillColor,
               filled: true,
               errorText: unitError,
@@ -233,7 +234,7 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
           ElevatedButton(
             onPressed: isFormValid ? _saveItem : null, // 禁用按钮直到表单有效
             style: ElevatedButton.styleFrom(
-              backgroundColor: buttonBackgroundColor,
+              backgroundColor: AppColors.appBarColor(context),
             ),
             child: const Text(
               'Add Item',

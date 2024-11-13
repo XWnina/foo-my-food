@@ -159,7 +159,7 @@ class _EditShoppingItemPageState extends State<EditShoppingItemPage> {
           ElevatedButton(
             onPressed: isFormValid ? _saveItem : null, // 禁用按钮直到表单有效
             style: ElevatedButton.styleFrom(
-              backgroundColor: buttonBackgroundColor,
+              backgroundColor: AppColors.appBarColor(context),
             ),
             child: const Text(
               'Save Changes',
