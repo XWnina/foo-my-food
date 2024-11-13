@@ -3,8 +3,12 @@ package com.foomyfood.foomyfood.database.db_service;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,23 +27,23 @@ public class UserIngredientService {
     @Autowired
     private IngredientRepository ingredientRepository;
 
-    // Get all user ingredients by userId
+    // Get all user ingredients
     public List<UserIngredient> getAllUserIngredients(Long userId) {
         return userIngredientRepository.findAllByUserId(userId);
     }
 
-    // Get a specific user ingredient by userId and ingredientId
+    // Get user ingredient by user ID and ingredient ID
     public Optional<UserIngredient> getUserIngredient(Long userId, Long ingredientId) {
         return userIngredientRepository.findByUserIdAndIngredientId(userId, ingredientId);
     }
 
-    // Create a new user ingredient
+    // Create user ingredient
     public UserIngredient createUserIngredient(Long userId, Long ingredientId, int userQuantity) {
         UserIngredient userIngredient = new UserIngredient(userId, ingredientId, userQuantity);
         return userIngredientRepository.save(userIngredient);
     }
 
-    // Update an existing user ingredient
+    // Update user ingredient
     public UserIngredient updateUserIngredient(Long userId, Long ingredientId, int userQuantity) {
         Optional<UserIngredient> optionalUserIngredient = userIngredientRepository.findByUserIdAndIngredientId(userId, ingredientId);
         if (optionalUserIngredient.isPresent()) {
@@ -51,28 +55,20 @@ public class UserIngredientService {
         }
     }
 
-    // Delete a user ingredient by userId and ingredientId
+    // Delete user ingredient
     public void deleteUserIngredient(Long userId, Long ingredientId) {
         Optional<UserIngredient> optionalUserIngredient = userIngredientRepository.findByUserIdAndIngredientId(userId, ingredientId);
-        if (optionalUserIngredient.isPresent()) {
-            userIngredientRepository.delete(optionalUserIngredient.get());
-        } else {
-            throw new RuntimeException("UserIngredient not found for userId " + userId + " and ingredientId " + ingredientId);
-        }
+        optionalUserIngredient.ifPresent(userIngredientRepository::delete);
     }
 
+    // Get user ingredients details
     public List<List<Object>> getUserIngredientsDetails(Long userId) {
-        // Step 1: Get all ingredientIds for the given userId
-        List<UserIngredient> ingredientIds = userIngredientRepository.findAllByUserId(userId);
-
-        // Step 2: Retrieve the details of the ingredients by ingredientIds from ingredients table
+        List<UserIngredient> userIngredients = userIngredientRepository.findAllByUserId(userId);
         List<Ingredient> ingredients = ingredientRepository.findAll();
 
-        // Step 3: Convert the ingredients into a list of lists
         List<List<Object>> ingredientDetailsList = new ArrayList<>();
 
         for (Ingredient ingredient : ingredients) {
-            // Add ingredient properties to inner list
             List<Object> ingredientDetails = new ArrayList<>();
             ingredientDetails.add(ingredient.getIngredientId());
             ingredientDetails.add(ingredient.getName());
@@ -87,13 +83,13 @@ public class UserIngredientService {
             ingredientDetails.add(ingredient.getFiber());
             ingredientDetails.add(ingredient.getImageURL());
             ingredientDetails.add(ingredient.getIsUserCreated());
-
-            // Add the inner list to the outer list
             ingredientDetailsList.add(ingredientDetails);
         }
 
-        return ingredientDetailsList;  // List of list with ingredient details
+        return ingredientDetailsList;
     }
+
+    // Get user expiring ingredients by user ID
     public List<Ingredient> getExpiringIngredients(Long userId) {
         List<UserIngredient> userIngredients = userIngredientRepository.findAllByUserId(userId);
         List<Ingredient> expiringIngredients = new ArrayList<>();
@@ -110,6 +106,8 @@ public class UserIngredientService {
         }
         return expiringIngredients;
     }
+
+    // Check if user created ingredient exists by user ID and ingredient name
     public Optional<Ingredient> checkUserCreatedIngredient(Long userId, String name) {
         List<UserIngredient> userIngredients = userIngredientRepository.findAllByUserId(userId);
         for (UserIngredient userIngredient : userIngredients) {
@@ -121,4 +119,47 @@ public class UserIngredientService {
         return Optional.empty();
     }
 
+    // Get user ingredients by user ID
+    public Set<String> getUserIngredientsByUserId(Long userId) {
+        List<UserIngredient> userIngredients = userIngredientRepository.findAllByUserId(userId);
+        Set<String> ingredientNames = new HashSet<>();
+
+        for (UserIngredient userIngredient : userIngredients) {
+            Optional<Ingredient> optionalIngredient = ingredientRepository.findById(userIngredient.getIngredientId());
+            optionalIngredient.ifPresent(ingredient -> ingredientNames.add(ingredient.getName().toLowerCase())); // 转换为小写
+        }
+        return ingredientNames;
+    }
+
+    // Get user ingredients with expiration weights by user ID
+    public Map<String, Double> getUserIngredientsWithExpirationWeights(Long userId) {
+        List<UserIngredient> userIngredients = userIngredientRepository.findAllByUserId(userId);
+        Map<String, Double> ingredientWeights = new HashMap<>();
+
+        for (UserIngredient userIngredient : userIngredients) {
+            Optional<Ingredient> optionalIngredient = ingredientRepository.findById(userIngredient.getIngredientId());
+            if (optionalIngredient.isPresent()) {
+                Ingredient ingredient = optionalIngredient.get();
+                LocalDate expirationDate = LocalDate.parse(ingredient.getExpirationDate());
+                long daysUntilExpiration = ChronoUnit.DAYS.between(LocalDate.now(), expirationDate);
+
+                double weight;
+                if (daysUntilExpiration <= 0) {
+                    weight = 2.0; // Expired
+                } else if (daysUntilExpiration <= 3) {
+                    weight = 1.7; // Expire in 3 days
+                } else if (daysUntilExpiration <= 5) {
+                    weight = 1.5; // Expire in 5 days
+                } else if (daysUntilExpiration <= 7) {
+                    weight = 1.2; // Expire in 7 days
+                } else {
+                    weight = 1.0; // Rest
+                }
+
+                ingredientWeights.put(ingredient.getName().toLowerCase(), weight);
+            }
+        }
+
+        return ingredientWeights;
+    }
 }
