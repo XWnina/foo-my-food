@@ -31,7 +31,11 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
   int _totalCalories = 0;
   String _searchQuery = '';
   String _sortBy = 'what_i_have';
-  String _mealPlan = '';
+  Map<String, Recipe?> _mealPlan = {
+    'breakfast': null,
+    'lunch': null,
+    'dinner': null,
+  };
   List<String> _matchingIngredients = [];
   bool _showDropdown = false;
   bool _showNoResultsMessage = false;
@@ -53,6 +57,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
       _fetchRecipes(),
       _fetchUserFavorites(),
     ]);
+    _generateMealPlan();
   }
 
   void _toggleFavorite(Recipe recipe, bool isPresetRecipe) async {
@@ -238,35 +243,45 @@ bool _isRecipeFavorited(Recipe recipe, bool isPresetRecipe) {
     );
   }
 
-  void _generateMealPlan() {
-    if (_filteredMyRecipes.length < 3) {
+void _generateMealPlan() {
+    if (_filteredMyRecipes.isEmpty && _filteredPresetRecipes.isEmpty) {
       setState(() {
-        _mealPlan = 'Not enough recipes to generate a meal plan.';
+        _mealPlan = {
+          'breakfast': null,
+          'lunch': null,
+          'dinner': null,
+        };
       });
       return;
     }
 
-    final breakfast = _filteredMyRecipes
-        .where((recipe) => recipe.labels?.contains('breakfast') ?? false)
-        .toList();
-    final lunch = _filteredMyRecipes
-        .where((recipe) => recipe.labels?.contains('lunch') ?? false)
-        .toList();
-    final dinner = _filteredMyRecipes
-        .where((recipe) => recipe.labels?.contains('dinner') ?? false)
-        .toList();
+    List<Recipe> allRecipes = [..._filteredMyRecipes, ..._filteredPresetRecipes];
 
-    breakfast.shuffle();
-    lunch.shuffle();
-    dinner.shuffle();
+    /// New: Create a copy of allRecipes to modify
+    List<Recipe> availableRecipes = List.from(allRecipes);
 
     setState(() {
-      _mealPlan = 'Suggested Meal Plan:\n'
-          'Breakfast: ${breakfast.isNotEmpty ? breakfast.first.name : 'N/A'}\n'
-          'Lunch: ${lunch.isNotEmpty ? lunch.first.name : 'N/A'}\n'
-          'Dinner: ${dinner.isNotEmpty ? dinner.first.name : 'N/A'}';
+      _mealPlan = {
+        'breakfast': _getRandomRecipeByLabel(availableRecipes, 'breakfast'),
+        'lunch': _getRandomRecipeByLabel(availableRecipes, 'lunch'),
+        'dinner': _getRandomRecipeByLabel(availableRecipes, 'dinner'),
+      };
     });
   }
+
+
+  Recipe? _getRandomRecipeByLabel(List<Recipe> recipes, String label) {
+    final matchingRecipes = recipes.where((recipe) => 
+      recipe.labels?.toLowerCase().contains(label.toLowerCase()) ?? false
+    ).toList();
+    if (matchingRecipes.isEmpty) return null;
+    matchingRecipes.shuffle();
+    Recipe selectedRecipe = matchingRecipes.first;
+    /// New: Remove the selected recipe from the available recipes
+    recipes.remove(selectedRecipe);
+    return selectedRecipe;
+  }
+
 
   Future<void> _getMatchingIngredients(String query) async {
     try {
@@ -627,23 +642,49 @@ bool _isRecipeFavorited(Recipe recipe, bool isPresetRecipe) {
   }
 
   Widget _buildMealPlanSection() {
+    return Card(
+      margin: const EdgeInsets.all(16.0),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Today\'s Meal Plan',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            ..._mealPlan.entries.map((entry) => _buildMealItem(entry.key, entry.value)),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _generateMealPlan,
+              child: Text('Generate New Meal Plan',
+                  style: TextStyle(color: AppColors.textColor(context))),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 添加：新方法 _buildMealItem
+  Widget _buildMealItem(String mealType, Recipe? recipe) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Meal Plan',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            mealType.capitalize(),
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 8),
           Text(
-              _mealPlan.isNotEmpty ? _mealPlan : 'No meal plan generated yet.'),
-          SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _generateMealPlan,
-            child: Text('Generate Meal Plan',
-                style: TextStyle(color: AppColors.textColor(context))),
+            recipe != null
+                ? '${recipe.name} (${recipe.calories} kcal)'
+                : 'No suitable recipe found',
+            style: TextStyle(
+              color: recipe != null ? Colors.black : Colors.grey,
+            ),
           ),
         ],
       ),
@@ -721,5 +762,10 @@ bool _isRecipeFavorited(Recipe recipe, bool isPresetRecipe) {
         );
       },
     );
+  }
+}
+extension StringExtension on String {
+  String capitalize() {
+    return "${this[0].toUpperCase()}${this.substring(1)}";
   }
 }
