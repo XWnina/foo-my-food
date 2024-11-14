@@ -1,17 +1,16 @@
 import 'dart:convert';
+import 'package:foo_my_food_app/models/collection_item.dart';
+import 'package:foo_my_food_app/utils/constants.dart';
 import 'package:http/http.dart' as http;
 
 class RecipeCollectionService {
-  final String baseApiUrl;
-
-  RecipeCollectionService({required this.baseApiUrl});
-
+  final String apiUrl = baseApiUrl;
   Future<void> addFavorite(
       String userId, String? recipeId, String? presetRecipeId) async {
     print(userId);
     print(recipeId);
     print(presetRecipeId);
-    final url = Uri.parse('$baseApiUrl/my-recipe-collection/add');
+    final url = Uri.parse('$apiUrl/my-recipe-collection/add');
     final body = jsonEncode({
       'user_id': userId,
       if (recipeId != null) 'recipe_id': recipeId,
@@ -80,6 +79,27 @@ class RecipeCollectionService {
       }
     } catch (e) {
       print('Error in getUserFavorites: $e');
+      return [];
+    }
+  }
+
+  // 获取用户所有收藏（包括食谱和预设食谱）
+  Future<List<CollectionItem>> getUserFavoritesAll(String userId) async {
+    final url = Uri.parse('$apiUrl/my-recipe-collection/info/$userId');
+    print('Sending GET request to $url');
+
+    try {
+      final response = await http.get(url);
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      if (response.statusCode == 200) {
+        List<dynamic> data = jsonDecode(response.body);
+        return data.map((item) => CollectionItem.fromMap(item)).toList();
+      } else {
+        throw Exception('Failed to load all favorites info');
+      }
+    } catch (e) {
+      print('Error in getUserFavoritesAll: $e');
       return [];
     }
   }

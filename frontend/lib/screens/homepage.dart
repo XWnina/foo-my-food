@@ -117,7 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ingredients.add(ingredient);
 
             DateTime expirationDate = DateTime.parse(ingredient.expirationDate);
-            if (expirationDate.difference(DateTime.now()).inDays <= 3) {
+            if (expirationDate.difference(DateTime.now()).inDays < 2) {
               expiringSoonIngredients.add(ingredient);
             }
           }
