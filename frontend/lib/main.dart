@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'providers/ingredient_provider.dart';
 import 'providers/shopping_list_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/collection_provider.dart'; // 导入 CollectionProvider
 
 void main() {
   runApp(
@@ -11,8 +12,8 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (context) => IngredientProvider()),
         ChangeNotifierProvider(create: (context) => ShoppingListProvider()),
-        ChangeNotifierProvider(
-            create: (context) => ThemeProvider()), // 添加 ThemeProvider
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
+        ChangeNotifierProvider(create: (context) => UserFavorites()),
       ],
       child: const MyApp(),
     ),

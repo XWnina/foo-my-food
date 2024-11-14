@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // 导入 Provider
+import 'package:foo_my_food_app/models/collection_item.dart';
 import 'package:foo_my_food_app/screens/settings_page.dart';
-import 'package:provider/provider.dart';
-import 'package:foo_my_food_app/providers/theme_provider.dart';
-import 'package:foo_my_food_app/screens/user_info_page.dart'; // 确保路径正确
-import 'package:foo_my_food_app/utils/colors.dart'; // 导入 AppColors
+import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import 'package:foo_my_food_app/utils/constants.dart';
+import 'package:foo_my_food_app/services/recipe_collection_service.dart';
+import 'package:http/http.dart' as http;
 
 class UserMainPage extends StatefulWidget {
   @override
@@ -15,13 +15,15 @@ class UserMainPage extends StatefulWidget {
 }
 
 class _UserMainPageState extends State<UserMainPage> {
-  String? _username = 'Username'; // 临时用户名
+  String? _username = 'Username';
   String? _avatarUrl;
+  List<CollectionItem> _favorites = [];
 
   @override
   void initState() {
     super.initState();
-    _loadUserData(); // 页面加载时调用
+    _loadUserData();
+    _loadFavorites();
   }
 
   // 从后端加载用户数据
@@ -65,6 +67,35 @@ class _UserMainPageState extends State<UserMainPage> {
     }
   }
 
+  // 从后端加载收藏数据
+  Future<void> _loadFavorites() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('User ID not found. Please log in again.')),
+      );
+      return;
+    }
+
+    final recipeCollectionService = RecipeCollectionService();
+    try {
+      final favorites =
+          await recipeCollectionService.getUserFavoritesAll(userId);
+      setState(() {
+        _favorites = favorites;
+      });
+      print("Loaded favorites: $_favorites");
+    } catch (e) {
+      print('Error loading favorites: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to load favorites')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,7 +104,7 @@ class _UserMainPageState extends State<UserMainPage> {
           'User Main Page',
           style: TextStyle(color: AppColors.textColor(context)),
         ),
-        backgroundColor: AppColors.appBarColor(context), // 使用 AppColors 获取动态主题色
+        backgroundColor: AppColors.appBarColor(context),
         actions: [
           IconButton(
             icon: Icon(Icons.settings, color: AppColors.textColor(context)),
@@ -92,7 +123,7 @@ class _UserMainPageState extends State<UserMainPage> {
           Container(
             width: double.infinity,
             height: MediaQuery.of(context).size.height * 0.25,
-            color: AppColors.appBarColor(context), // 使用 AppColors 获取动态主题色
+            color: AppColors.appBarColor(context),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -109,7 +140,7 @@ class _UserMainPageState extends State<UserMainPage> {
                 const SizedBox(height: 10),
                 Text(
                   _username ?? 'Loading...',
-                  style:  TextStyle(
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textColor(context),
@@ -118,7 +149,6 @@ class _UserMainPageState extends State<UserMainPage> {
               ],
             ),
           ),
-          // 将 "Collections" 标签上移，靠近头像区域
           Container(
             color: Colors.grey[200],
             padding: const EdgeInsets.symmetric(vertical: 10),
@@ -127,34 +157,109 @@ class _UserMainPageState extends State<UserMainPage> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             ),
           ),
-          const SizedBox(height: 10), // 添加间距
+          const SizedBox(height: 10),
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.all(10),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 9,
+                childAspectRatio: 0.85,
               ),
-              itemCount: 6, // Example count, replace with your data
+              itemCount: _favorites.length,
               itemBuilder: (context, index) {
+                final item = _favorites[index];
                 return Card(
-                  color: AppColors.cardColor(context), // 使用 AppColors 获取动态背景色
+                  color: AppColors.cardColor(context),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                   elevation: 4,
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        "Collection $index",
-                        style: TextStyle(
-                          color: AppColors.cardNameTextColor(context),
-                          fontWeight: FontWeight.bold,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Display image or placeholder
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(10)),
+                        child: item.imageUrl != null
+                            ? Image.network(
+                                item.imageUrl!,
+                                height: 116,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              )
+                            : Container(
+                                height: 116,
+                                color: Colors.grey,
+                                child: Icon(Icons.image, color: Colors.white),
+                              ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              item.name,
+                              style: TextStyle(
+                                color: AppColors.cardNameTextColor(context),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Calories: ${item.calories} kcal",
+                              style: TextStyle(
+                                color: AppColors.cardExpiresTextColor(context),
+                                fontSize: 14,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 4),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              alignment: WrapAlignment.center,
+                              children: item.tags.isNotEmpty
+                                  ? item.tags.map((tag) {
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 2, horizontal: 6),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.lablebackground(
+                                              context),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          tag,
+                                          style: TextStyle(
+                                            color:
+                                                AppColors.cardExpiresTextColor(
+                                                    context),
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      );
+                                    }).toList()
+                                  : [
+                                      const Text(
+                                        "No labels",
+                                        style: TextStyle(
+                                            color: Colors.grey, fontSize: 12),
+                                      ),
+                                    ],
+                            ),
+                          ],
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 );
               },

@@ -20,7 +20,7 @@ class SmartMenuPage extends StatefulWidget {
 
 class _SmartMenuPageState extends State<SmartMenuPage> {
   final RecipeCollectionService _recipeCollectionService =
-      RecipeCollectionService(baseApiUrl: baseApiUrl);
+      RecipeCollectionService();
   Set<String> _favoriteRecipes = {};
   List<Recipe> _myRecipes = [];
   List<Recipe> _presetRecipes = [];
@@ -116,29 +116,38 @@ bool _isRecipeFavorited(Recipe recipe, bool isPresetRecipe) {
 
   Future<void> _fetchRecipes() async {
     try {
-      final myRecipesResponse = await http
-          .get(Uri.parse('$baseApiUrl/myrecipes/user/${widget.userId}'));
-      final presetRecipesResponse =
-          await http.get(Uri.parse('$baseApiUrl/preset-recipes'));
+      String customRecipesUrl;
+      String presetRecipesUrl;
 
-      if (myRecipesResponse.statusCode == 200 &&
-          presetRecipesResponse.statusCode == 200) {
-        final List<dynamic> myRecipeData = json.decode(myRecipesResponse.body);
-        final List<dynamic> presetRecipeData =
-            json.decode(presetRecipesResponse.body);
+      switch (_sortBy) {
+        case 'expires_soon':
+          customRecipesUrl = '$baseApiUrl/api/recipes/custom/expiring?userId=${widget.userId}';
+          presetRecipesUrl = '$baseApiUrl/api/recipes/preset/expiring?userId=${widget.userId}';
+          break;
+        case 'usually_cooked':
+          // TODO: Implement when backend supports this feature
+          customRecipesUrl = '$baseApiUrl/api/recipes/custom?userId=${widget.userId}';
+          presetRecipesUrl = '$baseApiUrl/api/recipes/preset?userId=${widget.userId}';
+          break;
+        case 'what_i_have':
+        default:
+          customRecipesUrl = '$baseApiUrl/api/recipes/custom?userId=${widget.userId}';
+          presetRecipesUrl = '$baseApiUrl/api/recipes/preset?userId=${widget.userId}';
+          break;
+      }
+
+      final customRecipesResponse = await http.get(Uri.parse(customRecipesUrl));
+      final presetRecipesResponse = await http.get(Uri.parse(presetRecipesUrl));
+
+      if (customRecipesResponse.statusCode == 200 && presetRecipesResponse.statusCode == 200) {
+        final List<dynamic> customRecipeData = json.decode(customRecipesResponse.body);
+        final List<dynamic> presetRecipeData = json.decode(presetRecipesResponse.body);
 
         setState(() {
-          _myRecipes =
-              myRecipeData.map((data) => Recipe.fromJson(data)).toList();
-          _presetRecipes =
-              presetRecipeData.map((data) => Recipe.fromJson(data)).toList();
-          /*test*/
-          print('\nMapped Preset Recipes:');
-          _presetRecipes.forEach((recipe) => print(recipe.toJson()));
-          /*test*/
+          _myRecipes = customRecipeData.map((data) => Recipe.fromJson(data)).toList();
+          _presetRecipes = presetRecipeData.map((data) => Recipe.fromJson(data)).toList();
           _applyFilters();
         });
-        //print(_presetRecipes);
       } else {
         throw Exception('Failed to load recipes');
       }
@@ -147,7 +156,9 @@ bool _isRecipeFavorited(Recipe recipe, bool isPresetRecipe) {
     }
   }
 
-  void _applyFilters() {
+
+
+    void _applyFilters() {
     setState(() {
       if (_selectedIngredients.isEmpty) {
         _filteredMyRecipes = _myRecipes;
@@ -168,19 +179,10 @@ bool _isRecipeFavorited(Recipe recipe, bool isPresetRecipe) {
         }).toList();
       }
 
-      switch (_sortBy) {
-        case 'what_i_have':
-          // No need to sort
-          break;
-        case 'expires_soon':
-          // Sorting logic remains the same
-          break;
-        case 'usually_cooked':
-          // Sorting logic remains the same
-          break;
-      }
+      // No need for additional sorting as the API now returns sorted results
     });
   }
+
 
   void _addIngredient(String ingredient) {
     if (ingredient.isNotEmpty && !_selectedIngredients.contains(ingredient)) {
@@ -271,7 +273,7 @@ void _generateMealPlan() {
 
 
   Recipe? _getRandomRecipeByLabel(List<Recipe> recipes, String label) {
-    final matchingRecipes = recipes.where((recipe) => 
+    final matchingRecipes = recipes.where((recipe) =>
       recipe.labels?.toLowerCase().contains(label.toLowerCase()) ?? false
     ).toList();
     if (matchingRecipes.isEmpty) return null;
