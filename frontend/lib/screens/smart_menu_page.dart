@@ -20,7 +20,7 @@ class SmartMenuPage extends StatefulWidget {
 
 class _SmartMenuPageState extends State<SmartMenuPage> {
   final RecipeCollectionService _recipeCollectionService =
-      RecipeCollectionService(baseApiUrl: baseApiUrl);
+      RecipeCollectionService();
   Set<String> _favoriteRecipes = {};
   List<Recipe> _myRecipes = [];
   List<Recipe> _presetRecipes = [];
@@ -271,7 +271,7 @@ void _generateMealPlan() {
 
 
   Recipe? _getRandomRecipeByLabel(List<Recipe> recipes, String label) {
-    final matchingRecipes = recipes.where((recipe) => 
+    final matchingRecipes = recipes.where((recipe) =>
       recipe.labels?.toLowerCase().contains(label.toLowerCase()) ?? false
     ).toList();
     if (matchingRecipes.isEmpty) return null;

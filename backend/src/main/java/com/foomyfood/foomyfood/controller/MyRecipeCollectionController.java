@@ -42,4 +42,9 @@ public class MyRecipeCollectionController {
     public ResponseEntity<?> getUserFavorites(@PathVariable Long userId) {
         return ResponseEntity.ok(recipeCollectionService.getUserFavorites(userId));
     }
+    // 获取用户的收藏（包括食谱和预设食谱）
+    @GetMapping("/info/{userId}")
+    public ResponseEntity<?> getUserFavoritesAll(@PathVariable Long userId) {
+        return ResponseEntity.ok(recipeCollectionService.getUserFavoritesAll(userId));
+    }
 }
