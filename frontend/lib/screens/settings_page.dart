@@ -9,7 +9,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foo_my_food_app/screens/login_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:foo_my_food_app/screens/recipepage.dart';
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -47,6 +46,9 @@ class _SettingsPageState extends State<SettingsPage> {
         break;
       case "blueTheme":
         themeProvider.switchTheme(ThemeProvider.blueTheme);
+        break;
+      case "pinkTheme":
+        themeProvider.switchTheme(ThemeProvider.pinkTheme);
         break;
       default:
         themeProvider.switchTheme(ThemeProvider.yellowGreenTheme); // 默认主题
@@ -185,80 +187,185 @@ class _SettingsPageState extends State<SettingsPage> {
     print("Tracking days saved: $days"); // 检查是否成功保存
   }
 
+  void _showIngredientDaysInputDialog() {
+    final _ingredientDaysController = TextEditingController();
+    String? errorText;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text("Set Ingredients Expiration Reminder Days"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _ingredientDaysController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: "Days",
+                      errorText: errorText,
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        if (int.tryParse(value) == null) {
+                          errorText = "Please enter a valid integer.";
+                        } else {
+                          errorText = null;
+                        }
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (int.tryParse(_ingredientDaysController.text) != null) {
+                      int days = int.parse(_ingredientDaysController.text);
+                      await _saveIngredientTrackingDays(days); // 保存到数据库
+                      Navigator.pop(context);
+                    } else {
+                      setState(() {
+                        errorText = "Please enter a valid integer.";
+                      });
+                    }
+                  },
+                  child: Text("Save"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _saveIngredientTrackingDays(int days) async {
+    final url = '$baseApiUrl/user/$userId/ingredient-tracking-days';
+    final response = await http.put(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'ingredientTrackingDays': days}),
+    );
+    if (response.statusCode == 200) {
+      print("Ingredient tracking days saved to database: $days");
+    } else {
+      print(
+          "Failed to save ingredient tracking days to database: ${response.statusCode}");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
       backgroundColor: AppColors.backgroundColor(context),
       appBar: AppBar(
         title: Text('Settings',
             style: TextStyle(color: AppColors.textColor(context))),
         backgroundColor: AppColors.appBarColor(context),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: whiteTextColor),
-            onPressed: () {
-              _confirmLogout();
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildCustomButton(
+            icon: Icons.person,
+            text: 'Set User Information',
+            color: AppColors.cardColor(context),
+            onTap: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => UserProfile()));
             },
+          ),
+          _buildCustomButton(
+            icon: Icons.timer,
+            text: 'Set Cooking Reminder',
+            color: AppColors.cardColor(context),
+            onTap: _showDaysInputDialog,
+          ),
+          _buildCustomButton(
+            icon: Icons.event,
+            text: 'Set Expiration Date Reminder',
+            color: AppColors.cardColor(context),
+            onTap: _showIngredientDaysInputDialog,
+          ),
+          _buildCustomButton(
+            icon: Icons.color_lens,
+            text: 'Set Theme Color',
+            color: AppColors.cardColor(context),
+            onTap: () {
+              if (userId != null) {
+                _showThemeDialog(context, themeProvider);
+              } else {
+                print("User ID not available");
+              }
+            },
+          ),
+          const SizedBox(height: 10),
+          Divider(thickness: 2, color: AppColors.cardNameTextColor(context)),
+          _buildCustomButton(
+            icon: Icons.logout,
+            iconColor: AppColors.textColor(context),
+            text: 'Logout',
+            textColor: AppColors.textColor(context),
+            color: const Color.fromARGB(255, 180, 11, 45),
+            onTap: _confirmLogout,
+            trailingIconColor: AppColors.textColor(context),
           ),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => UserProfile()));
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.buttonBackgroundColor(context),
-              ),
-              child: Text(
-                'Set User Information',
-                style: TextStyle(color: AppColors.textColor(context)),
-              ),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _showDaysInputDialog, // 显示输入天数的对话框
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.buttonBackgroundColor(context),
-              ),
-              child: Text(
-                'Set Cooking Reminder',
-                style: TextStyle(color: AppColors.textColor(context)),
-              ),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                if (userId != null) {
-                  _showThemeDialog(context, themeProvider);
-                } else {
-                  print("User ID not available");
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.buttonBackgroundColor(context),
-              ),
-              child: Text(
-                'Set Theme Color',
-                style: TextStyle(color: AppColors.textColor(context)),
-              ),
-            ),
-            SizedBox(height: 20),
-            // 新增的文字登出按钮
-            TextButton(
-              onPressed: _confirmLogout,
-              child: Text(
-                "Logout",
-                style: TextStyle(color: Colors.red, fontSize: 16),
-              ),
-            ),
-          ],
+    );
+  }
+
+  Widget _buildCustomButton({
+    required IconData icon,
+    required String text,
+    required Color color,
+    required VoidCallback onTap,
+    Color? textColor,
+    Color? iconColor,
+    Color? trailingIconColor,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: color, // 背景色
+        borderRadius: BorderRadius.circular(10), // 圆角形状
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            offset: Offset(0, 4),
+            blurRadius: 4,
+          ),
+        ],
+      ),
+      child: ListTile(
+        leading: Icon(icon,
+            color: iconColor ??
+                AppColors.buttonBackgroundColor(context)), // 默认图标颜色
+        title: Text(
+          text,
+          style: TextStyle(
+            color:
+                textColor ?? AppColors.buttonBackgroundColor(context), // 默认颜色
+            fontWeight: FontWeight.bold,
+          ),
         ),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          color: trailingIconColor ??
+              AppColors.buttonBackgroundColor(context), // 默认向右箭头颜色
+          size: 16,
+        ),
+        onTap: onTap,
       ),
     );
   }
@@ -297,12 +404,12 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Select Theme Color"),
+          title: const Text("Select Theme Color"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                title: Text("Yellow Green Theme"),
+                title: const Text("Yellow Green Theme"),
                 onTap: () async {
                   themeProvider.switchTheme(ThemeProvider.yellowGreenTheme);
                   if (userId != null) {
@@ -313,12 +420,23 @@ class _SettingsPageState extends State<SettingsPage> {
                 },
               ),
               ListTile(
-                title: Text("Blue Theme"),
+                title: const Text("Blue Theme"),
                 onTap: () async {
                   themeProvider.switchTheme(ThemeProvider.blueTheme);
                   if (userId != null) {
                     await UserThemeService.updateUserTheme(
                         userId!, "blueTheme");
+                  }
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: const Text("Pink Theme"),
+                onTap: () async {
+                  themeProvider.switchTheme(ThemeProvider.pinkTheme);
+                  if (userId != null) {
+                    await UserThemeService.updateUserTheme(
+                        userId!, "pinkTheme");
                   }
                   Navigator.of(context).pop();
                 },

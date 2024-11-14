@@ -129,6 +129,37 @@ public class UserInfoController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
+    @PutMapping("/{userId}/ingredient-tracking-days")
+    public ResponseEntity<?> updateUserIngredientTrackingDays(
+            @PathVariable Long userId,
+            @RequestBody Map<String, Integer> request) {
+        Integer ingredientTrackingDays = request.get("ingredientTrackingDays");
+        if (ingredientTrackingDays == null) {
+            return new ResponseEntity<>("ingredientTrackingDays parameter is missing", HttpStatus.BAD_REQUEST);
+        }
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setUserIngredientExpirationTime(Long.valueOf(ingredientTrackingDays));
+            userRepository.save(user);
+            return new ResponseEntity<>("Ingredient tracking days updated successfully", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/{userId}/ingredient-tracking-days")
+    public ResponseEntity<Map<String, Integer>> getUserIngredientTrackingDays(@PathVariable Long userId) {
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isPresent()) {
+            Long ingredientTrackingDays = userOptional.get().getUserIngredientExpirationTime();
+            Map<String, Integer> response = new HashMap<>();
+            response.put("ingredientTrackingDays", Math.toIntExact(ingredientTrackingDays != null ? ingredientTrackingDays : 3)); // 提供默认值
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
 
 
 
