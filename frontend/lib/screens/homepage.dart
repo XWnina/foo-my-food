@@ -93,6 +93,21 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+// 获取提醒天数
+  Future<int?> _getUserIngredientTrackingDays() async {
+    final url = '$baseApiUrl/user/$userId/ingredient-tracking-days';
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['ingredientTrackingDays'];
+    } else {
+      print("Failed to load ingredient tracking days");
+      return null; // 无法获取时返回 null
+    }
+  }
+
+// 主方法 - 获取食材并筛选过期提醒
   Future<void> _fetchUserIngredients() async {
     try {
       final response =
@@ -103,10 +118,17 @@ class _MyHomePageState extends State<MyHomePage> {
         List<Ingredient> ingredients = [];
         List<Ingredient> expiringSoonIngredients = [];
 
+        // 获取用户的 ingredientTrackingDays，如果未设置则默认使用3天
+        int? ingredientTrackingDays = await _getUserIngredientTrackingDays();
+        int trackingDays;
+        if (ingredientTrackingDays != null) {
+          trackingDays = ingredientTrackingDays - 1; // 如果设置了提醒天数，则使用该值减去 1
+        } else {
+          trackingDays = 2; // 如果未设置提醒天数，则使用默认值 2
+        }
+
         for (var item in userIngredientsData) {
           int? ingredientId = item['ingredientId'];
-          int userQuantity = item['userQuantity'];
-
           if (ingredientId == null) continue;
 
           final ingredientResponse = await http
@@ -117,7 +139,10 @@ class _MyHomePageState extends State<MyHomePage> {
             ingredients.add(ingredient);
 
             DateTime expirationDate = DateTime.parse(ingredient.expirationDate);
-            if (expirationDate.difference(DateTime.now()).inDays < 2) {
+
+            // 检查是否在提醒范围内（小于 trackingDays）
+            if (expirationDate.difference(DateTime.now()).inDays <
+                trackingDays) {
               expiringSoonIngredients.add(ingredient);
             }
           }
@@ -129,13 +154,9 @@ class _MyHomePageState extends State<MyHomePage> {
             Provider.of<IngredientProvider>(context, listen: false);
         ingredientProvider.ingredients = ingredients;
 
-        // 仅当未显示弹窗时才显示过期提醒
-        if (expiringSoonIngredients.isNotEmpty &&
-            !ingredientProvider.showExpirationAlert) {
-          ingredientProvider.showExpirationAlert = true;
-          _showExpirationAlert(expiringSoonIngredients).then((_) {
-            ingredientProvider.showExpirationAlert = false; // 弹窗关闭后重置状态
-          });
+        // 显示过期提醒
+        if (expiringSoonIngredients.isNotEmpty) {
+          _showExpirationAlert(expiringSoonIngredients);
         }
       } else {
         throw Exception('Failed to load user ingredients');
