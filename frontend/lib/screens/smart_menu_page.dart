@@ -126,8 +126,8 @@ bool _isRecipeFavorited(Recipe recipe, bool isPresetRecipe) {
           break;
         case 'usually_cooked':
           // TODO: Implement when backend supports this feature
-          customRecipesUrl = '$baseApiUrl/recipes/custom?userId=${widget.userId}';
-          presetRecipesUrl = '$baseApiUrl/recipes/preset?userId=${widget.userId}';
+          customRecipesUrl = '$baseApiUrl/myrecipes/user/${widget.userId}';
+          presetRecipesUrl = '$baseApiUrl/preset-recipes';
           break;
         case 'what_i_have':
         default:
