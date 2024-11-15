@@ -158,9 +158,9 @@ bool _isRecipeFavorited(Recipe recipe, bool isPresetRecipe) {
               print('Preset Recipe Data: $data'); // 打印 preset recipe data
               return Recipe.fromJson(data);
             }).toList();
-
             _applyFilters();
           });
+          _generateMealPlan();
       } else {
         throw Exception('Failed to load recipes');
       }
@@ -751,6 +751,7 @@ void _generateMealPlan() {
                   _applyFilters();
                 });
                 Navigator.pop(context);
+                 _fetchRecipes();
               },
             ),
             ListTile(
@@ -761,6 +762,7 @@ void _generateMealPlan() {
                   _applyFilters();
                 });
                 Navigator.pop(context);
+                 _fetchRecipes();
               },
             ),
             ListTile(
@@ -771,6 +773,7 @@ void _generateMealPlan() {
                   _applyFilters();
                 });
                 Navigator.pop(context);
+                 _fetchRecipes();
               },
             ),
           ],
