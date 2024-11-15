@@ -2,6 +2,7 @@ package com.foomyfood.foomyfood.service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,6 @@ public class SmartMenuService {
         return presetRecipes;
     }
 
-    // Matching recipes by ingredients, with the option to search from preset recipe table or the user's recipes and option to use expiration weight
     public List<Map<String, Object>> findRecipesByIngredients(Long userId, boolean isPresetSource, boolean useExpirationWeight) {
         // If useExpirationWeight is true, get the user ingredients with expiration weights
         Map<String, Double> ingredientWeights;
@@ -65,14 +65,11 @@ public class SmartMenuService {
             userIngredients = userIngredientService.getUserIngredientsByUserId(userId);
         }
 
-        List<Map<String, Object>> matchedRecipes = new ArrayList<>();
-
         // Get the recipes and their ingredients
-        List<List<String>> recipesIngredients;
-        List<String> recipesNames;
+        List<List<String>> recipesIngredients; // List of recipes ingredients
+        List<String> recipesNames;  // List of recipes names
 
         if (isPresetSource) {
-            // If the source is preset recipes, get the preset recipes and their ingredients
             List<PresetRecipe> recipes = presetRecipeService.getAllPresetRecipes();
             recipesIngredients = new ArrayList<>();
             recipesNames = new ArrayList<>();
@@ -81,7 +78,6 @@ public class SmartMenuService {
                 recipesNames.add(recipe.getDishName());
             }
         } else {
-            // Else, get the user recipes and their ingredients
             List<Recipe> recipes = recipeService.getRecipesByUserId(userId);
             recipesIngredients = new ArrayList<>();
             recipesNames = new ArrayList<>();
@@ -91,53 +87,72 @@ public class SmartMenuService {
             }
         }
 
-        // Calculate the ingredient score and percentage for each recipe for sorting
-        for (int i = 0; i < recipesIngredients.size(); i++) {
-            List<String> recipeIngredients = recipesIngredients.get(i);
-            String recipeName = recipesNames.get(i);
+        List<Map<String, Object>> matchedRecipes = new ArrayList<>();
 
+        // Iterate over each recipe
+        for (int i = 0; i < recipesNames.size(); i++) {
+            String recipeName = recipesNames.get(i);
+            List<String> recipeIngredients = recipesIngredients.get(i);
+
+            Set<String> matchedIngredients = new HashSet<>();  // Store matched ingredients for the current recipe
             double ingredientScore = 0.0;
             int matchedCount = 0;
-            List<String> matchedIngredients = new ArrayList<>();
-
-            for (String ingredient : recipeIngredients) {
-                String lowerIngredient = ingredient.toLowerCase();
-                if (userIngredients.contains(lowerIngredient)) {
-                    double weight = (ingredientWeights != null && ingredientWeights.containsKey(lowerIngredient))
-                            ? ingredientWeights.get(lowerIngredient)
-                            : 1.0;
-                    ingredientScore += weight;
-                    matchedCount++;
-                    matchedIngredients.add(ingredient);
+            // System.out.println("Current Recipe: " + recipeName);
+            // System.out.println("Current Recipe Ingredients: " + recipeIngredients);
+            // Iterate over each ingredient in the recipe
+            for (int j = 0; j < recipeIngredients.size(); j++) {
+                // Check if the user has this ingredient
+                String currentRecipeIngredient = recipeIngredients.get(j);
+                // System.out.println("==================================");
+                // System.out.println("Checking for ingredient: " + currentRecipeIngredient);
+                for (int k = 0; k < userIngredients.size(); k++) {
+                    String currentUserIngredient = userIngredients.toArray()[k].toString();
+                    // System.out.println("Checking against user ingredient: " + currentUserIngredient);
+                    if (currentRecipeIngredient.trim().equalsIgnoreCase(currentUserIngredient)) {
+                        // System.out.println("!!!!!!Match found!");
+                        matchedIngredients.add(currentUserIngredient);
+                        // Calculate the ingredient score
+                        double weight = getWeight(ingredientWeights, currentUserIngredient, useExpirationWeight);
+                        // System.out.print("The matched ingredient is: " + currentUserIngredient);
+                        // System.out.println(" with weight: " + weight);
+                        ingredientScore += weight;
+                        // System.out.println("Current ingredient score: " + ingredientScore);
+                        matchedCount++;
+                        // System.out.println("Current matched count: " + matchedCount);
+                    }
                 }
             }
 
-            // If the recipe has at least one matched ingredient, calculate the percentage
-            if (ingredientScore > 0) {
-                double ingredientPercentage = (double) matchedCount / recipeIngredients.size();
+            // Only add the recipe if it has at least one matched ingredient
+            if (!matchedIngredients.isEmpty()) {
 
                 Map<String, Object> recipeInfo = new HashMap<>();
                 recipeInfo.put("recipeName", recipeName);
-                recipeInfo.put("ingredientScore", Math.round(ingredientScore * 100.0) / 100.0); 
-                recipeInfo.put("ingredientPercentage", Math.round(ingredientPercentage * 100.0) / 100.0); 
+                recipeInfo.put("ingredientScore", Math.round(ingredientScore * 100.0) / 100.0);
+                if (ingredientScore == 0.0) {
+                    recipeInfo.put("ingredientPercentage", 0.0);
+                } else {
+                    double ingredientPercentage = (double) matchedCount / recipeIngredients.size();
+                    recipeInfo.put("ingredientPercentage", Math.round(ingredientPercentage * 100.0) / 100.0);
+                }
                 recipeInfo.put("matchedIngredients", matchedIngredients);
                 recipeInfo.put("ingredients", recipeIngredients);
                 matchedRecipes.add(recipeInfo);
             }
         }
+        // System.out.println("+---------------------------------+");
 
-        // Sort the matched recipes, first by ingredient score, then by ingredient percentage
+        // Sort the matched recipes by ingredient score, then by ingredient percentage
         matchedRecipes.sort((r1, r2) -> {
             double score1 = (double) r1.get("ingredientScore");
             double score2 = (double) r2.get("ingredientScore");
-            int scoreCompare = Double.compare(score2, score1); 
+            int scoreCompare = Double.compare(score2, score1);
             if (scoreCompare != 0) {
                 return scoreCompare;
             }
             double percentage1 = (double) r1.get("ingredientPercentage");
             double percentage2 = (double) r2.get("ingredientPercentage");
-            // if the ingredient score is the same, sort by ingredient percentage
-            return Double.compare(percentage2, percentage1); 
+            return Double.compare(percentage2, percentage1);
         });
 
         return matchedRecipes;
@@ -161,5 +176,13 @@ public class SmartMenuService {
     // Matching recipes from preset recipe, by expiring ingredients
     public List<Map<String, Object>> findPresetRecipesByExpiringIngredients(Long userId) {
         return findRecipesByIngredients(userId, true, true);
+    }
+
+    private double getWeight(Map<String, Double> ingredientWeights, String ingredient, Boolean useExpirationWeight) {
+        if (useExpirationWeight) {
+            return ingredientWeights.get(ingredient);
+        } else {
+            return 1.0;
+        }
     }
 }

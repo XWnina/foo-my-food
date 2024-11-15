@@ -126,7 +126,7 @@ public class UserIngredientService {
 
         for (UserIngredient userIngredient : userIngredients) {
             Optional<Ingredient> optionalIngredient = ingredientRepository.findById(userIngredient.getIngredientId());
-            optionalIngredient.ifPresent(ingredient -> ingredientNames.add(ingredient.getName().toLowerCase())); // 转换为小写
+            optionalIngredient.ifPresent(ingredient -> ingredientNames.add(ingredient.getName().toLowerCase())); // Add ingredient name to the set
         }
         return ingredientNames;
     }
