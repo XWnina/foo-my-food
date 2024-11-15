@@ -121,33 +121,46 @@ bool _isRecipeFavorited(Recipe recipe, bool isPresetRecipe) {
 
       switch (_sortBy) {
         case 'expires_soon':
-          customRecipesUrl = '$baseApiUrl/api/recipes/custom/expiring?userId=${widget.userId}';
-          presetRecipesUrl = '$baseApiUrl/api/recipes/preset/expiring?userId=${widget.userId}';
+          customRecipesUrl = '$baseApiUrl/recipes/custom/expiring?userId=${widget.userId}';
+          presetRecipesUrl = '$baseApiUrl/recipes/preset/expiring?userId=${widget.userId}';
           break;
         case 'usually_cooked':
           // TODO: Implement when backend supports this feature
-          customRecipesUrl = '$baseApiUrl/api/recipes/custom?userId=${widget.userId}';
-          presetRecipesUrl = '$baseApiUrl/api/recipes/preset?userId=${widget.userId}';
+          customRecipesUrl = '$baseApiUrl/recipes/custom?userId=${widget.userId}';
+          presetRecipesUrl = '$baseApiUrl/recipes/preset?userId=${widget.userId}';
           break;
         case 'what_i_have':
         default:
-          customRecipesUrl = '$baseApiUrl/api/recipes/custom?userId=${widget.userId}';
-          presetRecipesUrl = '$baseApiUrl/api/recipes/preset?userId=${widget.userId}';
+          //print("yeaahhh");
+          //print(widget.userId);
+          customRecipesUrl = '$baseApiUrl/recipes/custom?userId=${widget.userId}';
+          presetRecipesUrl = '$baseApiUrl/recipes/preset?userId=${widget.userId}';
           break;
       }
-
       final customRecipesResponse = await http.get(Uri.parse(customRecipesUrl));
       final presetRecipesResponse = await http.get(Uri.parse(presetRecipesUrl));
-
       if (customRecipesResponse.statusCode == 200 && presetRecipesResponse.statusCode == 200) {
         final List<dynamic> customRecipeData = json.decode(customRecipesResponse.body);
         final List<dynamic> presetRecipeData = json.decode(presetRecipesResponse.body);
 
-        setState(() {
-          _myRecipes = customRecipeData.map((data) => Recipe.fromJson(data)).toList();
-          _presetRecipes = presetRecipeData.map((data) => Recipe.fromJson(data)).toList();
-          _applyFilters();
-        });
+        // setState(() {
+        //   _myRecipes = customRecipeData.map((data) => Recipe.fromJson(data)).toList();
+        //   _presetRecipes = presetRecipeData.map((data) => Recipe.fromJson(data)).toList();
+        //   _applyFilters();
+        // });
+            setState(() {
+            _myRecipes = customRecipeData.map((data) {
+              print('Custom Recipe Data: $data'); // 打印 custom recipe data
+              return Recipe.fromJson(data);
+            }).toList();
+
+            _presetRecipes = presetRecipeData.map((data) {
+              print('Preset Recipe Data: $data'); // 打印 preset recipe data
+              return Recipe.fromJson(data);
+            }).toList();
+
+            _applyFilters();
+          });
       } else {
         throw Exception('Failed to load recipes');
       }
