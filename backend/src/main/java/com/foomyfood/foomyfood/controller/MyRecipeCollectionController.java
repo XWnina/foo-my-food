@@ -18,13 +18,21 @@ public class MyRecipeCollectionController {
     // 添加收藏
     @PostMapping("/add")
     public ResponseEntity<?> addFavorite(@RequestBody Map<String, String> body) {
+        System.out.println("Request Body: " + body);
+
         Long userId = Long.parseLong(body.get("user_id"));
+        System.out.println("User ID: " + userId);
+
         Long recipeId = body.containsKey("recipe_id") ? Long.parseLong(body.get("recipe_id")) : null;
+        System.out.println("Recipe ID: " + recipeId);
+
         Long presetRecipeId = body.containsKey("preset_recipe_id") ? Long.parseLong(body.get("preset_recipe_id")) : null;
+        System.out.println("Preset Recipe ID: " + presetRecipeId);
 
         recipeCollectionService.addFavorite(userId, recipeId, presetRecipeId);
         return ResponseEntity.ok().build();
     }
+
 
     // 删除收藏
     @PostMapping("/remove")
