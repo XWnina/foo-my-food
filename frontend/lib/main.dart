@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:foo_my_food_app/models/collection_item.dart';
 import 'screens/login_page.dart';
 import 'package:provider/provider.dart';
 import 'providers/ingredient_provider.dart';
@@ -14,7 +13,7 @@ void main() {
         ChangeNotifierProvider(create: (context) => IngredientProvider()),
         ChangeNotifierProvider(create: (context) => ShoppingListProvider()),
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
-        ChangeNotifierProvider(create: (context) => CollectionProvider()),
+        ChangeNotifierProvider(create: (context) => UserFavorites()),
       ],
       child: const MyApp(),
     ),
