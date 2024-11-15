@@ -40,7 +40,7 @@ class Recipe {
       // Highlight: Handle both 'cookCount' and 'cook_count' fields
       cookCount: json['cookCount'] ?? json['cook_count'] ?? 0,
       // Highlight: Handle both 'name' and 'dishName' fields
-      name: json['name'] ?? json['dishName'] ?? 'Unknown',
+      name: json['name'] ?? json['dishName']?? json['recipeName'] ?? 'Unknown',
       // Highlight: Handle different ingredient formats
       ingredients: parseIngredients(json['ingredients'] ?? json['ingredientsAsList'] ?? json['ingredient']),
       // Highlight: Handle both 'labels' and 'label' fields
