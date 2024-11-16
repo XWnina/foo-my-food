@@ -13,7 +13,7 @@ void main() {
         ChangeNotifierProvider(create: (context) => IngredientProvider()),
         ChangeNotifierProvider(create: (context) => ShoppingListProvider()),
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
-        ChangeNotifierProvider(create: (context) => UserFavorites()),
+        ChangeNotifierProvider(create: (context) => CollectionProvider()),
       ],
       child: const MyApp(),
     ),

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/models/collection_item.dart';
+import 'package:foo_my_food_app/providers/collection_provider.dart';
 import 'package:foo_my_food_app/services/recipe_collection_service.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:foo_my_food_app/models/recipe.dart';
 import 'package:foo_my_food_app/utils/constants.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -66,11 +69,29 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
     final bool isFavorited = _favoriteRecipes.contains(key);
 
     try {
+      // 新增：获取 CollectionProvider
+      final collectionProvider =
+          Provider.of<CollectionProvider>(context, listen: false);
+
       if (isFavorited) {
         await _recipeCollectionService.removeFavorite(
             widget.userId,
             isPresetRecipe ? null : recipe.id.toString(),
             isPresetRecipe ? recipe.id.toString() : null);
+
+        // 新增：从 Provider 中删除收藏
+        collectionProvider.removeFavorite(
+          CollectionItem(
+            id: recipe.id,
+            name: recipe.name,
+            calories: recipe.calories ?? 0,
+            imageUrl: recipe.imageUrl,
+            description: recipe.description ?? '',
+            ingredients: recipe.ingredients,
+            tags: recipe.labels?.split(',') ?? [],
+          ),
+        );
+
         setState(() {
           _favoriteRecipes.remove(key);
         });
@@ -79,13 +100,26 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
             widget.userId,
             isPresetRecipe ? null : recipe.id.toString(),
             isPresetRecipe ? recipe.id.toString() : null);
+
+        // 新增：添加到 Provider 中的收藏
+        collectionProvider.addFavorite(
+          CollectionItem(
+            id: recipe.id,
+            name: recipe.name,
+            calories: recipe.calories ?? 0,
+            imageUrl: recipe.imageUrl,
+            description: recipe.description ?? '',
+            ingredients: recipe.ingredients,
+            tags: recipe.labels?.split(',') ?? [],
+          ),
+        );
+
         setState(() {
           _favoriteRecipes.add(key);
         });
       }
     } catch (e) {
       print('Error in toggle favorite: $e');
-      // 可以添加错误提示，如：SnackBar通知用户操作失败
     }
   }
 
@@ -103,16 +137,15 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
       });
     } catch (e) {
       print('Error fetching favorites: $e');
-      // 可以使用 SnackBar 或对话框提示用户
     }
   }
+
   // 检查菜谱是否已收藏
-bool _isRecipeFavorited(Recipe recipe, bool isPresetRecipe) {
-  final String key = isPresetRecipe ? 'preset_${recipe.id}' : 'my_${recipe.id}';
-  return _favoriteRecipes.contains(key);
-}
-
-
+  bool _isRecipeFavorited(Recipe recipe, bool isPresetRecipe) {
+    final String key =
+        isPresetRecipe ? 'preset_${recipe.id}' : 'my_${recipe.id}';
+    return _favoriteRecipes.contains(key);
+  }
 
   Future<void> _fetchRecipes() async {
     try {
@@ -564,21 +597,22 @@ void _generateMealPlan() {
                           ),
                           // 添加星形图标
                           Positioned(
-                          top: 8,
-                          right: 8,
-                          child: IconButton(
-                            icon: Icon(
-                              _isRecipeFavorited(recipe, isPresetRecipe)
-                                  ? Icons.star
-                                  : Icons.star_border,
-                              color: _isRecipeFavorited(recipe, isPresetRecipe)
-                                  ? Colors.yellow
-                                  : Colors.grey,
+                            top: 8,
+                            right: 8,
+                            child: IconButton(
+                              icon: Icon(
+                                _isRecipeFavorited(recipe, isPresetRecipe)
+                                    ? Icons.star
+                                    : Icons.star_border,
+                                color:
+                                    _isRecipeFavorited(recipe, isPresetRecipe)
+                                        ? Colors.yellow
+                                        : Colors.grey,
+                              ),
+                              onPressed: () =>
+                                  _toggleFavorite(recipe, isPresetRecipe),
                             ),
-                            onPressed: () =>
-                                _toggleFavorite(recipe, isPresetRecipe),
                           ),
-                        ),
                           if (_isSelecting)
                             Positioned(
                               top: 8,
