@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/providers/collection_provider.dart';
 import 'package:provider/provider.dart'; // 导入 Provider
 import 'package:foo_my_food_app/models/collection_item.dart';
 import 'package:foo_my_food_app/screens/settings_page.dart';
@@ -82,12 +83,16 @@ class _UserMainPageState extends State<UserMainPage> {
 
     final recipeCollectionService = RecipeCollectionService();
     try {
+      // 调用服务获取收藏数据
       final favorites =
           await recipeCollectionService.getUserFavoritesAll(userId);
-      setState(() {
-        _favorites = favorites;
-      });
-      print("Loaded favorites: $_favorites");
+
+      // 获取 Provider 并更新收藏
+      final favoritesProvider =
+          Provider.of<CollectionProvider>(context, listen: false);
+      favoritesProvider.setFavorites(favorites); // 更新 Provider 中的数据
+
+      print("Loaded favorites: $favorites");
     } catch (e) {
       print('Error loading favorites: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -98,6 +103,8 @@ class _UserMainPageState extends State<UserMainPage> {
 
   @override
   Widget build(BuildContext context) {
+    final favoritesProvider = Provider.of<CollectionProvider>(context);
+    final List<CollectionItem> favorites = favoritesProvider.favorites;
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -167,9 +174,9 @@ class _UserMainPageState extends State<UserMainPage> {
                 mainAxisSpacing: 9,
                 childAspectRatio: 0.85,
               ),
-              itemCount: _favorites.length,
+              itemCount: favoritesProvider.favorites.length,
               itemBuilder: (context, index) {
-                final item = _favorites[index];
+                final item = favoritesProvider.favorites[index];
                 return Card(
                   color: AppColors.cardColor(context),
                   shape: RoundedRectangleBorder(
@@ -183,7 +190,8 @@ class _UserMainPageState extends State<UserMainPage> {
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(10)),
-                        child: item.imageUrl != null
+                        child: (item.imageUrl != null &&
+                                item.imageUrl!.isNotEmpty)
                             ? Image.network(
                                 item.imageUrl!,
                                 height: 116,
