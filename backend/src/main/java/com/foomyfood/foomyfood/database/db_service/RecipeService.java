@@ -9,8 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.foomyfood.foomyfood.database.Recipe;
 import com.foomyfood.foomyfood.database.db_repository.CookingHistoryRepository;
-import com.foomyfood.foomyfood.database.db_repository.RecipeRepository;
 import com.foomyfood.foomyfood.database.db_repository.RecipeCollectionRepository;
+import com.foomyfood.foomyfood.database.db_repository.RecipeRepository;
 
 @Service
 public class RecipeService {
@@ -70,8 +70,12 @@ public class RecipeService {
         recipeRepository.deleteById(recipeId);
         recipeCollectionRepository.deleteByRecipeId(recipeId);
     }
-    
+
     public List<Recipe> getRecipesByUserId(Long userId) {
         return recipeRepository.findByUserId(userId);
+    }
+
+    public Recipe getRecipeByIdAsRecipe(Long id) {
+        return recipeRepository.findById(id).orElseThrow(() -> new RuntimeException("Recipe with ID " + id + " not found"));
     }
 }

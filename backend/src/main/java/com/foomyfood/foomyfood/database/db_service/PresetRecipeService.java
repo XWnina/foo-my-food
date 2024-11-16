@@ -34,4 +34,9 @@ public class PresetRecipeService {
     public void deletePresetRecipe(Long id) {
         presetRecipeRepository.deleteById(id);
     }
+
+    //
+    public PresetRecipe getPresetRecipeByIdAsPresetRecipe(Long id) {
+        return presetRecipeRepository.findById(id).orElseThrow(() -> new RuntimeException("PresetRecipe with ID " + id + " not found"));
+    }
 }
