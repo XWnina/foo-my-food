@@ -188,6 +188,7 @@ public class SmartMenuService {
                 // Fetch full recipe details from PresetRecipe
                 PresetRecipe presetRecipe = presetRecipeService.getPresetRecipeByIdAsPresetRecipe(presetRecipeId);
                 if (presetRecipe != null) {
+                    fullRecipeInfo.put("id", presetRecipe.getId());
                     fullRecipeInfo.put("description", presetRecipe.getDescription());
                     fullRecipeInfo.put("imageUrl", presetRecipe.getImageURL());
                     fullRecipeInfo.put("calories", presetRecipe.getCalories());
@@ -197,6 +198,7 @@ public class SmartMenuService {
                 // Fetch full recipe details from Recipe
                 Recipe userRecipe = recipeService.getRecipeByIdAsRecipe(recipeId);
                 if (userRecipe != null) {
+                    fullRecipeInfo.put("id", userRecipe.getId());
                     fullRecipeInfo.put("description", userRecipe.getDescription());
                     fullRecipeInfo.put("imageUrl", userRecipe.getImageURL());
                     fullRecipeInfo.put("calories", userRecipe.getCalories());

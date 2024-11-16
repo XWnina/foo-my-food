@@ -130,7 +130,7 @@ public class FoomyfoodApplication implements CommandLineRunner {
         if (jsonOutput.isEmpty()) {
             System.out.println("No recipes found for the given criteria.");
         } else {
-            jsonOutput.forEach(recipe -> System.out.println("Recipe JSON: " + recipe));
+            jsonOutput.forEach(recipe -> System.out.println(recipe));
         }
         System.out.println("=====End of JSON Test=====");
     }
