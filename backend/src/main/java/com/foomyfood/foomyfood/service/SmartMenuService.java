@@ -36,7 +36,7 @@ public class SmartMenuService {
         for (Map<String, Object> recipe : detailedResults) {
             if (!isPresetSource) {
                 recipeIds.add((Long) recipe.get("recipeId"));
-            }else {
+            } else {
                 recipeIds.add((Long) recipe.get("presetRecipeId"));
             }
         }
@@ -178,35 +178,39 @@ public class SmartMenuService {
 
     public List<Map<String, Object>> getDetailedRecipeInfo(Long userId, boolean isPresetSource, boolean useExpiration) {
         List<Map<String, Object>> recipeDetails = findRecipesByIngredientsWithDetails(userId, isPresetSource, useExpiration);
+        List<Map<String, Object>> detailedRecipes = new ArrayList<>();
+        if (isPresetSource) {
+            detailedRecipes = recipeDetails.stream().map(recipe -> {
+                Long presetRecipeId = (Long) recipe.get("presetRecipeId");
+                Map<String, Object> fullRecipeInfo = new HashMap<>(recipe);
 
-        List<Map<String, Object>> detailedRecipes = recipeDetails.stream().map(recipe -> {
-            Long recipeId = (Long) recipe.get("recipeId");
-            Long presetRecipeId = (Long) recipe.get("presetRecipeId");
-            Map<String, Object> fullRecipeInfo = new HashMap<>(recipe);
-
-            if (isPresetSource) {
                 // Fetch full recipe details from PresetRecipe
                 PresetRecipe presetRecipe = presetRecipeService.getPresetRecipeByIdAsPresetRecipe(presetRecipeId);
                 if (presetRecipe != null) {
-                    fullRecipeInfo.put("id", presetRecipe.getId());
                     fullRecipeInfo.put("description", presetRecipe.getDescription());
                     fullRecipeInfo.put("imageUrl", presetRecipe.getImageURL());
                     fullRecipeInfo.put("calories", presetRecipe.getCalories());
                     fullRecipeInfo.put("labels", presetRecipe.getLabels());
                 }
-            } else {
-                // Fetch full recipe details from Recipe
-                Recipe userRecipe = recipeService.getRecipeByIdAsRecipe(recipeId);
-                if (userRecipe != null) {
-                    fullRecipeInfo.put("id", userRecipe.getId());
-                    fullRecipeInfo.put("description", userRecipe.getDescription());
-                    fullRecipeInfo.put("imageUrl", userRecipe.getImageURL());
-                    fullRecipeInfo.put("calories", userRecipe.getCalories());
-                    fullRecipeInfo.put("labels", userRecipe.getLabels());
+
+                return fullRecipeInfo;
+            }).collect(Collectors.toList());
+        } else {
+            detailedRecipes = recipeDetails.stream().map(recipe -> {
+                Long recipeId = (Long) recipe.get("recipeId");
+                Map<String, Object> fullRecipeInfo = new HashMap<>(recipe);
+
+                Recipe Recipe = recipeService.getRecipeByIdAsRecipe(recipeId);
+                if (Recipe != null) {
+                    fullRecipeInfo.put("description", Recipe.getDescription());
+                    fullRecipeInfo.put("imageUrl", Recipe.getImageURL());
+                    fullRecipeInfo.put("calories", Recipe.getCalories());
+                    fullRecipeInfo.put("labels", Recipe.getLabels());
                 }
-            }
-            return fullRecipeInfo;
-        }).collect(Collectors.toList());
+
+                return fullRecipeInfo;
+            }).collect(Collectors.toList());
+        }
 
         return detailedRecipes;
     }
