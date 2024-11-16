@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:foo_my_food_app/utils/constants.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RecipeDetailPage extends StatefulWidget {
   final Map<String, dynamic> recipe;
@@ -99,8 +100,10 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
     }
 
     // 过滤掉空标签
-    final filteredLabels =
-        _selectedLabels.where((label) => label.isNotEmpty).join(', ');
+    final filteredLabels = (_selectedLabels.isEmpty ||
+            _selectedLabels.every((label) => label.trim().isEmpty))
+        ? null
+        : _selectedLabels.join(', ');
 
     final updatedRecipe = {
       'dishName': _nameController.text,
@@ -326,7 +329,9 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                       ),
                     ],
                   )
-                : Text('Labels: ${widget.recipe['labels']}'),
+                : Text(
+                    'Labels: ${widget.recipe['labels']?.isNotEmpty == true ? widget.recipe['labels'] : 'No label in this Recipe'}',
+                  ),
             const SizedBox(height: 16),
             _isEditing
                 ? TextField(
@@ -366,7 +371,9 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                     ),
                     maxLines: 4,
                   )
-                : Text('Description: ${widget.recipe['description']}'),
+                : Text(
+                    'Description: ${widget.recipe['description']?.isNotEmpty == true ? widget.recipe['description'] : 'No description for this recipe'}',
+                  ),
             const SizedBox(height: 16),
             _isEditing
                 ? TextField(
@@ -380,8 +387,40 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                   )
                 : widget.recipe['videoLink'] != null &&
                         widget.recipe['videoLink'].isNotEmpty
-                    ? Text('Video Link: ${widget.recipe['videoLink']}')
+                    ? Row(
+                        children: [
+                          const Text(
+                            'Video Link: ',
+                          ),
+                          GestureDetector(
+                            onTap: () async {
+                              final url = Uri.parse(widget.recipe['videoLink']);
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url,
+                                    mode: LaunchMode.externalApplication);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Could not launch ${widget.recipe['videoLink']}',
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                            child: Text(
+                              widget.recipe['videoLink'],
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.blue,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
                     : const SizedBox(),
+            const SizedBox(height: 16),
             Text(
               'Total Times Cooked: ${widget.recipe['cookCount'] ?? 0}',
             ),

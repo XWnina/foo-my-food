@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/providers/collection_provider.dart';
 import 'package:provider/provider.dart'; // 导入 Provider
 import 'package:foo_my_food_app/models/collection_item.dart';
 import 'package:foo_my_food_app/screens/settings_page.dart';
@@ -8,13 +9,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foo_my_food_app/utils/constants.dart';
 import 'package:foo_my_food_app/services/recipe_collection_service.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 class UserMainPage extends StatefulWidget {
+  const UserMainPage({Key? key}) : super(key: key);
   @override
-  _UserMainPageState createState() => _UserMainPageState();
+  UserMainPageState createState() => UserMainPageState();
 }
 
-class _UserMainPageState extends State<UserMainPage> {
+class UserMainPageState extends State<UserMainPage> {
+  Future<void> loadFavorites() async {
+    await _loadFavorites(); // 内部调用加载收藏的方法
+  }
+
   String? _username = 'Username';
   String? _avatarUrl;
   List<CollectionItem> _favorites = [];
@@ -82,12 +89,16 @@ class _UserMainPageState extends State<UserMainPage> {
 
     final recipeCollectionService = RecipeCollectionService();
     try {
+      // 调用服务获取收藏数据
       final favorites =
           await recipeCollectionService.getUserFavoritesAll(userId);
-      setState(() {
-        _favorites = favorites;
-      });
-      print("Loaded favorites: $_favorites");
+
+      // 获取 Provider 并更新收藏
+      final favoritesProvider =
+          Provider.of<CollectionProvider>(context, listen: false);
+      favoritesProvider.setFavorites(favorites); // 更新 Provider 中的数据
+
+      print("Loaded favorites: $favorites");
     } catch (e) {
       print('Error loading favorites: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -96,8 +107,204 @@ class _UserMainPageState extends State<UserMainPage> {
     }
   }
 
+  void _showRecipeDetails(BuildContext context, CollectionItem item) async {
+    // 确保弹窗前数据最新
+    await _loadFavorites();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.cardColor(context),
+          title: Text(
+            item.name,
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.cardNameTextColor(context)),
+          ),
+          content: SingleChildScrollView(
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.8, // 限制对话框宽度
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 显示图片
+                  if (item.imageUrl != null && item.imageUrl!.isNotEmpty)
+                    Image.network(
+                      item.imageUrl!,
+                      height: 150,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    )
+                  else
+                    const Icon(Icons.image, size: 100),
+                  const SizedBox(height: 30),
+
+                  // 显示热量
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: "Calories: ", // 加粗的部分
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.cardNameTextColor(context),
+                          ),
+                        ),
+                        TextSpan(
+                          text: "${item.calories} kcal", // 普通字体部分
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.cardExpiresTextColor(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // 显示配料
+                  Text(
+                    "Ingredients:",
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.cardNameTextColor(context)),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    item.ingredients.join(', '),
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.cardExpiresTextColor(context)),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // 显示描述
+                  Text(
+                    "Description:",
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.cardNameTextColor(context)),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    item.description.isNotEmpty
+                        ? item.description
+                        : "No description for this recipe", // 没有描述时显示默认文本
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.cardExpiresTextColor(context)),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // 显示标签
+                  Text(
+                    "Labels:",
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.cardNameTextColor(context)),
+                  ),
+                  const SizedBox(height: 5),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: item.tags.isNotEmpty
+                        ? item.tags.map((tag) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 2, horizontal: 6),
+                              decoration: BoxDecoration(
+                                color: AppColors.lablebackground(context),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                tag.trim(),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color:
+                                      AppColors.cardExpiresTextColor(context),
+                                ),
+                              ),
+                            );
+                          }).toList()
+                        : [
+                            Text(
+                              "No labels",
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color:
+                                      AppColors.cardExpiresTextColor(context)),
+                            ),
+                          ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // 显示视频链接（如果有）
+                  if (item.videoLink != null && item.videoLink!.isNotEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Video Link:",
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.cardNameTextColor(context)),
+                        ),
+                        const SizedBox(height: 5),
+                        InkWell(
+                          onTap: () async {
+                            final url = Uri.parse(item.videoLink!);
+
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url,
+                                  mode: LaunchMode.externalApplication);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        'Could not launch ${item.videoLink}')),
+                              );
+                            }
+                          },
+                          child: Text(
+                            item.videoLink!,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.blue,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'Close',
+                style: TextStyle(color: AppColors.cardNameTextColor(context)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final favoritesProvider = Provider.of<CollectionProvider>(context);
+    final List<CollectionItem> favorites = favoritesProvider.favorites;
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -122,7 +329,7 @@ class _UserMainPageState extends State<UserMainPage> {
         children: [
           Container(
             width: double.infinity,
-            height: MediaQuery.of(context).size.height * 0.25,
+            height: MediaQuery.of(context).size.height * 0.2,
             color: AppColors.appBarColor(context),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -159,111 +366,135 @@ class _UserMainPageState extends State<UserMainPage> {
           ),
           const SizedBox(height: 10),
           Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(10),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 9,
-                childAspectRatio: 0.85,
-              ),
-              itemCount: _favorites.length,
-              itemBuilder: (context, index) {
-                final item = _favorites[index];
-                return Card(
-                  color: AppColors.cardColor(context),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 4,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Display image or placeholder
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(10)),
-                        child: item.imageUrl != null
-                            ? Image.network(
-                                item.imageUrl!,
-                                height: 116,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              )
-                            : Container(
-                                height: 116,
-                                color: Colors.grey,
-                                child: Icon(Icons.image, color: Colors.white),
-                              ),
+            child: favorites.isEmpty
+                ? Center(
+                    child: Text(
+                      'No collections yet. Start adding your favorites!',
+                      style: TextStyle(
+                        color: AppColors.textColor(context),
+                        fontSize: 16,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              item.name,
-                              style: TextStyle(
-                                color: AppColors.cardNameTextColor(context),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                    ),
+                  )
+                : GridView.builder(
+                    padding: const EdgeInsets.all(10),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2, // 每行展示 2 个卡片
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 9,
+                      childAspectRatio: 0.8, // 调整宽高比例
+                    ),
+                    itemCount: favorites.length,
+                    itemBuilder: (context, index) {
+                      final item = favorites[index];
+                      return GestureDetector(
+                        onTap: () {
+                          _showRecipeDetails(context, item);
+                        },
+                        child: Card(
+                          color: AppColors.cardColor(context),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 4,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(10)),
+                                  child: (item.imageUrl != null &&
+                                          item.imageUrl!.isNotEmpty)
+                                      ? Image.network(
+                                          item.imageUrl!,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : const Icon(Icons.image, size: 35),
+                                ),
                               ),
-                              textAlign: TextAlign.center,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Calories: ${item.calories} kcal",
-                              style: TextStyle(
-                                color: AppColors.cardExpiresTextColor(context),
-                                fontSize: 14,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 4),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 4,
-                              alignment: WrapAlignment.center,
-                              children: item.tags.isNotEmpty
-                                  ? item.tags.map((tag) {
-                                      return Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 2, horizontal: 6),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.lablebackground(
-                                              context),
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          tag,
-                                          style: TextStyle(
-                                            color:
-                                                AppColors.cardExpiresTextColor(
-                                                    context),
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      );
-                                    }).toList()
-                                  : [
-                                      const Text(
-                                        "No labels",
-                                        style: TextStyle(
-                                            color: Colors.grey, fontSize: 12),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.name,
+                                      style: TextStyle(
+                                        color: AppColors.cardNameTextColor(
+                                            context),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
                                       ),
-                                    ],
-                            ),
-                          ],
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      "Calories: ${item.calories} kcal",
+                                      style: TextStyle(
+                                        color: AppColors.cardExpiresTextColor(
+                                            context),
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 4,
+                                      children: item.tags != null &&
+                                              item.tags
+                                                  .where((tag) =>
+                                                      tag.trim().isNotEmpty)
+                                                  .isNotEmpty
+                                          ? item.tags
+                                              .where((tag) =>
+                                                  tag.trim().isNotEmpty)
+                                              .map((tag) {
+                                              return Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 2,
+                                                        horizontal: 6),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      AppColors.lablebackground(
+                                                          context),
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                ),
+                                                child: Text(
+                                                  tag.trim(),
+                                                  style: TextStyle(
+                                                    color: AppColors
+                                                        .cardExpiresTextColor(
+                                                            context),
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList()
+                                          : [
+                                              Text(
+                                                "No label in this Recipe",
+                                                style: TextStyle(
+                                                    color: AppColors
+                                                        .cardExpiresTextColor(
+                                                            context),
+                                                    fontSize: 12),
+                                              ),
+                                            ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),

@@ -5,9 +5,11 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.foomyfood.foomyfood.database.Recipe;
 import com.foomyfood.foomyfood.database.db_repository.CookingHistoryRepository;
+import com.foomyfood.foomyfood.database.db_repository.RecipeCollectionRepository;
 import com.foomyfood.foomyfood.database.db_repository.RecipeRepository;
 
 @Service
@@ -17,6 +19,8 @@ public class RecipeService {
     private RecipeRepository recipeRepository;
     @Autowired
     private CookingHistoryRepository cookingHistoryRepository;
+    @Autowired
+    private RecipeCollectionRepository recipeCollectionRepository;
 
     // Add a new recipe
     public Recipe addRecipe(Recipe recipe) {
@@ -60,12 +64,18 @@ public class RecipeService {
     }
 
     // Delete a recipe by ID
+    @Transactional
     public void deleteRecipe(Long recipeId) {
         cookingHistoryRepository.deleteByRecipeId(recipeId);
         recipeRepository.deleteById(recipeId);
+        recipeCollectionRepository.deleteByRecipeId(recipeId);
     }
-    
+
     public List<Recipe> getRecipesByUserId(Long userId) {
         return recipeRepository.findByUserId(userId);
+    }
+
+    public Recipe getRecipeByIdAsRecipe(Long id) {
+        return recipeRepository.findById(id).orElseThrow(() -> new RuntimeException("Recipe with ID " + id + " not found"));
     }
 }

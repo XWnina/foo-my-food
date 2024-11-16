@@ -25,3 +25,10 @@ frontend/build/ios/XCBuildData/PIFCache/target/TARGET@v11_hash=fc4bb5e468a015271
 
 .idea
 frontend/.dart_tool/extension_discovery/vs_code.json
+frontend/linux/flutter/generated_plugin_registrant.cc
+frontend/linux/flutter/generated_plugins.cmake
+frontend/macos/Flutter/GeneratedPluginRegistrant.swift
+frontend/pubspec.lock
+frontend/windows/flutter/generated_plugin_registrant.cc
+frontend/windows/flutter/generated_plugins.cmake
+frontend/ios/Podfile.lock
