@@ -99,8 +99,10 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
     }
 
     // 过滤掉空标签
-    final filteredLabels =
-        _selectedLabels.where((label) => label.isNotEmpty).join(', ');
+    final filteredLabels = (_selectedLabels.isEmpty ||
+            _selectedLabels.every((label) => label.trim().isEmpty))
+        ? null
+        : _selectedLabels.join(', ');
 
     final updatedRecipe = {
       'dishName': _nameController.text,

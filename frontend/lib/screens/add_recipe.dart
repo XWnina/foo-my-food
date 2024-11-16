@@ -114,8 +114,11 @@ class _AddRecipePageState extends State<AddRecipePage> {
         .split(',')
         .map((e) => e.trim())
         .toList(); // 确保是数组形式
-    final labels =
-        _selectedLabels.where((label) => label.isNotEmpty).join(', ');
+    final labels = (_selectedLabels.isEmpty ||
+            _selectedLabels.every((label) => label.trim().isEmpty))
+        ? null
+        : _selectedLabels.join(', ');
+
     final calories = _caloriesController.text;
     final description = _descriptionController.text;
     final videoLink = _videoLinkController.text;
@@ -224,7 +227,7 @@ class _AddRecipePageState extends State<AddRecipePage> {
                           value: _selectedLabels.contains(label),
                           onChanged: (bool? selected) {
                             setState(() {
-                              if (selected == true) {
+                              if (selected == true && label.isNotEmpty) {
                                 _selectedLabels.add(label);
                               } else {
                                 _selectedLabels.remove(label);
