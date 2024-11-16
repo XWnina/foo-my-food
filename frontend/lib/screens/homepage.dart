@@ -65,15 +65,21 @@ class _MyHomePageState extends State<MyHomePage> {
 
   late List<Widget> _pages;
 
+  late GlobalKey<UserMainPageState> userMainPageKey;
+
   @override
   void initState() {
     super.initState();
     _loadUserId();
+
+    userMainPageKey =
+        GlobalKey<UserMainPageState>(); // 设置 GlobalKey 类型为 UserMainPageState
+
     _pages = [
       MyFoodPage(fetchUserIngredientsCallback: _fetchUserIngredients),
-      RecipePage(), // 替换为 RecipePage
+      RecipePage(),
       const ShoppingListPage(),
-      UserMainPage(),
+      UserMainPage(key: userMainPageKey), // 传递 GlobalKey
     ];
   }
 
@@ -236,6 +242,13 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _selectedIndex = index;
     });
+
+    if (index == 3) {
+      final userMainPageState = userMainPageKey.currentState;
+      if (userMainPageState != null) {
+        userMainPageState.loadFavorites();
+      }
+    }
   }
 
   void _onCategorySelected(String category) {
