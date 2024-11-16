@@ -13,4 +13,5 @@ public interface RecipeCollectionRepository extends JpaRepository<RecipeCollecti
     List<RecipeCollection> findByUserId(Long userId);
 
     void deleteByUserIdAndRecipeIdAndPresetRecipeId(Long userId, Long recipeId, Long presetRecipeId);
+    void deleteByRecipeId(Long recipeId);
 }

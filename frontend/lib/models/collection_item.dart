@@ -6,6 +6,7 @@ class CollectionItem {
   final String description;
   final List<String> ingredients;
   final List<String> tags;
+  final String? videoLink;
 
 
   CollectionItem({
@@ -16,6 +17,7 @@ class CollectionItem {
     required this.description,
     required this.ingredients,
     required this.tags,
+    this.videoLink,
   });
 
   // 从 Map 创建 CollectionItem 实例
@@ -24,6 +26,7 @@ class CollectionItem {
       id: map['id'] ?? 0,
       name: map['dishName'] ?? 'Unnamed',
       calories: map['calories'] ?? 0,
+      videoLink: map['videoLink'],
       imageUrl: map['imageURL'],
       description: map['description'] ?? '',
       ingredients: List<String>.from(map['ingredientsAsList'] ?? []),
@@ -39,6 +42,7 @@ class CollectionItem {
       'id': id,
       'dishName': name,
       'calories': calories,
+      'videoLink': videoLink,
       'imageURL': imageUrl,
       'description': description,
       'ingredientsAsList': ingredients,

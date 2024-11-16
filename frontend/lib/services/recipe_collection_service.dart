@@ -54,8 +54,8 @@ class RecipeCollectionService {
         headers: {'Content-Type': 'application/json'},
         body: body,
       );
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('collection remove status: ${response.statusCode}');
+      print('collection remove response: ${response.body}');
       if (response.statusCode != 200) {
         throw Exception('Failed to remove from favorites');
       }
@@ -70,8 +70,8 @@ class RecipeCollectionService {
 
     try {
       final response = await http.get(url);
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('collection status: ${response.statusCode}');
+      print('collection response: ${response.body}');
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
@@ -90,8 +90,8 @@ class RecipeCollectionService {
 
     try {
       final response = await http.get(url);
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('collection all status: ${response.statusCode}');
+      print('collection all response: ${response.body}');
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
         return data.map((item) => CollectionItem.fromMap(item)).toList();
