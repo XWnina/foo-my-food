@@ -3,10 +3,10 @@ package com.foomyfood.foomyfood.service;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,31 +29,38 @@ public class SmartMenuService {
     @Autowired
     private RecipeService recipeService;
 
-    public List<PresetRecipe> filterUserRecipesFromPresetRecipes(Long userId) {
-        List<PresetRecipe> presetRecipes = presetRecipeService.getAllPresetRecipes();
-        List<Recipe> userRecipes = recipeService.getRecipesByUserId(userId);
-
-        // User recipes are compared with preset recipes
-        Iterator<PresetRecipe> presetIterator = presetRecipes.iterator();
-
-        while (presetIterator.hasNext()) {
-            PresetRecipe presetRecipe = presetIterator.next();
-            for (Recipe userRecipe : userRecipes) {
-                // if the dish name and ingredients are the same, remove the item from the preset recipe list
-                if (presetRecipe.getDishName().equalsIgnoreCase(userRecipe.getDishName())
-                        && presetRecipe.getIngredientsAsList().containsAll(userRecipe.getIngredientsAsList())
-                        && userRecipe.getIngredientsAsList().containsAll(presetRecipe.getIngredientsAsList())) {
-                    presetIterator.remove();
-                    break;
-                }
+    // Methods returning only recipe IDs
+    public List<Long> findRecipesByIngredients(Long userId, boolean isPresetSource, boolean useExpirationWeight) {
+        List<Map<String, Object>> detailedResults = findRecipesByIngredientsWithDetails(userId, isPresetSource, useExpirationWeight);
+        List<Long> recipeIds = new ArrayList<>();
+        for (Map<String, Object> recipe : detailedResults) {
+            if (!isPresetSource) {
+                recipeIds.add((Long) recipe.get("recipeId"));
+            }else {
+                recipeIds.add((Long) recipe.get("presetRecipeId"));
             }
         }
-
-        return presetRecipes;
+        return recipeIds;
     }
 
-    public List<Map<String, Object>> findRecipesByIngredients(Long userId, boolean isPresetSource, boolean useExpirationWeight) {
-        // If useExpirationWeight is true, get the user ingredients with expiration weights
+    public List<Long> findCustomRecipesByUserIngredients(Long userId) {
+        return findRecipesByIngredients(userId, false, false);
+    }
+
+    public List<Long> findPresetRecipesByUserIngredients(Long userId) {
+        return findRecipesByIngredients(userId, true, false);
+    }
+
+    public List<Long> findCustomRecipesByExpiringIngredients(Long userId) {
+        return findRecipesByIngredients(userId, false, true);
+    }
+
+    public List<Long> findPresetRecipesByExpiringIngredients(Long userId) {
+        return findRecipesByIngredients(userId, true, true);
+    }
+
+    // Methods returning detailed recipe information
+    public List<Map<String, Object>> findRecipesByIngredientsWithDetails(Long userId, boolean isPresetSource, boolean useExpirationWeight) {
         Map<String, Double> ingredientWeights;
         Set<String> userIngredients;
 
@@ -65,84 +72,71 @@ public class SmartMenuService {
             userIngredients = userIngredientService.getUserIngredientsByUserId(userId);
         }
 
-        // Get the recipes and their ingredients
-        List<List<String>> recipesIngredients; // List of recipes ingredients
-        List<String> recipesNames;  // List of recipes names
+        List<List<String>> recipesIngredients;
+        List<String> recipesNames;
+        List<Long> recipeIds;
 
         if (isPresetSource) {
             List<PresetRecipe> recipes = presetRecipeService.getAllPresetRecipes();
             recipesIngredients = new ArrayList<>();
             recipesNames = new ArrayList<>();
+            recipeIds = new ArrayList<>();
             for (PresetRecipe recipe : recipes) {
                 recipesIngredients.add(recipe.getIngredientsAsList());
                 recipesNames.add(recipe.getDishName());
+                recipeIds.add(recipe.getId());
             }
         } else {
             List<Recipe> recipes = recipeService.getRecipesByUserId(userId);
             recipesIngredients = new ArrayList<>();
             recipesNames = new ArrayList<>();
+            recipeIds = new ArrayList<>();
             for (Recipe recipe : recipes) {
                 recipesIngredients.add(recipe.getIngredientsAsList());
                 recipesNames.add(recipe.getDishName());
+                recipeIds.add(recipe.getId());
             }
         }
 
         List<Map<String, Object>> matchedRecipes = new ArrayList<>();
 
-        // Iterate over each recipe
         for (int i = 0; i < recipesNames.size(); i++) {
             String recipeName = recipesNames.get(i);
             List<String> recipeIngredients = recipesIngredients.get(i);
+            Long recipeId = recipeIds.get(i);
 
-            Set<String> matchedIngredients = new HashSet<>();  // Store matched ingredients for the current recipe
+            Set<String> matchedIngredients = new HashSet<>();
             double ingredientScore = 0.0;
             int matchedCount = 0;
-            // System.out.println("Current Recipe: " + recipeName);
-            // System.out.println("Current Recipe Ingredients: " + recipeIngredients);
-            // Iterate over each ingredient in the recipe
-            for (int j = 0; j < recipeIngredients.size(); j++) {
-                // Check if the user has this ingredient
-                String currentRecipeIngredient = recipeIngredients.get(j);
-                // System.out.println("==================================");
-                // System.out.println("Checking for ingredient: " + currentRecipeIngredient);
-                for (int k = 0; k < userIngredients.size(); k++) {
-                    String currentUserIngredient = userIngredients.toArray()[k].toString();
-                    // System.out.println("Checking against user ingredient: " + currentUserIngredient);
+
+            for (String currentRecipeIngredient : recipeIngredients) {
+                for (String currentUserIngredient : userIngredients) {
                     if (currentRecipeIngredient.trim().equalsIgnoreCase(currentUserIngredient)) {
-                        // System.out.println("!!!!!!Match found!");
                         matchedIngredients.add(currentUserIngredient);
-                        // Calculate the ingredient score
                         double weight = getWeight(ingredientWeights, currentUserIngredient, useExpirationWeight);
-                        // System.out.print("The matched ingredient is: " + currentUserIngredient);
-                        // System.out.println(" with weight: " + weight);
                         ingredientScore += weight;
-                        // System.out.println("Current ingredient score: " + ingredientScore);
                         matchedCount++;
-                        // System.out.println("Current matched count: " + matchedCount);
                     }
                 }
             }
 
-            // Only add the recipe if it has at least one matched ingredient
             if (!matchedIngredients.isEmpty()) {
-
                 Map<String, Object> recipeInfo = new HashMap<>();
+                if (isPresetSource) {
+                    recipeInfo.put("presetRecipeId", recipeId);
+                } else {
+                    recipeInfo.put("recipeId", recipeId);
+                }
                 recipeInfo.put("recipeName", recipeName);
                 recipeInfo.put("ingredientScore", Math.round(ingredientScore * 100.0) / 100.0);
-                if (ingredientScore == 0.0) {
-                    recipeInfo.put("ingredientPercentage", 0.0);
-                } else {
-                    double ingredientPercentage = (double) matchedCount / recipeIngredients.size();
-                    recipeInfo.put("ingredientPercentage", Math.round(ingredientPercentage * 100.0) / 100.0);
-                }
+                double ingredientPercentage = (double) matchedCount / recipeIngredients.size();
+                recipeInfo.put("ingredientPercentage", Math.round(ingredientPercentage * 100.0) / 100.0);
                 recipeInfo.put("matchedIngredients", matchedIngredients);
                 recipeInfo.put("ingredients", recipeIngredients);
                 matchedRecipes.add(recipeInfo);
             }
         }
-        // System.out.println("+---------------------------------+");
 
-        // Sort the matched recipes by ingredient score, then by ingredient percentage
         matchedRecipes.sort((r1, r2) -> {
             double score1 = (double) r1.get("ingredientScore");
             double score2 = (double) r2.get("ingredientScore");
@@ -158,31 +152,60 @@ public class SmartMenuService {
         return matchedRecipes;
     }
 
-    // Matching recipes from user recipe, by ingredients in the inventory
-    public List<Map<String, Object>> findCustomRecipesByUserIngredients(Long userId) {
-        return findRecipesByIngredients(userId, false, false);
+    public List<Map<String, Object>> findCustomRecipesByUserIngredientsWithDetails(Long userId) {
+        return findRecipesByIngredientsWithDetails(userId, false, false);
     }
 
-    // Matching recipes from preset recipe, by ingredients in the inventory
-    public List<Map<String, Object>> findPresetRecipesByUserIngredients(Long userId) {
-        return findRecipesByIngredients(userId, true, false);
+    public List<Map<String, Object>> findPresetRecipesByUserIngredientsWithDetails(Long userId) {
+        return findRecipesByIngredientsWithDetails(userId, true, false);
     }
 
-    // Matching recipes from user recipe, by expiring ingredients
-    public List<Map<String, Object>> findCustomRecipesByExpiringIngredients(Long userId) {
-        return findRecipesByIngredients(userId, false, true);
+    public List<Map<String, Object>> findCustomRecipesByExpiringIngredientsWithDetails(Long userId) {
+        return findRecipesByIngredientsWithDetails(userId, false, true);
     }
 
-    // Matching recipes from preset recipe, by expiring ingredients
-    public List<Map<String, Object>> findPresetRecipesByExpiringIngredients(Long userId) {
-        return findRecipesByIngredients(userId, true, true);
+    public List<Map<String, Object>> findPresetRecipesByExpiringIngredientsWithDetails(Long userId) {
+        return findRecipesByIngredientsWithDetails(userId, true, true);
     }
 
     private double getWeight(Map<String, Double> ingredientWeights, String ingredient, Boolean useExpirationWeight) {
-        if (useExpirationWeight) {
+        if (useExpirationWeight && ingredientWeights != null) {
             return ingredientWeights.get(ingredient);
         } else {
             return 1.0;
         }
+    }
+
+    public List<Map<String, Object>> getDetailedRecipeInfo(Long userId, boolean isPresetSource, boolean useExpiration) {
+        List<Map<String, Object>> recipeDetails = findRecipesByIngredientsWithDetails(userId, isPresetSource, useExpiration);
+
+        List<Map<String, Object>> detailedRecipes = recipeDetails.stream().map(recipe -> {
+            Long recipeId = (Long) recipe.get("recipeId");
+            Long presetRecipeId = (Long) recipe.get("presetRecipeId");
+            Map<String, Object> fullRecipeInfo = new HashMap<>(recipe);
+
+            if (isPresetSource) {
+                // Fetch full recipe details from PresetRecipe
+                PresetRecipe presetRecipe = presetRecipeService.getPresetRecipeByIdAsPresetRecipe(presetRecipeId);
+                if (presetRecipe != null) {
+                    fullRecipeInfo.put("description", presetRecipe.getDescription());
+                    fullRecipeInfo.put("imageUrl", presetRecipe.getImageURL());
+                    fullRecipeInfo.put("calories", presetRecipe.getCalories());
+                    fullRecipeInfo.put("labels", presetRecipe.getLabels());
+                }
+            } else {
+                // Fetch full recipe details from Recipe
+                Recipe userRecipe = recipeService.getRecipeByIdAsRecipe(recipeId);
+                if (userRecipe != null) {
+                    fullRecipeInfo.put("description", userRecipe.getDescription());
+                    fullRecipeInfo.put("imageUrl", userRecipe.getImageURL());
+                    fullRecipeInfo.put("calories", userRecipe.getCalories());
+                    fullRecipeInfo.put("labels", userRecipe.getLabels());
+                }
+            }
+            return fullRecipeInfo;
+        }).collect(Collectors.toList());
+
+        return detailedRecipes;
     }
 }
