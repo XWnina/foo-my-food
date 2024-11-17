@@ -64,16 +64,31 @@ public class FoomyfoodApplication implements CommandLineRunner {
         System.out.println("Use expiring ingredients? (yes or no): ");
         boolean useExpiring = scanner.nextLine().equalsIgnoreCase("yes");
 
+        System.out.println("Use preferred ingredients? (yes or no): ");
+        boolean usePreference = scanner.nextLine().equalsIgnoreCase("yes");
+
         // Step 1: Fetch detailed recipe information
         List<Map<String, Object>> recipeDetails;
-        if (sourceChoice == 1) {
-            recipeDetails = useExpiring
-                    ? smartMenuService.findCustomRecipesByExpiringIngredientsWithDetails(userId)
-                    : smartMenuService.findCustomRecipesByUserIngredientsWithDetails(userId);
-        } else if (sourceChoice == 2) {
-            recipeDetails = useExpiring
-                    ? smartMenuService.findPresetRecipesByExpiringIngredientsWithDetails(userId)
-                    : smartMenuService.findPresetRecipesByUserIngredientsWithDetails(userId);
+        if (sourceChoice == 1 && useExpiring && !usePreference) {
+            // Expiring ingredients from user recipes: 1TF
+            recipeDetails = smartMenuService.getDetailedRecipeInfo(userId, false, true, false);
+        } else if (sourceChoice == 1 && !useExpiring && usePreference) {
+            // All preferred ingredients from user recipes: 1FT
+            System.out.println("====All preferred ingredients from user recipes: 1FT====");
+            recipeDetails = smartMenuService.getDetailedRecipeInfo(userId, false, false, true);
+        } else if (sourceChoice == 1 && !useExpiring && !usePreference) {
+            // User Ingredients from user recipes: 1FF
+            recipeDetails = smartMenuService.getDetailedRecipeInfo(userId, false, false, false);
+        } else if (sourceChoice == 2 && useExpiring && !usePreference) {
+            // Expiring ingredients from preset recipes: 2TF
+            recipeDetails = smartMenuService.getDetailedRecipeInfo(userId, true, true, false);
+        } else if (sourceChoice == 2 && !useExpiring && usePreference) {
+            // All preferred ingredients from preset recipes: 2FT
+            System.out.println("====All preferred ingredients from preset recipes: 2FT====");
+            recipeDetails = smartMenuService.getDetailedRecipeInfo(userId, true, false, true);
+        } else if (sourceChoice == 2 && useExpiring && usePreference) {
+            // User ingredients from preset recipes: 2FF
+            recipeDetails = smartMenuService.getDetailedRecipeInfo(userId, true, false, false);
         } else {
             System.out.println("Invalid choice. Exiting.");
             return;
@@ -83,10 +98,10 @@ public class FoomyfoodApplication implements CommandLineRunner {
         printRecipesInDetails(recipeDetails);
 
         // Step 3: Print IDs based on conditions
-        printRecipeIDs(userId, sourceChoice, useExpiring);
+        printRecipeIDs(userId, sourceChoice, useExpiring, usePreference);
 
         // Step 4: Test JSON output
-        testJsonOutput(userId, sourceChoice == 2, useExpiring);
+        testJsonOutput(userId, sourceChoice == 2, useExpiring, usePreference);
     }
 
     private void printRecipesInDetails(List<Map<String, Object>> recipes) {
@@ -102,31 +117,38 @@ public class FoomyfoodApplication implements CommandLineRunner {
                 System.out.println("Score: " + recipe.get("ingredientScore"));
                 System.out.println("Percentage: " + recipe.get("ingredientPercentage"));
                 System.out.println();
-            }
-        }
+            }        }
     }
 
-    private void printRecipeIDs(Long userId, int sourceChoice, boolean useExpiring) {
+    private void printRecipeIDs(Long userId, int sourceChoice, boolean useExpiring, boolean usePreference) {
         System.out.println("=====Recipe IDs=====");
         List<Long> recipeIds;
-        if (sourceChoice == 1 && !useExpiring) {
+        if (sourceChoice == 1 && !useExpiring && !usePreference) {
+            // All user ingredients from user recipes: 1FF
             recipeIds = smartMenuService.findCustomRecipesByUserIngredients(userId);
-            System.out.println("User Recipe IDs: " + recipeIds);
-        } else if (sourceChoice == 1 && useExpiring) {
+        } else if (sourceChoice == 1 && useExpiring && !usePreference) {
+            // Expiring ingredients from user recipes: 1TF
             recipeIds = smartMenuService.findCustomRecipesByExpiringIngredients(userId);
-            System.out.println("User Recipe IDs: " + recipeIds);
-        } else if (sourceChoice == 2 && !useExpiring) {
+        } else if (sourceChoice == 1 && !useExpiring && usePreference) {
+            // All preferred ingredients from user recipes: 1FT
+            recipeIds = smartMenuService.findCustomRecipesWithPreferenceWeights(userId);
+        } else if (sourceChoice == 2 && !useExpiring && !usePreference) {
+            // All user ingredients from preset recipes: 2FF
             recipeIds = smartMenuService.findPresetRecipesByUserIngredients(userId);
-            System.out.println("Preset Recipe IDs: " + recipeIds);
-        } else if (sourceChoice == 2 && useExpiring) {
+        } else if (sourceChoice == 2 && useExpiring && !usePreference) {
+            // Expiring ingredients from preset recipes: 2TF
             recipeIds = smartMenuService.findPresetRecipesByExpiringIngredients(userId);
-            System.out.println("Preset Recipe IDs: " + recipeIds);
+        } else if (sourceChoice == 2 && !useExpiring && usePreference) {
+            // All preferred ingredients from preset recipes: 2FT
+            recipeIds = smartMenuService.findPresetRecipesWithPreferenceWeights(userId);
+        } else {
+            System.out.println("Invalid choice. Exiting.");
         }
     }
 
-    private void testJsonOutput(Long userId, boolean isPreset, boolean useExpiring) {
+    private void testJsonOutput(Long userId, boolean isPreset, boolean useExpiring, boolean usePreference) {
         System.out.println("=====JSON Output=====");
-        List<Map<String, Object>> jsonOutput = smartMenuService.getDetailedRecipeInfo(userId, isPreset, useExpiring);
+        List<Map<String, Object>> jsonOutput = smartMenuService.getDetailedRecipeInfo(userId, isPreset, useExpiring, usePreference);
         if (jsonOutput.isEmpty()) {
             System.out.println("No recipes found for the given criteria.");
         } else {

@@ -21,6 +21,9 @@ public class CookingHistoryService {
     @Autowired
     private RecipeRepository recipeRepository;
 
+    @Autowired
+    private PreferredIngredientsService preferredIngredientsService;
+
     // Add a new CookingHistory entry
 //    public CookingHistory addCookingHistory(Long userId, Long recipeId, LocalDate cookingDate) {
 //        Optional<Recipe> recipe = recipeRepository.findById(recipeId);
@@ -42,11 +45,15 @@ public class CookingHistoryService {
             updatedRecipe.setCookCount(updatedRecipe.getCookCount() + 1);
             recipeRepository.save(updatedRecipe);
 
+            // Update the preferred ingredients table
+            preferredIngredientsService.updatePreferredIngredientsFromRecipes();
+            
             return cookingHistory;
         } else {
             throw new IllegalArgumentException("Recipe not found with id: " + recipeId);
         }
     }
+
     // Retrieve all CookingHistory entries by user ID
     public List<CookingHistory> getAllCookingHistoryByUserId(Long userId) {
         return cookingHistoryRepository.findByUserId(userId);
@@ -70,8 +77,5 @@ public class CookingHistoryService {
         System.out.println("Recipe ID " + recipeId + " was cooked " + cookCount + " times in the last " + days + " days.");
         return cookCount;
     }
-
-
-
 
 }

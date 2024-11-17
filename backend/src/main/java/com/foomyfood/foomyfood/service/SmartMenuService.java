@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.foomyfood.foomyfood.database.PresetRecipe;
 import com.foomyfood.foomyfood.database.Recipe;
+import com.foomyfood.foomyfood.database.db_service.PreferredIngredientsService;
 import com.foomyfood.foomyfood.database.db_service.PresetRecipeService;
 import com.foomyfood.foomyfood.database.db_service.RecipeService;
 import com.foomyfood.foomyfood.database.db_service.UserIngredientService;
@@ -29,43 +30,47 @@ public class SmartMenuService {
     @Autowired
     private RecipeService recipeService;
 
-    // Methods returning only recipe IDs
-    public List<Long> findRecipesByIngredients(Long userId, boolean isPresetSource, boolean useExpirationWeight) {
-        List<Map<String, Object>> detailedResults = findRecipesByIngredientsWithDetails(userId, isPresetSource, useExpirationWeight);
-        List<Long> recipeIds = new ArrayList<>();
-        for (Map<String, Object> recipe : detailedResults) {
-            if (!isPresetSource) {
-                recipeIds.add((Long) recipe.get("recipeId"));
-            } else {
-                recipeIds.add((Long) recipe.get("presetRecipeId"));
-            }
+    @Autowired
+    private PreferredIngredientsService preferredIngredientsService;
+
+    private Map<String, Double> getUserIngredientsWithPreferenceWeights(Long userId) {
+        // Fetch preferred ingredients with their cooking counts
+        Map<String, Integer> preferredIngredients = preferredIngredientsService.getPreferredIngredientsWithCookCount(userId);
+
+        // Sort preferred ingredients by cooking frequency in descending order
+        List<Map.Entry<String, Integer>> sortedPreferredIngredients = preferredIngredients.entrySet().stream()
+                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue())) // Descending order of frequency
+                .collect(Collectors.toList());
+
+        // Assign weights inversely proportional to rank of ingredient
+        Map<String, Double> preferredWeights = new HashMap<>();
+        for (int i = 0; i < sortedPreferredIngredients.size(); i++) {
+            Map.Entry<String, Integer> entry = sortedPreferredIngredients.get(i);
+            String ingredient = entry.getKey();
+            double weight = 1.0 / (i + 1); // Weight decreases as rank increases
+            preferredWeights.put(ingredient.toLowerCase(), weight); // Normalize to lowercase for consistency
+            // System.out.println("Ingredient: " + ingredient + ", Rank: " + (i + 1) + ", Weight: " + weight);
+
         }
-        return recipeIds;
+        return preferredWeights;
     }
 
-    public List<Long> findCustomRecipesByUserIngredients(Long userId) {
-        return findRecipesByIngredients(userId, false, false);
-    }
-
-    public List<Long> findPresetRecipesByUserIngredients(Long userId) {
-        return findRecipesByIngredients(userId, true, false);
-    }
-
-    public List<Long> findCustomRecipesByExpiringIngredients(Long userId) {
-        return findRecipesByIngredients(userId, false, true);
-    }
-
-    public List<Long> findPresetRecipesByExpiringIngredients(Long userId) {
-        return findRecipesByIngredients(userId, true, true);
+    private double getWeight(Map<String, Double> ingredientWeights, String ingredient, Boolean useExpirationWeight) {
+        double weight = ingredientWeights != null ? ingredientWeights.getOrDefault(ingredient.toLowerCase(), 0.0) : 1.0;
+        System.out.println("Ingredient: " + ingredient + ", Weight: " + weight);
+        return weight;
     }
 
     // Methods returning detailed recipe information
-    public List<Map<String, Object>> findRecipesByIngredientsWithDetails(Long userId, boolean isPresetSource, boolean useExpirationWeight) {
+    public List<Map<String, Object>> findRecipesByIngredientsWithDetails(Long userId, boolean isPresetSource, boolean useExpirationWeight, boolean usePreferenceWeight) {
         Map<String, Double> ingredientWeights;
         Set<String> userIngredients;
 
         if (useExpirationWeight) {
             ingredientWeights = userIngredientService.getUserIngredientsWithExpirationWeights(userId);
+            userIngredients = ingredientWeights.keySet();
+        } else if (usePreferenceWeight) {
+            ingredientWeights = getUserIngredientsWithPreferenceWeights(userId);
             userIngredients = ingredientWeights.keySet();
         } else {
             ingredientWeights = null;
@@ -153,31 +158,70 @@ public class SmartMenuService {
     }
 
     public List<Map<String, Object>> findCustomRecipesByUserIngredientsWithDetails(Long userId) {
-        return findRecipesByIngredientsWithDetails(userId, false, false);
+        return findRecipesByIngredientsWithDetails(userId, false, false, false);
     }
 
     public List<Map<String, Object>> findPresetRecipesByUserIngredientsWithDetails(Long userId) {
-        return findRecipesByIngredientsWithDetails(userId, true, false);
+        return findRecipesByIngredientsWithDetails(userId, true, false, false);
     }
 
     public List<Map<String, Object>> findCustomRecipesByExpiringIngredientsWithDetails(Long userId) {
-        return findRecipesByIngredientsWithDetails(userId, false, true);
+        return findRecipesByIngredientsWithDetails(userId, false, true, false);
     }
 
     public List<Map<String, Object>> findPresetRecipesByExpiringIngredientsWithDetails(Long userId) {
-        return findRecipesByIngredientsWithDetails(userId, true, true);
+        return findRecipesByIngredientsWithDetails(userId, true, true, false);
     }
 
-    private double getWeight(Map<String, Double> ingredientWeights, String ingredient, Boolean useExpirationWeight) {
-        if (useExpirationWeight && ingredientWeights != null) {
-            return ingredientWeights.get(ingredient);
-        } else {
-            return 1.0;
+    public List<Map<String, Object>> findCustomRecipesByPreferredIngredientsWithDetails(Long userId) {
+        return findRecipesByIngredientsWithDetails(userId, false, false, true);
+    }
+
+    public List<Map<String, Object>> findPresetRecipesByPreferredIngredientsWithDetails(Long userId) {
+        return findRecipesByIngredientsWithDetails(userId, true, false, true);
+    }
+
+    // Methods returning only recipe IDs
+    public List<Long> findRecipesByIngredients(Long userId, boolean isPresetSource, boolean useExpirationWeight, boolean usePreferenceWeight) {
+        List<Map<String, Object>> detailedResults = findRecipesByIngredientsWithDetails(userId, isPresetSource, useExpirationWeight, usePreferenceWeight);
+        List<Long> recipeIds = new ArrayList<>();
+        for (Map<String, Object> recipe : detailedResults) {
+            if (!isPresetSource) {
+                recipeIds.add((Long) recipe.get("recipeId"));
+            } else {
+                recipeIds.add((Long) recipe.get("presetRecipeId"));
+            }
         }
+        return recipeIds;
     }
 
-    public List<Map<String, Object>> getDetailedRecipeInfo(Long userId, boolean isPresetSource, boolean useExpiration) {
-        List<Map<String, Object>> recipeDetails = findRecipesByIngredientsWithDetails(userId, isPresetSource, useExpiration);
+    public List<Long> findCustomRecipesByUserIngredients(Long userId) {
+        return findRecipesByIngredients(userId, false, false, false);
+    }
+
+    public List<Long> findPresetRecipesByUserIngredients(Long userId) {
+        return findRecipesByIngredients(userId, true, false, false);
+    }
+
+    public List<Long> findCustomRecipesByExpiringIngredients(Long userId) {
+        return findRecipesByIngredients(userId, false, true, false);
+    }
+
+    public List<Long> findPresetRecipesByExpiringIngredients(Long userId) {
+        return findRecipesByIngredients(userId, true, true, false);
+    }
+
+    public List<Long> findCustomRecipesWithPreferenceWeights(Long userId) {
+        return findRecipesByIngredients(userId, false, false, true);
+    }
+
+    public List<Long> findPresetRecipesWithPreferenceWeights(Long userId) {
+        return findRecipesByIngredients(userId, true, false, true);
+    }
+
+    // Method returning detailed recipe information
+    public List<Map<String, Object>> getDetailedRecipeInfo(Long userId, boolean isPresetSource, boolean useExpiration, boolean usePreference) {
+        List<Map<String, Object>> recipeDetails = findRecipesByIngredientsWithDetails(userId, isPresetSource, useExpiration, usePreference);
         List<Map<String, Object>> detailedRecipes = new ArrayList<>();
         if (isPresetSource) {
             detailedRecipes = recipeDetails.stream().map(recipe -> {

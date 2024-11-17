@@ -128,7 +128,6 @@ public class Recipe {
         return cookCount;
     }
 
-    // Setter 方法
     public void setCookCount(int cookCount) {
         this.cookCount = cookCount;
     }

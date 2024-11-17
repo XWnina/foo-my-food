@@ -21,6 +21,8 @@ public class RecipeService {
     private CookingHistoryRepository cookingHistoryRepository;
     @Autowired
     private RecipeCollectionRepository recipeCollectionRepository;
+    @Autowired
+    private PreferredIngredientsService preferredIngredientsService;
 
     // Add a new recipe
     public Recipe addRecipe(Recipe recipe) {
@@ -31,6 +33,10 @@ public class RecipeService {
         if (recipe.getIngredients() == null || recipe.getIngredients().isEmpty()) {
             throw new IllegalArgumentException("Ingredients are mandatory.");
         }
+
+        // Update the preferred ingredients table
+        preferredIngredientsService.updatePreferredIngredientsFromRecipes();
+
         return recipeRepository.save(recipe);
     }
 
@@ -46,6 +52,7 @@ public class RecipeService {
 
     // Update an existing recipe
     public Recipe editRecipe(Long id, Recipe updatedRecipe) {
+
         return recipeRepository.findById(id).map(recipe -> {
             recipe.setDishName(updatedRecipe.getDishName());
             recipe.setCalories(updatedRecipe.getCalories());
@@ -54,6 +61,9 @@ public class RecipeService {
             recipe.setDescription(updatedRecipe.getDescription());
             recipe.setIngredients(String.join(", ", updatedRecipe.getIngredientsAsList()));
             recipe.setLabels(updatedRecipe.getLabels());
+
+            // Update the preferred ingredients table
+            preferredIngredientsService.updatePreferredIngredientsFromRecipes();
 
             return recipeRepository.save(recipe);
         }).orElseThrow(() -> new RuntimeException("Recipe with ID " + id + " not found"));

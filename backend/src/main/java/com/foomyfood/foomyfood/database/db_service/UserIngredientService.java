@@ -18,6 +18,7 @@ import com.foomyfood.foomyfood.database.UserIngredient;
 import com.foomyfood.foomyfood.database.db_repository.IngredientRepository;
 import com.foomyfood.foomyfood.database.db_repository.UserIngredientRepository;
 
+
 @Service
 public class UserIngredientService {
 
@@ -26,6 +27,9 @@ public class UserIngredientService {
 
     @Autowired
     private IngredientRepository ingredientRepository;
+
+    @Autowired
+    private PreferredIngredientsService preferredIngredientsService;
 
     // Get all user ingredients
     public List<UserIngredient> getAllUserIngredients(Long userId) {
@@ -162,4 +166,5 @@ public class UserIngredientService {
 
         return ingredientWeights;
     }
+
 }
