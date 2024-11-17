@@ -21,12 +21,13 @@ public class SmartMenuController {
 //        return smartMenuService.findCustomRecipesByUserIngredients(userId);
 //    }
     @GetMapping("/api/recipes/custom")
-    public List<Map<String,Object>> getCustomRecipesByUserIngredients(@RequestParam Long userId) {
-        return smartMenuService.getDetailedRecipeInfo(userId,false,false);
+    public List<Map<String, Object>> getCustomRecipesByUserIngredients(@RequestParam Long userId) {
+        return smartMenuService.getDetailedRecipeInfo(userId, false, false, false);
     }
+
     @GetMapping("/api/recipes/preset")
-    public List<Map<String,Object>> getPresetRecipesByUserIngredients(@RequestParam Long userId) {
-        return smartMenuService.getDetailedRecipeInfo(userId,true,false);
+    public List<Map<String, Object>> getPresetRecipesByUserIngredients(@RequestParam Long userId) {
+        return smartMenuService.getDetailedRecipeInfo(userId, true, false, false);
     }
 
 //    @GetMapping("/api/recipes/custom/expiring")
@@ -38,19 +39,29 @@ public class SmartMenuController {
 //    public List<Long> getPresetRecipesByExpiringIngredients(@RequestParam Long userId) {
 //        return smartMenuService.findPresetRecipesByExpiringIngredients(userId);
 //    }
-////
+    ////
 //    @GetMapping("/api/recipes/preset")
 //    public List<Long> getPresetRecipesByUserIngredients(@RequestParam Long userId) {
 //        return smartMenuService.findPresetRecipesByUserIngredients(userId);
 //    }
 
     @GetMapping("/api/recipes/custom/expiring")
-    public List<Map<String,Object>> getCustomRecipesByExpiringIngredients(@RequestParam Long userId) {
-        return smartMenuService.getDetailedRecipeInfo(userId,false,true);
+    public List<Map<String, Object>> getCustomRecipesByExpiringIngredients(@RequestParam Long userId) {
+        return smartMenuService.getDetailedRecipeInfo(userId, false, true, false);
     }
 
     @GetMapping("/api/recipes/preset/expiring")
-    public List<Map<String,Object>>getPresetRecipesByExpiringIngredients(@RequestParam Long userId) {
-        return smartMenuService.getDetailedRecipeInfo(userId,true,true);
+    public List<Map<String, Object>> getPresetRecipesByExpiringIngredients(@RequestParam Long userId) {
+        return smartMenuService.getDetailedRecipeInfo(userId, true, true, false);
+    }
+
+    @GetMapping("/api/recipes/custom/preference")
+    public List<Map<String, Object>> getCustomRecipesByUserIngredientsWithPreferenceWeights(@RequestParam Long userId) {
+        return smartMenuService.getDetailedRecipeInfo(userId, false, false, true);
+    }
+
+    @GetMapping("/api/recipes/preset/preference")
+    public List<Map<String, Object>> getPresetRecipesByUserIngredientsWithPreferenceWeights(@RequestParam Long userId) {
+        return smartMenuService.getDetailedRecipeInfo(userId, true, false, true);
     }
 }
