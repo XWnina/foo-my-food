@@ -159,8 +159,9 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
           break;
         case 'usually_cooked':
           // TODO: Implement when backend supports this feature
-          customRecipesUrl = '$baseApiUrl/myrecipes/user/${widget.userId}';
-          presetRecipesUrl = '$baseApiUrl/preset-recipes';
+          print("yeaahhh");
+          customRecipesUrl = '$baseApiUrl/recipes/custom/preference?userId=${widget.userId}';
+          presetRecipesUrl = '$baseApiUrl/recipes/preset/preference?userId=${widget.userId}';
           break;
         case 'what_i_have':
         default:
