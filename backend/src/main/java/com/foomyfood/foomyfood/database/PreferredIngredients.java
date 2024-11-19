@@ -21,8 +21,8 @@ public class PreferredIngredients {
     @Column(name = "ingredient", nullable = false)
     private String ingredient;
 
-    @Column(name = "total_cooking_count", nullable = false)
-    private int totalCookingCount;
+    @Column(name = "total_cooking_time", nullable = false)
+    private int totalCookingCount = 0;
 
     // Constructors
     public PreferredIngredients() {}
