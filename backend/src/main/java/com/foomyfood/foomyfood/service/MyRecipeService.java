@@ -22,4 +22,5 @@ public class MyRecipeService {
     public List<Recipe> getAllRecipes() {
         return recipeService.getAllRecipes();
     }
+
 }
