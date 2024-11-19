@@ -82,7 +82,13 @@ public class SmartMenuService {
         List<Long> recipeIds;
 
         if (isPresetSource) {
-            List<PresetRecipe> recipes = presetRecipeService.getAllPresetRecipes();
+            // List<PresetRecipe> recipes = presetRecipeService.getAllPresetRecipes();
+            List<PresetRecipe> recipes = filterUniquePresetRecipes(userId);
+            System.out.println("================================");
+            for (int i = 0; i < recipes.size(); i++) {
+                System.out.println(i);
+                System.out.println(recipes.get(i).getDishName());
+            }
             recipesIngredients = new ArrayList<>();
             recipesNames = new ArrayList<>();
             recipeIds = new ArrayList<>();
@@ -257,5 +263,71 @@ public class SmartMenuService {
         }
 
         return detailedRecipes;
+    }
+
+    public List<PresetRecipe> filterUniquePresetRecipes(Long userId) {
+        List<Recipe> userRecipes = recipeService.getRecipesByUserId(userId);
+        List<PresetRecipe> allPresetRecipes = presetRecipeService.getAllPresetRecipes();
+        List<PresetRecipe> uniquePresetRecipes = allPresetRecipes;
+
+        for (int i = 0; i < allPresetRecipes.size(); i++) {
+            for (int j = 0; j < userRecipes.size(); j++) {
+                String currentUserRecipeName = userRecipes.get(j).getDishName();
+
+                String currentPresetRecipeName = allPresetRecipes.get(i).getDishName();
+                String currentUserIngredient = userRecipes.get(j).getIngredients();
+                String currentPresetRecipeIngredient = allPresetRecipes.get(i).getIngredients();
+                String currentUserRecipeDescription = userRecipes.get(j).getDescription();
+                String currentPresetRecipeDescription = allPresetRecipes.get(i).getDescription();
+
+                // System.out.println("Current user recipe name: " + currentUserRecipeName);
+                // System.out.println("Current preset recipe name: " + currentPresetRecipeName);
+                // System.out.println("Current user recipe ingredient: " + currentUserIngredient);
+                // System.out.println("Current preset recipe ingredient: " + currentPresetRecipeIngredient);
+                // System.out.println("Current user recipe description: " + currentUserRecipeDescription);
+                // System.out.println("Current preset recipe description: " + currentPresetRecipeDescription);
+                // System.out.println("================================");
+                // System.out.println("================================");
+                // If the user recipe's name is null, set it to an empty string
+                if (currentUserRecipeDescription == null) {
+                    currentUserRecipeDescription = "";
+                }
+                // If one of the user recipe's name, description, and ingredients dismatch the preset recipe's name, description, and ingredients, add the preset recipe to the list of unique preset recipes
+                // if (!(currentUserRecipeName.equals(currentPresetRecipeName)
+                //         && currentUserRecipeDescription.equals(currentPresetRecipeDescription)
+                //         && currentUserIngredient.equals(currentPresetRecipeIngredient))) {
+                //     uniquePresetRecipes.add(allPresetRecipes.get(i));
+                //     System.out.println("!!!!!!!!!!!!!!!!!!!!Added preset recipe to unique preset recipes!!!!!!!!!!!!!!!!!!!!");
+                //     System.out.println("Current preset recipe name: " + currentPresetRecipeName);
+                //     break;
+                // }
+
+                if (!currentUserRecipeName.equals(currentPresetRecipeName)) {
+                    // System.out.println("NAME MISMATCH");
+                    // System.out.println("Current user recipe name: " + currentUserRecipeName);
+                    break;
+                } else if (!currentUserIngredient.equals(currentPresetRecipeIngredient)) {
+                    // System.out.println("INGREDIENT MISMATCH");
+                    // System.out.println("Current user recipe name: " + currentUserRecipeName);
+                    break;
+                } else if (!currentUserRecipeDescription.equals(currentPresetRecipeDescription)) {
+                    // System.out.println("DESCRIPTION MISMATCH");
+                    // System.out.println("Current user recipe name: " + currentUserRecipeName);
+                    break;
+                } else {
+                    // System.out.println("ALL MATCH DELETE FROM LIST");
+                    // uniquePresetRecipes.remove(allPresetRecipes.get(i));
+                    break;
+                }
+            }
+
+        }
+        // System.out.println("+++++++++++++++++++++++++++++++");
+        // for (int i = 0; i < uniquePresetRecipes.size(); i++) {
+        //     System.out.println(i);
+        //     System.out.println(uniquePresetRecipes.get(i).getDishName());
+        //     System.out.println(uniquePresetRecipes.get(i).getIngredients());
+        // }
+        return uniquePresetRecipes;
     }
 }
