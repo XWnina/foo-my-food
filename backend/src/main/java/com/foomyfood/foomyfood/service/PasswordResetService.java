@@ -4,7 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class PasswordResetService {
+public class
+PasswordResetService {
 
     @Autowired
     private EmailService emailService;  // 使用 EmailService 发送邮件

@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.foomyfood.foomyfood.database.db_repository.RecipeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import com.foomyfood.foomyfood.database.db_service.PreferredIngredientsService;
 import com.foomyfood.foomyfood.database.db_service.PresetRecipeService;
 import com.foomyfood.foomyfood.database.db_service.RecipeService;
 import com.foomyfood.foomyfood.database.db_service.UserIngredientService;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SmartMenuService {
@@ -29,6 +31,8 @@ public class SmartMenuService {
 
     @Autowired
     private RecipeService recipeService;
+    @Autowired
+    private RecipeRepository recipeRepository;
 
     @Autowired
     private PreferredIngredientsService preferredIngredientsService;
@@ -330,4 +334,21 @@ public class SmartMenuService {
         // }
         return uniquePresetRecipes;
     }
+
+    @Transactional
+    public Recipe copyPresetRecipe(Long userId, Long presetRecipeId) {
+        PresetRecipe presetRecipe = presetRecipeService.getPresetRecipeByIdAsPresetRecipe(presetRecipeId);
+        Recipe copiedRecipe = new Recipe();
+        copiedRecipe.setDishName(presetRecipe.getDishName());
+        copiedRecipe.setCalories(presetRecipe.getCalories());
+        copiedRecipe.setVideoLink(presetRecipe.getVideoLink());
+        copiedRecipe.setImageURL(presetRecipe.getImageURL());
+        copiedRecipe.setDescription(presetRecipe.getDescription());
+        copiedRecipe.setIngredients(presetRecipe.getIngredients());
+        copiedRecipe.setLabels(presetRecipe.getLabels());
+        copiedRecipe.setUserId(userId);
+        copiedRecipe.setCookCount(0);
+        return recipeRepository.save(copiedRecipe);
+    }
+
 }

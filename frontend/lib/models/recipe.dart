@@ -36,7 +36,7 @@ class Recipe {
       // Highlight: Handle both 'id' and '_id' fields
       id: json['id'] is int
           ? json['id']
-          : int.parse((json['id'] ?? json['_id'] ?? '0').toString()),
+          : int.parse((json['id'] ?? json['_id']?? json['presetRecipeId'] ?? '0').toString()),
       // Highlight: Handle both 'cookCount' and 'cook_count' fields
       cookCount: json['cookCount'] ?? json['cook_count'] ?? 0,
       // Highlight: Handle both 'name' and 'dishName' fields
