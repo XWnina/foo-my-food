@@ -86,7 +86,7 @@ public class FoomyfoodApplication implements CommandLineRunner {
             // All preferred ingredients from preset recipes: 2FT
             System.out.println("====All preferred ingredients from preset recipes: 2FT====");
             recipeDetails = smartMenuService.getDetailedRecipeInfo(userId, true, false, true);
-        } else if (sourceChoice == 2 && useExpiring && usePreference) {
+        } else if (sourceChoice == 2 && !useExpiring && !usePreference) {
             // User ingredients from preset recipes: 2FF
             recipeDetails = smartMenuService.getDetailedRecipeInfo(userId, true, false, false);
         } else {
@@ -96,19 +96,17 @@ public class FoomyfoodApplication implements CommandLineRunner {
 
         // Step 2: Print details in a human-readable format
         printRecipesInDetails(recipeDetails);
-
         // Step 3: Print IDs based on conditions
-        printRecipeIDs(userId, sourceChoice, useExpiring, usePreference);
-
+        // printRecipeIDs(userId, sourceChoice, useExpiring, usePreference);
         // Step 4: Test JSON output
-        testJsonOutput(userId, sourceChoice == 2, useExpiring, usePreference);
+        // testJsonOutput(userId, sourceChoice == 2, useExpiring, usePreference);
     }
 
     private void printRecipesInDetails(List<Map<String, Object>> recipes) {
         if (recipes.isEmpty()) {
             System.out.println("No matching recipes found.");
         } else {
-            for (Map<String, Object> recipe : recipes) {
+            recipes.forEach(recipe -> {
                 System.out.println("Recipe ID: " + recipe.get("recipeId"));
                 System.out.println("Preset Recipe ID: " + recipe.get("presetRecipeId"));
                 System.out.println("Recipe: " + recipe.get("recipeName"));
@@ -117,7 +115,8 @@ public class FoomyfoodApplication implements CommandLineRunner {
                 System.out.println("Score: " + recipe.get("ingredientScore"));
                 System.out.println("Percentage: " + recipe.get("ingredientPercentage"));
                 System.out.println();
-            }        }
+            });
+        }
     }
 
     private void printRecipeIDs(Long userId, int sourceChoice, boolean useExpiring, boolean usePreference) {
