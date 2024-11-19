@@ -51,4 +51,5 @@ public class PresetRecipeController {
         presetRecipeService.deletePresetRecipe(id);
         return ResponseEntity.noContent().build();
     }
+
 }

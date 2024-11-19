@@ -533,6 +533,33 @@ void _generateMealPlan() {
       ),
     );
   }
+Future<void> _copyPresetRecipe(Recipe recipe) async {
+    try {
+      //print(recipe.name.toString());
+      final response = await http.post(
+        Uri.parse('$baseApiUrl/recipes/copy'), // 替换为你的 API URL
+        body: {
+        'userId': widget.userId,
+        'presetRecipeId': recipe.id.toString(),
+      },
+      );
+      print(response.statusCode);
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${recipe.name} has been added to your recipes!')),
+        );
+        _fetchRecipes(); // Refresh the recipe list
+      } else {
+        throw Exception('Failed to copy recipe');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to copy recipe. Please try again.')),
+      );
+      print('Error copying recipe: $e');
+    }
+  }
+
 
   Widget _buildRecipeSection(String title, List<Recipe> recipes) {
     final bool isPresetRecipe = title == 'Preset Recipes';
@@ -677,6 +704,15 @@ void _generateMealPlan() {
                                   );
                                 }).toList() ??
                                 [],
+                          ),
+                          if (isPresetRecipe)
+                            ElevatedButton(
+                              onPressed: () => _copyPresetRecipe(recipe),
+                              child: Text('Copy to My Recipes'),
+                              style: ElevatedButton.styleFrom(
+                                foregroundColor: AppColors.textColor(context), 
+                                backgroundColor: AppColors.appBarColor(context),
+                              ),
                           ),
                         ],
                       ),
