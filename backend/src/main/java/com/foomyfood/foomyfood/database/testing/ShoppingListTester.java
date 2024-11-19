@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import com.foomyfood.foomyfood.database.ShoppingList;
 import com.foomyfood.foomyfood.database.db_service.ShoppingListService;
 
-// @Component
+@Component
 public class ShoppingListTester implements CommandLineRunner {
 
     @Autowired
@@ -55,17 +55,17 @@ public class ShoppingListTester implements CommandLineRunner {
     private void createTestItems() {
         // Valid items with all fields filled
         ShoppingList item1 = shoppingListService.createItem(
-                new ShoppingList(1L, "Milk", 2, "liters", false)
+                new ShoppingList(1L, "Milk", 2, "liters", false, "Vegetables")
         );
 
         // Item with minimal details
         ShoppingList item2 = shoppingListService.createItem(
-                new ShoppingList(1L, "Bread", 1, "loaf", true)
+                new ShoppingList(1L, "Bread", 1, "loaf", true, "Grocery")
         );
 
         // Item with only userId and name filled
         ShoppingList item3 = shoppingListService.createItem(
-                new ShoppingList(2L, "Eggs", 12, "pcs", false)
+                new ShoppingList(2L, "Eggs", 12, "pcs", false, "Dairy")
         );
 
         // Print created items
@@ -99,8 +99,7 @@ public class ShoppingListTester implements CommandLineRunner {
     // Update an item
     private void updateItem(Long itemId) {
         ShoppingList updatedItem = shoppingListService.updateItem(itemId,
-                new ShoppingList(1L, "Updated Milk", 3, "liters", true)
-        );
+                new ShoppingList(1L, "Updated Milk", 3, "liters", true, "dairy"));
         System.out.println("Updated Item: " + updatedItem);
     }
 
