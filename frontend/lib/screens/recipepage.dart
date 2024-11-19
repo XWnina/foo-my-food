@@ -164,7 +164,12 @@ class _RecipePageState extends State<RecipePage> {
         print('Error: ${response.statusCode} - ${response.body}');
       }
     }
-    _fetchUserRecipes(); // 刷新菜谱列表以更新制作次数
+    setState(() {  // Add this setState
+    _selectedRecipes.clear();
+    _isSelecting = false;
+    _totalCalories = 0;
+    });
+    await _fetchUserRecipes(); // 刷新菜谱列表以更新制作次数
   }
 
   void _loadUserId() async {
@@ -181,31 +186,39 @@ class _RecipePageState extends State<RecipePage> {
     }
   }
 
-  Future<void> _fetchUserRecipes() async {
-    print("Fetching user recipes...");
-    try {
-      final response =
-          await http.get(Uri.parse('$baseApiUrl/myrecipes/user/$userId'));
-      if (response.statusCode == 200) {
-        final List<dynamic> recipeData = json.decode(response.body);
-        print('Raw recipe data from backend: $recipeData');
-        List<Recipe> recipes =
-            recipeData.map((data) => Recipe.fromJson(data)).toList();
+ Future<void> _fetchUserRecipes() async {
+  if (!mounted) return; // Add this check
+  
+  print("Fetching user recipes...");
+  try {
+    final response = await http.get(Uri.parse('$baseApiUrl/myrecipes/user/$userId'));
+    if (response.statusCode == 200) {
+      final List<dynamic> recipeData = json.decode(response.body);
+      print('Raw recipe data from backend: $recipeData');
+      List<Recipe> recipes = recipeData.map((data) => Recipe.fromJson(data)).toList();
+      
+      if (mounted) { // Add this check before setState
         setState(() {
           _recipes = recipes;
           _applyFilters();
-          _isReminderShown = false; // 重置弹窗显示标志
+          _isReminderShown = false;
         });
-        _recipes.forEach((recipe) =>
-            print('Recipe ID: ${recipe.id}, Cook Count: ${recipe.cookCount}'));
-        //await _checkForRecipeReminder();
-      } else {
-        throw Exception('Failed to load recipes');
       }
-    } catch (e) {
-      print('Error: $e');
+      
+      _recipes.forEach((recipe) =>
+          print('Recipe ID: ${recipe.id}, Cook Count: ${recipe.cookCount}'));
+    } else {
+      throw Exception('Failed to load recipes');
+    }
+  } catch (e) {
+    print('Error: $e');
+    if (mounted) { // Add error handling UI update
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load recipes: ${e.toString()}')),
+      );
     }
   }
+}
 
   Future<void> _confirmDeleteRecipe(int recipeId) async {
     showDialog(
@@ -488,7 +501,7 @@ class _RecipePageState extends State<RecipePage> {
                       return Stack(
                         children: [
                           GestureDetector(
-                            onTap: () {
+                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -500,7 +513,8 @@ class _RecipePageState extends State<RecipePage> {
                                   ),
                                 ),
                               ).then((_) {
-                                _fetchUserRecipes(); // 刷新列表
+                                // This will execute after returning from RecipeDetailPage
+                                _fetchUserRecipes();
                               });
                             },
                             child: Card(
@@ -713,11 +727,12 @@ class _RecipePageState extends State<RecipePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
+         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const AddRecipePage()),
           ).then((_) {
+            // This will execute after returning from AddRecipePage
             _fetchUserRecipes();
           });
         },

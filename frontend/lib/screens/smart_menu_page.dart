@@ -706,13 +706,37 @@ Future<void> _copyPresetRecipe(Recipe recipe) async {
                                 [],
                           ),
                           if (isPresetRecipe)
-                            ElevatedButton(
-                              onPressed: () => _copyPresetRecipe(recipe),
-                              child: Text('Copy to My Recipes'),
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: AppColors.textColor(context), 
-                                backgroundColor: AppColors.appBarColor(context),
-                              ),
+                          IconButton(  // **Changed from ElevatedButton to IconButton**
+                            icon: Icon(Icons.copy),  // **Using a copy icon**
+                            tooltip: 'Copy to My Recipes',
+                            onPressed: () {
+                              // **Confirmation prompt before copying**
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('Confirm Copy'),
+                                    content: Text('Are you sure you want to copy this recipe to My Recipes?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();  // Close the dialog
+                                        },
+                                        child: Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          _copyPresetRecipe(recipe);  // Call the copy function
+                                          Navigator.of(context).pop();  // Close the dialog
+                                        },
+                                        child: Text('Confirm'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                            color: AppColors.appBarColor(context),  // **Set the icon color**
                           ),
                         ],
                       ),
