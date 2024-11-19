@@ -31,16 +31,20 @@ public class ShoppingList {
     @Column(name = "is_purchased", nullable = false)
     private Boolean isPurchased;
 
+    @Column(name = "category", nullable = false)
+    private String category;
+
     // Constructors
     public ShoppingList() {
     }
 
-    public ShoppingList(Long userId, String name, int baseQuantity, String unit, Boolean isPurchased) {
+    public ShoppingList(Long userId, String name, int baseQuantity, String unit, Boolean isPurchased, String category) {
         this.userId = userId;
         this.name = name;
         this.baseQuantity = baseQuantity;
         this.unit = unit;
         this.isPurchased = isPurchased;
+        this.category = category;
     }
 
     // Getters and Setters
@@ -87,4 +91,13 @@ public class ShoppingList {
     public void setIsPurchased(Boolean isPurchased) {
         this.isPurchased = isPurchased;
     }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
 }
