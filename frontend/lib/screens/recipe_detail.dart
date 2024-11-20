@@ -8,6 +8,11 @@ import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'dart:ui' as ui;
+import 'dart:typed_data';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 class RecipeDetailPage extends StatefulWidget {
   final Map<String, dynamic> recipe;
   final String userId;
@@ -228,6 +233,10 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
               }
             },
           ),
+          IconButton(
+            icon: Icon(Icons.download, color: AppColors.textColor(context)),
+            onPressed: _showConfirmationDialog, // Show confirmation dialog
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -427,5 +436,220 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _showConfirmationDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Save as Picture'),
+          content: const Text(
+              'Do you want to save this recipe as a picture in the gallery?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false); // User chose "No"
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true); // User chose "Yes"
+              },
+              child: const Text('Yes'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // Proceed with saving the image if the user confirmed
+    if (result == true) {
+      await _saveImageToGallery();
+    }
+  }
+
+  Future<void> _saveImageToGallery() async {
+    // Request storage permission
+    final permission = await Permission.storage.request();
+    if (!permission.isGranted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Storage permission denied.')),
+      );
+      return;
+    }
+
+    try {
+      // Create canvas and draw content (same as your previous logic)
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, 1080, 1920));
+
+      // Background color
+      final paint = Paint()
+        ..color = const Color(0xFFFFFFFF); // White background
+      canvas.drawRect(const Rect.fromLTWH(0, 0, 1080, 1920), paint);
+
+      // Title
+      final titleStyle = ui.TextStyle(
+        color: const Color(0xFF000000),
+        fontSize: 48,
+        fontWeight: ui.FontWeight.bold,
+      );
+      final titleParagraph =
+          ui.ParagraphBuilder(ui.ParagraphStyle(textAlign: TextAlign.center))
+            ..pushStyle(titleStyle)
+            ..addText(widget.recipe['name']);
+      final titleParagraphLayout = titleParagraph.build()
+        ..layout(const ui.ParagraphConstraints(width: 1000));
+      canvas.drawParagraph(titleParagraphLayout, const Offset(40, 60));
+
+      // Ingredients
+      final ingredientStyle = ui.TextStyle(
+        color: const Color(0xFF333333),
+        fontSize: 36,
+      );
+      final ingredientText = 'Ingredients: ${widget.recipe['ingredients']}';
+      final ingredientParagraph =
+          ui.ParagraphBuilder(ui.ParagraphStyle(textAlign: TextAlign.left))
+            ..pushStyle(ingredientStyle)
+            ..addText(ingredientText);
+      final ingredientParagraphLayout = ingredientParagraph.build()
+        ..layout(const ui.ParagraphConstraints(width: 1000));
+      canvas.drawParagraph(ingredientParagraphLayout, const Offset(40, 200));
+
+      // Description
+      final descriptionStyle = ui.TextStyle(
+        color: const Color(0xFF555555),
+        fontSize: 32,
+      );
+      final descriptionText = 'Description:\n${widget.recipe['description']}';
+      final descriptionParagraph =
+          ui.ParagraphBuilder(ui.ParagraphStyle(textAlign: TextAlign.left))
+            ..pushStyle(descriptionStyle)
+            ..addText(descriptionText);
+      final descriptionParagraphLayout = descriptionParagraph.build()
+        ..layout(const ui.ParagraphConstraints(width: 1000));
+      canvas.drawParagraph(descriptionParagraphLayout, const Offset(40, 400));
+
+      // End recording
+      final picture = recorder.endRecording();
+      final img = await picture.toImage(1080, 1920);
+      final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+      final pngBytes = byteData?.buffer.asUint8List();
+
+      // Save to gallery
+      if (pngBytes != null) {
+        final result = await ImageGallerySaver.saveImage(
+          Uint8List.fromList(pngBytes),
+          quality: 80,
+          name: 'recipe_${widget.recipe['name']}',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result['isSuccess']
+                  ? 'Recipe image saved to gallery!'
+                  : 'Failed to save image.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error generating image: $e')),
+      );
+    }
+  }
+
+  Future<void> _generateAndSaveImage() async {
+    // 请求存储权限
+    final permission = await Permission.storage.request();
+    if (!permission.isGranted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Storage permission denied.')),
+      );
+      return;
+    }
+
+    try {
+      // 创建画布
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, 1080, 1920));
+
+      // 设置背景颜色
+      final paint = Paint()..color = const Color(0xFFFFFFFF); // 白色背景
+      canvas.drawRect(const Rect.fromLTWH(0, 0, 1080, 1920), paint);
+
+      // 添加标题
+      final titleStyle = ui.TextStyle(
+        color: const Color(0xFF000000),
+        fontSize: 48,
+        fontWeight: ui.FontWeight.bold,
+      );
+      final titleParagraph =
+          ui.ParagraphBuilder(ui.ParagraphStyle(textAlign: TextAlign.center))
+            ..pushStyle(titleStyle)
+            ..addText(widget.recipe['name']);
+      final titleParagraphLayout = titleParagraph.build()
+        ..layout(const ui.ParagraphConstraints(width: 1000));
+      canvas.drawParagraph(titleParagraphLayout, const Offset(40, 60));
+
+      // 添加食材信息
+      final ingredientStyle = ui.TextStyle(
+        color: const Color(0xFF333333),
+        fontSize: 36,
+      );
+      final ingredientText = 'Ingredients: ${widget.recipe['ingredients']}';
+      final ingredientParagraph =
+          ui.ParagraphBuilder(ui.ParagraphStyle(textAlign: TextAlign.left))
+            ..pushStyle(ingredientStyle)
+            ..addText(ingredientText);
+      final ingredientParagraphLayout = ingredientParagraph.build()
+        ..layout(const ui.ParagraphConstraints(width: 1000));
+      canvas.drawParagraph(ingredientParagraphLayout, const Offset(40, 200));
+
+      // 添加描述
+      final descriptionStyle = ui.TextStyle(
+        color: const Color(0xFF555555),
+        fontSize: 32,
+      );
+      final descriptionText = 'Description:\n${widget.recipe['description']}';
+      final descriptionParagraph =
+          ui.ParagraphBuilder(ui.ParagraphStyle(textAlign: TextAlign.left))
+            ..pushStyle(descriptionStyle)
+            ..addText(descriptionText);
+      final descriptionParagraphLayout = descriptionParagraph.build()
+        ..layout(const ui.ParagraphConstraints(width: 1000));
+      canvas.drawParagraph(descriptionParagraphLayout, const Offset(40, 400));
+
+      // 结束绘制
+      final picture = recorder.endRecording();
+      final img = await picture.toImage(1080, 1920);
+      final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+      final pngBytes = byteData?.buffer.asUint8List();
+
+      // 保存图片到相册
+      if (pngBytes != null) {
+        final result = await ImageGallerySaver.saveImage(
+          Uint8List.fromList(pngBytes),
+          quality: 80,
+          name: 'recipe_${widget.recipe['name']}',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result['isSuccess']
+                  ? 'Recipe image saved to gallery!'
+                  : 'Failed to save image.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error generating image: $e')),
+      );
+    }
   }
 }

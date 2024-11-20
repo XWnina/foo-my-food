@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
 
 import com.foomyfood.foomyfood.database.ShoppingList;
 import com.foomyfood.foomyfood.database.db_service.ShoppingListService;
