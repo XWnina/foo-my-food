@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import com.foomyfood.foomyfood.database.ShoppingList;
 import com.foomyfood.foomyfood.database.db_service.ShoppingListService;
 
-@Component
+// @Component
 public class ShoppingListTester implements CommandLineRunner {
 
     @Autowired

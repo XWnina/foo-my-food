@@ -226,7 +226,13 @@ class _MyHomePageState extends State<MyHomePage> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15), // 设置圆角弧度
         ),
-        child: const AddShoppingItemPage(),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.cardColor(context), // 设置背景颜色
+            borderRadius: BorderRadius.circular(15), // 保持圆角一致
+          ),
+          child: const AddShoppingItemPage(), // 子页面
+        ),
       ),
     ).then((newItem) {
       if (newItem != null) {

@@ -158,6 +158,9 @@ class ShoppingListProvider extends ChangeNotifier {
           updatedFields['baseQuantity'] ?? existingItem['baseQuantity'],
       'unit': updatedFields['unit'] ?? existingItem['unit'],
       'isPurchased': existingItem['isPurchased'],
+      'category': updatedFields.containsKey('category')
+          ? updatedFields['category']
+          : existingItem['category'],
     };
 
     try {

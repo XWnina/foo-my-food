@@ -45,9 +45,15 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(15), // 设置圆角
         ),
-        child: EditShoppingItemPage(item: item),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.cardColor(context), // 设置背景颜色
+            borderRadius: BorderRadius.circular(15), // 确保圆角一致
+          ),
+          child: EditShoppingItemPage(item: item),
+        ),
       ),
     ).then((updatedItem) {
       if (updatedItem != null) {
@@ -91,11 +97,14 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           return ListView(
             children: [
               if (unpurchasedItems.isNotEmpty) ...[
-                 Padding(
+                Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Text(
                     'Items to Purchase',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.cardNameTextColor(context)),
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.cardNameTextColor(context)),
                   ),
                 ),
                 ListView.builder(
@@ -109,11 +118,14 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                 ),
               ],
               if (purchasedItems.isNotEmpty) ...[
-                 Padding(
+                Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Text(
                     'Purchased Items',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.cardNameTextColor(context)),
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.cardNameTextColor(context)),
                   ),
                 ),
                 ListView.builder(
@@ -142,11 +154,23 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       child: ListTile(
         title: Text(
           item['name'],
-          style:  TextStyle(color: AppColors.cardNameTextColor(context)),
+          style: TextStyle(color: AppColors.cardNameTextColor(context)),
         ),
-        subtitle: Text(
-          'Quantity: ${item['baseQuantity']} ${item['unit']}',
-          style: TextStyle(color: AppColors.cardExpiresTextColor(context)),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Quantity: ${item['baseQuantity']} ${item['unit']}',
+              style: TextStyle(color: AppColors.cardExpiresTextColor(context)),
+            ),
+            if (item['category'] != null &&
+                item['category']!.isNotEmpty) // 如果分类字段存在并非空
+              Text(
+                'Category: ${item['category']}',
+                style:
+                    TextStyle(color: AppColors.cardExpiresTextColor(context)),
+              ),
+          ],
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,

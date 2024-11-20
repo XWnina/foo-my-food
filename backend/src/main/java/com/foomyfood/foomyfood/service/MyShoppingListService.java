@@ -44,6 +44,7 @@ public class MyShoppingListService {
             updatedItem.setBaseQuantity(shoppingList.getBaseQuantity());
             updatedItem.setUnit(shoppingList.getUnit());
             updatedItem.setIsPurchased(shoppingList.getIsPurchased());
+            updatedItem.setCategory(shoppingList.getCategory());
             return shoppingListRepository.save(updatedItem);
         } else {
             throw new RuntimeException("Item with ID " + foodId + " and userId " + userId + " not found");

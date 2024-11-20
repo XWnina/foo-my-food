@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:foo_my_food_app/providers/shopping_list_provider.dart';
+import 'package:foo_my_food_app/datasource/temp_db.dart';
 
 class EditShoppingItemPage extends StatefulWidget {
   final Map<String, dynamic> item;
@@ -17,6 +18,7 @@ class _EditShoppingItemPageState extends State<EditShoppingItemPage> {
   late TextEditingController _quantityController;
   late TextEditingController _unitController;
   String? itemError, quantityError, unitError;
+  String? _selectedCategory;
 
   bool get isFormValid =>
       itemError == null &&
@@ -33,6 +35,7 @@ class _EditShoppingItemPageState extends State<EditShoppingItemPage> {
     _quantityController =
         TextEditingController(text: widget.item['baseQuantity'].toString());
     _unitController = TextEditingController(text: widget.item['unit']);
+    _selectedCategory = widget.item['category'];
   }
 
   void _validateItemName() {
@@ -77,15 +80,21 @@ class _EditShoppingItemPageState extends State<EditShoppingItemPage> {
     int quantity = int.parse(_quantityController.text.trim());
     String unit = _unitController.text.trim();
 
+    // 创建更新的物品数据
     Map<String, dynamic> updatedItem = {
       'foodId': widget.item['foodId'],
       'name': name,
       'baseQuantity': quantity,
       'unit': unit,
+      'category': _selectedCategory, // 添加分类字段
     };
+    print("Updated shopplinglist item: $updatedItem");
 
+    // 调用后端更新方法
     await Provider.of<ShoppingListProvider>(context, listen: false)
         .updateItem(updatedItem);
+
+    // 返回到上一页，并传递更新后的数据
     Navigator.pop(context, updatedItem);
   }
 
@@ -154,6 +163,27 @@ class _EditShoppingItemPageState extends State<EditShoppingItemPage> {
               ),
             ),
             onChanged: (_) => _validateUnit(), // 单独验证 unit
+          ),
+          const SizedBox(height: 20),
+          DropdownButtonFormField<String>(
+            decoration: InputDecoration(
+              labelText: 'Edit category (optional)',
+              border: const OutlineInputBorder(),
+              fillColor: whiteFillColor,
+              filled: true,
+            ),
+            value: _selectedCategory,
+            items: categories
+                .map((category) => DropdownMenuItem(
+                      value: category,
+                      child: Text(category),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedCategory = value;
+              });
+            },
           ),
           const SizedBox(height: 20),
           ElevatedButton(

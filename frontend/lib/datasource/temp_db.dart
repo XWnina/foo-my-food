@@ -18,6 +18,16 @@ List<String> storageMethods = [
   'Pantry',
   'Room Temperature',
 ];
+List<String> categories = [
+  'Dairy',
+  'Snacks',
+  'Deli',
+  'Meat',
+  'Grocery',
+  'Frozen',
+  'Fresh',
+  'Bakery'
+];
 
 class TempDB {
   // 模拟的用户数据列表

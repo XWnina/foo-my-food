@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:foo_my_food_app/providers/shopping_list_provider.dart';
+import 'package:foo_my_food_app/datasource/temp_db.dart';
 import 'dart:convert';
 
 class AddShoppingItemPage extends StatefulWidget {
@@ -16,6 +17,7 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _unitController = TextEditingController();
   String? itemError, quantityError, unitError;
+  String? _selectedCategory;
 
   bool get isFormValid =>
       itemError == null &&
@@ -72,6 +74,11 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
       'unit': unit,
       'isPurchased': false,
     };
+
+    // 如果用户选择了分类，才添加分类字段
+    if (_selectedCategory != null) {
+      newItem['category'] = _selectedCategory;
+    }
 
     final response =
         await Provider.of<ShoppingListProvider>(context, listen: false)
@@ -172,7 +179,6 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
         right: 16.0,
         top: 16.0,
       ),
-
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -229,6 +235,27 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
               ),
             ),
             onChanged: (_) => _validateUnit(), // 单独验证 unit
+          ),
+          const SizedBox(height: 20),
+          DropdownButtonFormField<String>(
+            decoration: InputDecoration(
+              labelText: 'Select Category (Optional)',
+              border: const OutlineInputBorder(),
+              fillColor: whiteFillColor,
+              filled: true,
+            ),
+            value: _selectedCategory,
+            items: categories
+                .map((category) => DropdownMenuItem(
+                      value: category,
+                      child: Text(category),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedCategory = value;
+              });
+            },
           ),
           const SizedBox(height: 20),
           ElevatedButton(
