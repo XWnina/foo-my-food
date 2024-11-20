@@ -68,16 +68,16 @@ class ShoppingListProvider extends ChangeNotifier {
         _shoppingList.add(newItem);
         notifyListeners();
       }
-      return response; // 返回完整的响应对象
+      return response; // 返回响应对象
     } catch (e) {
       print("Error adding item: $e");
-      return null;
+      return null; // 遇到错误返回 null
     }
   }
 
-  Future<void> forceAddItem(Map<String, dynamic> newItem) async {
+  Future<http.Response?> forceAddItem(Map<String, dynamic> newItem) async {
     String? userId = await _getUserId();
-    if (userId == null) return;
+    if (userId == null) return null;
 
     try {
       final response = await http.post(
@@ -93,8 +93,10 @@ class ShoppingListProvider extends ChangeNotifier {
         _shoppingList.add(newItem);
         notifyListeners();
       }
+      return response; // 返回响应对象
     } catch (e) {
       print("Error force-adding item: $e");
+      return null; // 返回 null 表示失败
     }
   }
 

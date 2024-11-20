@@ -96,6 +96,11 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
       Map<String, dynamic> conflictingItem = jsonDecode(response.body);
       _showConflictDialog(conflictingItem);
     } else if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Item added successfully!'),
+        ),
+      );
       print("Item successfully added to backend.");
       Navigator.pop(context, newItem);
     } else {
@@ -110,8 +115,27 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
   }
 
   Future<void> _forceAddItemToShoppingList(Map<String, dynamic> newItem) async {
-    await Provider.of<ShoppingListProvider>(context, listen: false)
-        .forceAddItem(newItem);
+    final response =
+        await Provider.of<ShoppingListProvider>(context, listen: false)
+            .forceAddItem(newItem);
+
+    if (response != null && response.statusCode == 200) {
+      // 显示成功信息
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Item added successfully!'),
+        ),
+      );
+    } else {
+      // 如果失败，可以选择显示错误信息
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to force-add item.'),
+        ),
+      );
+    }
+
+    // 关闭页面
     Navigator.pop(context, newItem);
   }
 
@@ -126,6 +150,9 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
       'isPurchased': false,
       // 如果需要还可以添加其他字段，例如用户ID
     };
+    if (_selectedCategory != null) {
+      userInputItem['category'] = _selectedCategory;
+    }
 
     showDialog(
       context: context,
@@ -238,9 +265,9 @@ class _AddShoppingItemPageState extends State<AddShoppingItemPage> {
           ),
           const SizedBox(height: 20),
           DropdownButtonFormField<String>(
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Select Category (Optional)',
-              border: const OutlineInputBorder(),
+              border: OutlineInputBorder(),
               fillColor: whiteFillColor,
               filled: true,
             ),
