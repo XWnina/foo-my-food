@@ -372,7 +372,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                     maxLines: 4,
                   )
                 : Text(
-                    'Description: ${widget.recipe['description']?.isNotEmpty == true ? widget.recipe['description'] : 'No description for this recipe'}',
+                    'Description: ${widget.recipe['description'] ?? 'No description for this recipe'}',
                   ),
             const SizedBox(height: 16),
             _isEditing
@@ -385,41 +385,40 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                       border: OutlineInputBorder(),
                     ),
                   )
-                : widget.recipe['videoLink'] != null &&
-                        widget.recipe['videoLink'].isNotEmpty
-                    ? Row(
-                        children: [
-                          const Text(
-                            'Video Link: ',
-                          ),
-                          GestureDetector(
-                            onTap: () async {
-                              final url = Uri.parse(widget.recipe['videoLink']);
-                              if (await canLaunchUrl(url)) {
-                                await launchUrl(url,
-                                    mode: LaunchMode.externalApplication);
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Could not launch ${widget.recipe['videoLink']}',
-                                    ),
+                : Row(
+                    children: [
+                      const Text('Video Link: '),
+                      if (widget.recipe['videoLink'] != null &&
+                          widget.recipe['videoLink'].isNotEmpty)
+                        GestureDetector(
+                          onTap: () async {
+                            final url = Uri.parse(widget.recipe['videoLink']);
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url,
+                                  mode: LaunchMode.externalApplication);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Could not launch ${widget.recipe['videoLink']}',
                                   ),
-                                );
-                              }
-                            },
-                            child: Text(
-                              widget.recipe['videoLink'],
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.blue,
-                                decoration: TextDecoration.underline,
-                              ),
+                                ),
+                              );
+                            }
+                          },
+                          child: Text(
+                            widget.recipe['videoLink'],
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.blue,
+                              decoration: TextDecoration.underline,
                             ),
                           ),
-                        ],
-                      )
-                    : const SizedBox(),
+                        )
+                      else
+                        Text('No video link for this recipe'),
+                    ],
+                  ),
             const SizedBox(height: 16),
             Text(
               'Total Times Cooked: ${widget.recipe['cookCount'] ?? 0}',
