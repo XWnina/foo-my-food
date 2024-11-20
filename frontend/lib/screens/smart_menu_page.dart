@@ -475,60 +475,41 @@ void _generateMealPlan() {
       bottomNavigationBar: Container(
         color: AppColors.backgroundColor(context),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AddRecipePage(),
-                  ),
-                ).then((_) {
-                  _fetchRecipes();
+        child: ElevatedButton.icon(
+          onPressed: () {
+            if (_isSelecting) {
+              if (_selectedRecipes.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('You have not selected any recipes')),
+                );
+              } else {
+                _showNutritionReport(_totalCalories);
+                setState(() {
+                  _isSelecting = false;
+                  _selectedRecipes.clear();
+                  _totalCalories = 0;
                 });
-              },
-              child: Text('Add Recipe',
-                  style: TextStyle(color: AppColors.textColor(context))),
-            ),
-            ElevatedButton.icon(
-              onPressed: () {
-                if (_isSelecting) {
-                  if (_selectedRecipes.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('You have not selected any recipes')),
-                    );
-                  } else {
-                    _showNutritionReport(_totalCalories);
-                    setState(() {
-                      _isSelecting = false;
-                      _selectedRecipes.clear();
-                      _totalCalories = 0;
-                    });
-                  }
-                } else {
-                  setState(() {
-                    _isSelecting = true;
-                    _selectedRecipes.clear();
-                    _totalCalories = 0;
-                  });
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _isSelecting && _selectedRecipes.isEmpty
-                    ? Colors.grey
-                    : AppColors.appBarColor(context),
-              ),
-              icon: Icon(_isSelecting ? Icons.calculate : Icons.select_all,
-                  color: AppColors.textColor(context)),
-              label: Text(
-                _isSelecting ? 'Calculate' : 'Select Recipes',
-                style: TextStyle(color: AppColors.textColor(context)),
-              ),
-            ),
-          ],
+              }
+            } else {
+              setState(() {
+                _isSelecting = true;
+                _selectedRecipes.clear();
+                _totalCalories = 0;
+              });
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _isSelecting && _selectedRecipes.isEmpty
+                ? Colors.grey
+                : AppColors.appBarColor(context),
+          ),
+          icon: Icon(_isSelecting ? Icons.calculate : Icons.select_all,
+              color: AppColors.textColor(context)),
+          label: Text(
+            _isSelecting ? 'Calculate' : 'Select Recipes',
+            style: TextStyle(color: AppColors.textColor(context)),
+          ),
         ),
       ),
     );
@@ -623,24 +604,7 @@ Future<void> _copyPresetRecipe(Recipe recipe) async {
                                     fit: BoxFit.cover)
                                 : const Icon(Icons.image, size: 50),
                           ),
-                          // 添加星形图标
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: IconButton(
-                              icon: Icon(
-                                _isRecipeFavorited(recipe, isPresetRecipe)
-                                    ? Icons.star
-                                    : Icons.star_border,
-                                color:
-                                    _isRecipeFavorited(recipe, isPresetRecipe)
-                                        ? Colors.yellow
-                                        : Colors.grey,
-                              ),
-                              onPressed: () =>
-                                  _toggleFavorite(recipe, isPresetRecipe),
-                            ),
-                          ),
+                          // 只在选择模式下显示 Checkbox
                           if (_isSelecting)
                             Positioned(
                               top: 8,
@@ -683,60 +647,77 @@ Future<void> _copyPresetRecipe(Recipe recipe) async {
                                 color: AppColors.cardExpiresTextColor(context),
                                 fontSize: 12),
                           ),
-                          Wrap(
-                            spacing: 4,
-                            runSpacing: 4,
-                            children: recipe.labels?.split(', ').map((label) {
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 2, horizontal: 4),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.lablebackground(context),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      label,
-                                      style: TextStyle(
-                                          color: AppColors.cardExpiresTextColor(
-                                              context),
-                                          fontSize: 10),
-                                    ),
-                                  );
-                                }).toList() ??
-                                [],
-                          ),
-                          if (isPresetRecipe)
-                          IconButton(  // **Changed from ElevatedButton to IconButton**
-                            icon: Icon(Icons.copy),  // **Using a copy icon**
-                            tooltip: 'Copy to My Recipes',
-                            onPressed: () {
-                              // **Confirmation prompt before copying**
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text('Confirm Copy'),
-                                    content: Text('Are you sure you want to copy this recipe to My Recipes?'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop();  // Close the dialog
-                                        },
-                                        child: Text('Cancel'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          _copyPresetRecipe(recipe);  // Call the copy function
-                                          Navigator.of(context).pop();  // Close the dialog
-                                        },
-                                        child: Text('Confirm'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            },
-                            color: AppColors.appBarColor(context),  // **Set the icon color**
+                          if (recipe.labels != null && recipe.labels!.isNotEmpty)
+                            Wrap(
+                              spacing: 4,
+                              runSpacing: 4,
+                              children: recipe.labels!.split(', ').map((label) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 2, horizontal: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.lablebackground(context),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    label,
+                                    style: TextStyle(
+                                        color: AppColors.cardExpiresTextColor(
+                                            context),
+                                        fontSize: 10),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              if (isPresetRecipe)
+                                IconButton(
+                                  icon: Icon(Icons.copy),
+                                  tooltip: 'Copy to My Recipes',
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: Text('Confirm Copy'),
+                                          content: Text('Are you sure you want to copy this recipe to My Recipes?'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: Text('Cancel'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                _copyPresetRecipe(recipe);
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: Text('Confirm'),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                  color: AppColors.appBarColor(context),
+                                ),
+                              if (!isPresetRecipe)
+                                SizedBox(width: 48),
+                              IconButton(
+                                icon: Icon(
+                                  _isRecipeFavorited(recipe, isPresetRecipe)
+                                      ? Icons.star
+                                      : Icons.star_border,
+                                  color: _isRecipeFavorited(recipe, isPresetRecipe)
+                                      ? Colors.yellow
+                                      : Colors.grey,
+                                ),
+                                onPressed: () => _toggleFavorite(recipe, isPresetRecipe),
+                              ),
+                            ],
                           ),
                         ],
                       ),

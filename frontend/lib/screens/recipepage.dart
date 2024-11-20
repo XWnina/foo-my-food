@@ -11,6 +11,10 @@ import 'smart_menu_page.dart';
 import 'package:intl/intl.dart';
 
 class RecipePage extends StatefulWidget {
+  // final VoidCallback onFetchRecipes;
+
+  // RecipePage({required this.onFetchRecipes});
+
   @override
   _RecipePageState createState() => _RecipePageState();
 }
@@ -42,6 +46,7 @@ class _RecipePageState extends State<RecipePage> {
     _ensureTrackingDaysSet().then((_) {
       _checkForRecipeReminder();
     });
+    //widget.onFetchRecipes();
   }
 
   Future<void> _ensureTrackingDaysSet() async {
@@ -454,13 +459,16 @@ class _RecipePageState extends State<RecipePage> {
                     MaterialPageRoute(
                       builder: (context) => SmartMenuPage(userId: userId),
                     ),
-                  );
+                  ).then((_) {
+                    // 当从 SmartMenuPage 返回时，重新获取数据
+                    _fetchUserRecipes();
+                  });
                 },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      "Don't know what to eat?", // 文本
+                      "Don't know what to eat?",
                       style: TextStyle(
                         color: AppColors.cardNameTextColor(context),
                         fontSize: 15,
