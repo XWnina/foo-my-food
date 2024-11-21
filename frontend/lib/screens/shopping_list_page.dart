@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:foo_my_food_app/datasource/temp_db.dart';
 import 'package:provider/provider.dart';
 import 'package:foo_my_food_app/utils/colors.dart';
 import 'package:foo_my_food_app/providers/shopping_list_provider.dart';
@@ -13,6 +14,7 @@ class ShoppingListPage extends StatefulWidget {
 }
 
 class _ShoppingListPageState extends State<ShoppingListPage> {
+  final Set<String> _selectedCategories = {};
   @override
   void initState() {
     super.initState();
@@ -67,24 +69,75 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor(context),
       appBar: AppBar(
-        title: Text('Shopping List',
-            style: TextStyle(color: AppColors.textColor(context))),
+        title: Text(
+          'Shopping List',
+          style: TextStyle(color: AppColors.textColor(context)),
+        ),
         backgroundColor: AppColors.appBarColor(context),
+        actions: [
+          PopupMenuButton<String>(
+            icon: Icon(Icons.filter_list, color: AppColors.textColor(context)),
+            itemBuilder: (BuildContext context) {
+              return [
+                PopupMenuItem(
+                  enabled: false,
+                  child: const Text(
+                    'Select Categories:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ...categories.map((category) {
+                  return PopupMenuItem<String>(
+                    value: category,
+                    child: StatefulBuilder(
+                      builder: (context, setState) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(category),
+                            Checkbox(
+                              value: _selectedCategories.contains(category),
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  if (value == true) {
+                                    _selectedCategories.add(category);
+                                  } else {
+                                    _selectedCategories.remove(category);
+                                  }
+                                });
+                                this.setState(() {}); // 刷新界面以应用筛选
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  );
+                }).toList(),
+              ];
+            },
+          ),
+        ],
       ),
       body: Consumer<ShoppingListProvider>(
         builder: (context, provider, child) {
-          // 将购物清单划分为未购买和已购买
-          final unpurchasedItems = provider.shoppingList
-              .where((item) => !item['isPurchased'])
-              .toList();
-          final purchasedItems = provider.shoppingList
-              .where((item) => item['isPurchased'])
-              .toList();
+          final filteredItems = _selectedCategories.isEmpty
+              ? provider.shoppingList
+              : provider.shoppingList
+                  .where((item) =>
+                      item['category'] != null &&
+                      _selectedCategories.contains(item['category']))
+                  .toList();
 
-          if (provider.shoppingList.isEmpty) {
+          final unpurchasedItems =
+              filteredItems.where((item) => !item['isPurchased']).toList();
+          final purchasedItems =
+              filteredItems.where((item) => item['isPurchased']).toList();
+
+          if (filteredItems.isEmpty) {
             return const Center(
               child: Text(
-                'Your shopping list is empty!',
+                'No items match the selected categories.',
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 20,
@@ -98,7 +151,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             children: [
               if (unpurchasedItems.isNotEmpty) ...[
                 Padding(
-                  padding: EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Text(
                     'Items to Purchase',
                     style: TextStyle(
@@ -119,7 +172,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
               ],
               if (purchasedItems.isNotEmpty) ...[
                 Padding(
-                  padding: EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Text(
                     'Purchased Items',
                     style: TextStyle(
@@ -163,8 +216,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
               'Quantity: ${item['baseQuantity']} ${item['unit']}',
               style: TextStyle(color: AppColors.cardExpiresTextColor(context)),
             ),
-            if (item['category'] != null &&
-                item['category']!.isNotEmpty) // 如果分类字段存在并非空
+            if (item['category'] != null && item['category']!.isNotEmpty)
               Text(
                 'Category: ${item['category']}',
                 style:
@@ -178,18 +230,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             IconButton(
               icon: Icon(
                 isPurchasedSection ? Icons.undo : Icons.check,
-                color: isPurchasedSection ? Colors.blue : blackTextColor,
+                color: isPurchasedSection ? const Color.fromARGB(255, 71, 148, 211) : AppColors.appBarColor(context),
               ),
               onPressed: () {
-                if (isPurchasedSection) {
-                  // 将已购买的项目重新标记为未购买
-                  provider.togglePurchasedStatus(item['foodId'],
-                      isPurchased: false);
-                } else {
-                  // 将未购买的项目标记为已购买
-                  provider.togglePurchasedStatus(item['foodId'],
-                      isPurchased: true);
-                }
+                provider.togglePurchasedStatus(item['foodId'],
+                    isPurchased: !item['isPurchased']);
               },
             ),
             IconButton(
@@ -201,7 +246,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             IconButton(
               icon: const Icon(Icons.delete_forever, color: Colors.red),
               onPressed: () {
-                // Show confirmation dialog before deleting
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
@@ -212,16 +256,14 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                       actions: <Widget>[
                         TextButton(
                           onPressed: () {
-                            Navigator.of(context).pop(); // Close the dialog
+                            Navigator.of(context).pop();
                           },
                           child: const Text('Cancel'),
                         ),
                         TextButton(
                           onPressed: () {
-                            provider.deleteItem(
-                                item['foodId']); // Proceed with deletion
-                            Navigator.of(context)
-                                .pop(); // Close the dialog after deletion
+                            provider.deleteItem(item['foodId']);
+                            Navigator.of(context).pop();
                           },
                           child: const Text(
                             'Delete',
