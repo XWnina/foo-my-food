@@ -48,6 +48,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
     'what_i_have': 'What I Have',
     'expires_soon': 'Expires Soon',
     'usually_cooked': 'Usually Cooked',
+    'all_recipes': 'All Recipes',
   };
   @override
   void initState() {
@@ -158,15 +159,15 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
           presetRecipesUrl = '$baseApiUrl/recipes/preset/expiring?userId=${widget.userId}';
           break;
         case 'usually_cooked':
-          // TODO: Implement when backend supports this feature
-          print("yeaahhh");
           customRecipesUrl = '$baseApiUrl/recipes/custom/preference?userId=${widget.userId}';
           presetRecipesUrl = '$baseApiUrl/recipes/preset/preference?userId=${widget.userId}';
           break;
+        case 'all_recipes':
+          customRecipesUrl = '$baseApiUrl/myrecipes/user/${widget.userId}';
+          presetRecipesUrl = '$baseApiUrl/preset-recipes';
+          break;
         case 'what_i_have':
         default:
-          //print("yeaahhh");
-          //print(widget.userId);
           customRecipesUrl = '$baseApiUrl/recipes/custom?userId=${widget.userId}';
           presetRecipesUrl = '$baseApiUrl/recipes/preset?userId=${widget.userId}';
           break;
@@ -873,6 +874,17 @@ Future<void> _copyPresetRecipe(Recipe recipe) async {
                 });
                 Navigator.pop(context);
                  _fetchRecipes();
+              },
+            ),
+            ListTile(
+              title: Text('All Recipes'),
+              onTap: () {
+                setState(() {
+                  _sortBy = 'all_recipes';
+                  _applyFilters();
+                });
+                Navigator.pop(context);
+                _fetchRecipes();
               },
             ),
           ],

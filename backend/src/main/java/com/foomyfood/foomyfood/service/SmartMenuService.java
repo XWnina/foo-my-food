@@ -260,6 +260,7 @@ public class SmartMenuService {
                     fullRecipeInfo.put("imageUrl", Recipe.getImageURL());
                     fullRecipeInfo.put("calories", Recipe.getCalories());
                     fullRecipeInfo.put("labels", Recipe.getLabels());
+                    fullRecipeInfo.put("cookCount", Recipe.getCookCount());
                 }
 
                 return fullRecipeInfo;
