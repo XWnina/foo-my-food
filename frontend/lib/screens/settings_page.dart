@@ -413,10 +413,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 onTap: () async {
                   themeProvider.switchTheme(ThemeProvider.yellowGreenTheme);
                   if (userId != null) {
-                    await UserThemeService.updateUserTheme(
+                    bool isSuccess = await UserThemeService.updateUserTheme(
                         userId!, "yellowGreenTheme");
+                    Navigator.of(context).pop(); // 关闭对话框
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          isSuccess
+                              ? "Theme updated to Yellow Green successfully!"
+                              : "Failed to update theme.",
+                        ),
+                      ),
+                    );
                   }
-                  Navigator.of(context).pop();
                 },
               ),
               ListTile(
@@ -424,10 +433,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 onTap: () async {
                   themeProvider.switchTheme(ThemeProvider.blueTheme);
                   if (userId != null) {
-                    await UserThemeService.updateUserTheme(
+                    bool isSuccess = await UserThemeService.updateUserTheme(
                         userId!, "blueTheme");
+                    Navigator.of(context).pop(); // 关闭对话框
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          isSuccess
+                              ? "Theme updated to Blue successfully!"
+                              : "Failed to update theme.",
+                        ),
+                      ),
+                    );
                   }
-                  Navigator.of(context).pop();
                 },
               ),
               ListTile(
@@ -435,10 +453,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 onTap: () async {
                   themeProvider.switchTheme(ThemeProvider.pinkTheme);
                   if (userId != null) {
-                    await UserThemeService.updateUserTheme(
+                    bool isSuccess = await UserThemeService.updateUserTheme(
                         userId!, "pinkTheme");
+                    Navigator.of(context).pop(); // 关闭对话框
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          isSuccess
+                              ? "Theme updated to Pink successfully!"
+                              : "Failed to update theme.",
+                        ),
+                      ),
+                    );
                   }
-                  Navigator.of(context).pop();
                 },
               ),
               // 可以在此处添加更多主题选项
