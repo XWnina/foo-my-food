@@ -27,23 +27,26 @@ class UserThemeService {
   }
 
   // 更新用户主题
-  static Future<void> updateUserTheme(
+  static Future<bool> updateUserTheme(
       String userId, String selectedTheme) async {
     final url = Uri.parse('$baseApiUrl/user-theme/$userId');
     try {
       final response = await http.put(
         url,
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"userTheme": selectedTheme}), // 确保使用 JSON 对象格式
+        body: jsonEncode({"userTheme": selectedTheme}),
       );
 
       if (response.statusCode == 200) {
         print("Theme updated successfully");
+        return true; // 成功返回 true
       } else {
         print("Failed to update theme: ${response.statusCode}");
+        return false; // 失败返回 false
       }
     } catch (e) {
       print("Error updating user theme: $e");
+      return false; // 异常也返回 false
     }
   }
 }
