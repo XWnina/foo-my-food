@@ -15,6 +15,7 @@ class ShoppingListPage extends StatefulWidget {
 
 class _ShoppingListPageState extends State<ShoppingListPage> {
   final Set<String> _selectedCategories = {};
+  String _searchQuery = "";
   @override
   void initState() {
     super.initState();
@@ -119,82 +120,112 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           ),
         ],
       ),
-      body: Consumer<ShoppingListProvider>(
-        builder: (context, provider, child) {
-          final filteredItems = _selectedCategories.isEmpty
-              ? provider.shoppingList
-              : provider.shoppingList
-                  .where((item) =>
-                      item['category'] != null &&
-                      _selectedCategories.contains(item['category']))
-                  .toList();
-
-          final unpurchasedItems =
-              filteredItems.where((item) => !item['isPurchased']).toList();
-          final purchasedItems =
-              filteredItems.where((item) => item['isPurchased']).toList();
-
-          if (filteredItems.isEmpty) {
-            return const Center(
-              child: Text(
-                'No items match the selected categories.',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+      body: Column(
+        children: [
+          // 搜索框
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search by name...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
-            );
-          }
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.trim().toLowerCase(); // 更新搜索关键词
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: Consumer<ShoppingListProvider>(
+              builder: (context, provider, child) {
+                // 过滤逻辑：根据搜索关键词和分类过滤项目
+                final filteredItems = provider.shoppingList.where((item) {
+                  final matchesSearchQuery = _searchQuery.isEmpty ||
+                      item['name']
+                          .toString()
+                          .toLowerCase()
+                          .contains(_searchQuery);
+                  final matchesCategory = _selectedCategories.isEmpty ||
+                      (_selectedCategories.contains(item['category']));
+                  return matchesSearchQuery && matchesCategory;
+                }).toList();
 
-          return ListView(
-            children: [
-              if (unpurchasedItems.isNotEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    'Items to Purchase',
-                    style: TextStyle(
-                        fontSize: 18,
+                final unpurchasedItems = filteredItems
+                    .where((item) => !item['isPurchased'])
+                    .toList();
+                final purchasedItems =
+                    filteredItems.where((item) => item['isPurchased']).toList();
+
+                if (filteredItems.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No items match your criteria.',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.cardNameTextColor(context)),
-                  ),
-                ),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: unpurchasedItems.length,
-                  itemBuilder: (context, index) {
-                    final item = unpurchasedItems[index];
-                    return _buildShoppingListItem(context, item, provider);
-                  },
-                ),
-              ],
-              if (purchasedItems.isNotEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    'Purchased Items',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.cardNameTextColor(context)),
-                  ),
-                ),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: purchasedItems.length,
-                  itemBuilder: (context, index) {
-                    final item = purchasedItems[index];
-                    return _buildShoppingListItem(context, item, provider,
-                        isPurchasedSection: true);
-                  },
-                ),
-              ],
-            ],
-          );
-        },
+                      ),
+                    ),
+                  );
+                }
+
+                return ListView(
+                  children: [
+                    if (unpurchasedItems.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          'Items to Purchase',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.cardNameTextColor(context)),
+                        ),
+                      ),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: unpurchasedItems.length,
+                        itemBuilder: (context, index) {
+                          final item = unpurchasedItems[index];
+                          return _buildShoppingListItem(
+                              context, item, provider);
+                        },
+                      ),
+                    ],
+                    if (purchasedItems.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          'Purchased Items',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.cardNameTextColor(context)),
+                        ),
+                      ),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: purchasedItems.length,
+                        itemBuilder: (context, index) {
+                          final item = purchasedItems[index];
+                          return _buildShoppingListItem(context, item, provider,
+                              isPurchasedSection: true);
+                        },
+                      ),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -230,7 +261,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             IconButton(
               icon: Icon(
                 isPurchasedSection ? Icons.undo : Icons.check,
-                color: isPurchasedSection ? const Color.fromARGB(255, 71, 148, 211) : AppColors.appBarColor(context),
+                color: isPurchasedSection
+                    ? const Color.fromARGB(255, 71, 148, 211)
+                    : AppColors.appBarColor(context),
               ),
               onPressed: () {
                 provider.togglePurchasedStatus(item['foodId'],
