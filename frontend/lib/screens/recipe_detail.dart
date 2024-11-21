@@ -429,6 +429,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                     ],
                   ),
             const SizedBox(height: 16),
+            if (!widget.isPresetRecipe) 
             Text(
               'Total Times Cooked: ${widget.recipe['cookCount'] ?? 0}',
             ),
