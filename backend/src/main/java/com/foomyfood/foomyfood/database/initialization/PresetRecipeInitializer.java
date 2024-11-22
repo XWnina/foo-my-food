@@ -36,7 +36,7 @@ public class PresetRecipeInitializer implements CommandLineRunner {
                     null,
                     "Cut chicken breast into cubes and marinate with salt and cooking wine. Prepare peanuts and bell pepper. Heat oil in a pan, stir-fry the chicken until it changes color, add peanuts and bell pepper, stir evenly, and season to taste.",
                     "chicken breast, peanut, bell pepper",
-                    "lunch,dinner"));
+                    "lunch, dinner"));
 
             presetRecipeService.addPresetRecipe(new PresetRecipe(
                     "Braised Pork Ribs",
@@ -54,7 +54,7 @@ public class PresetRecipeInitializer implements CommandLineRunner {
                     null,
                     "Cut tofu into cubes and blanch to remove the beany taste. Heat oil, add minced ginger and garlic, stir-fry with chili bean paste until fragrant. Add tofu and stir-fry, add water and bring to a boil, garnish with green onion.",
                     "tofu, ginger, garlic, chili bean paste, green onion",
-                    "lunch,dinner,vegetarian"));
+                    "lunch, dinner, vegetarian"));
 
             presetRecipeService.addPresetRecipe(new PresetRecipe(
                     "Yu Xiang Shredded Pork",
@@ -63,7 +63,7 @@ public class PresetRecipeInitializer implements CommandLineRunner {
                     null,
                     "Cut pork into thin strips, marinate with salt and cooking wine. Stir-fry ginger and garlic until fragrant, add pork strip and stir-fry until cooked, then add fish-fragrant sauce and mix well.",
                     "pork, ginger, garlic, fish-fragrant sauce",
-                    "lunch,dinner"));
+                    "lunch, dinner"));
 
             presetRecipeService.addPresetRecipe(new PresetRecipe(
                     "Sweet and Sour Pork",
@@ -72,7 +72,7 @@ public class PresetRecipeInitializer implements CommandLineRunner {
                     null,
                     "Cut pork loin into strips, coat with egg and starch. Deep fry until golden brown. In another pan, mix sugar and vinegar to make sweet and sour sauce, add the pork and stir to coat.",
                     "pork loin, egg, starch, vinegar",
-                    "lunch,dinner"));
+                    "lunch, dinner"));
 
             presetRecipeService.addPresetRecipe(new PresetRecipe(
                     "Stir-fried Broccoli",
@@ -81,7 +81,7 @@ public class PresetRecipeInitializer implements CommandLineRunner {
                     null,
                     "Cut broccoli into small florets, blanch and drain. Heat oil, add garlic slice, stir-fry until fragrant, add broccoli and stir-fry with a pinch of salt.",
                     "broccoli, garlic",
-                    "lunch,dinner,vegetarian,vegan"));
+                    "lunch, dinner, vegetarian, vegan"));
 
             presetRecipeService.addPresetRecipe(new PresetRecipe(
                     "Spicy and Sour Shredded Potatoes",
@@ -90,7 +90,7 @@ public class PresetRecipeInitializer implements CommandLineRunner {
                     null,
                     "Cut potato into thin strips, rinse to remove starch. Heat oil, add dried chili, stir-fry until fragrant, add potato, and vinegar, stir evenly.",
                     "potato, dried chili, vinegar",
-                    "lunch,dinner,vegetarian,vegan"));
+                    "lunch, dinner, vegetarian, vegan"));
 
             presetRecipeService.addPresetRecipe(new PresetRecipe(
                     "Egg Fried Rice",
@@ -99,7 +99,7 @@ public class PresetRecipeInitializer implements CommandLineRunner {
                     null,
                     "Beat egg, heat oil in a pan and cook the egg until firm. Add cold rice and stir-fry evenly. Season with salt and garnish with green onion.",
                     "egg, cold rice, green onion",
-                    "breakfast,lunch,dinner"));
+                    "breakfast, lunch, dinner"));
 
             presetRecipeService.addPresetRecipe(new PresetRecipe(
                     "Chicken with Mushrooms",
@@ -108,7 +108,7 @@ public class PresetRecipeInitializer implements CommandLineRunner {
                     null,
                     "Combine chicken and mushroom in a pot, add water, ginger slice, and cooking wine. Simmer over medium heat for 40 minutes, add salt to taste.",
                     "chicken, mushroom, ginger",
-                    "lunch,dinner"));
+                    "lunch, dinner"));
 
             presetRecipeService.addPresetRecipe(new PresetRecipe(
                     "Shrimp with Scrambled Egg",
@@ -117,7 +117,7 @@ public class PresetRecipeInitializer implements CommandLineRunner {
                     null,
                     "Peel shrimp and marinate with a pinch of salt. Beat egg. Heat oil, pour in egg, add shrimp, and stir-fry until egg is set.",
                     "shrimp, egg",
-                    "breakfast,lunch"));
+                    "breakfast, lunch"));
 
             presetRecipeService.addPresetRecipe(new PresetRecipe(
                     "Tomato Scrambled Egg",
@@ -126,7 +126,7 @@ public class PresetRecipeInitializer implements CommandLineRunner {
                     null,
                     "Cut tomato into small wedges. Beat egg with a pinch of salt. Heat oil in a pan, pour in egg, cook until halfway done, add tomato, and stir-fry until combined and tomato is soft.",
                     "tomato, egg",
-                    "breakfast,lunch,dinner"));
+                    "breakfast, lunch, dinner"));
 
             presetRecipeService.addPresetRecipe(new PresetRecipe(
                     "Tomato Egg Soup",
@@ -135,7 +135,7 @@ public class PresetRecipeInitializer implements CommandLineRunner {
                     null,
                     "Cut tomato into small pieces. Boil water, add tomato and simmer until soft. Beat egg and slowly pour into the soup while stirring gently. Season with salt and garnish with green onion.",
                     "tomato, egg, water",
-                    "lunch,dinner,vegetarian"));
+                    "lunch, dinner, vegetarian"));
 
             System.out.println("Initialized preset recipes with Chinese cuisine.");
         } else {
