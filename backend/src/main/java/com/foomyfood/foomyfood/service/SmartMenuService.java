@@ -8,17 +8,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.foomyfood.foomyfood.database.db_repository.RecipeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.foomyfood.foomyfood.database.PresetRecipe;
 import com.foomyfood.foomyfood.database.Recipe;
+import com.foomyfood.foomyfood.database.db_repository.RecipeRepository;
 import com.foomyfood.foomyfood.database.db_service.PreferredIngredientsService;
 import com.foomyfood.foomyfood.database.db_service.PresetRecipeService;
 import com.foomyfood.foomyfood.database.db_service.RecipeService;
 import com.foomyfood.foomyfood.database.db_service.UserIngredientService;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SmartMenuService {
@@ -40,24 +40,22 @@ public class SmartMenuService {
     private Map<String, Double> getUserIngredientsWithPreferenceWeights(Long userId) {
         // Fetch preferred ingredients with their cooking counts
         Map<String, Integer> preferredIngredients = preferredIngredientsService.getPreferredIngredientsWithCookCount(userId);
-
-        // Sort preferred ingredients by cooking frequency in descending order
-        List<Map.Entry<String, Integer>> sortedPreferredIngredients = preferredIngredients.entrySet().stream()
-                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue())) // Descending order of frequency
-                .collect(Collectors.toList());
-
-        // Assign weights inversely proportional to rank of ingredient
+    
+        // Create a map to store the final weights
         Map<String, Double> preferredWeights = new HashMap<>();
-        for (int i = 0; i < sortedPreferredIngredients.size(); i++) {
-            Map.Entry<String, Integer> entry = sortedPreferredIngredients.get(i);
-            String ingredient = entry.getKey();
-            double weight = 1.0 / (i + 1); // Weight decreases as rank increases
-            preferredWeights.put(ingredient.toLowerCase(), weight); // Normalize to lowercase for consistency
-            // System.out.println("Ingredient: " + ingredient + ", Rank: " + (i + 1) + ", Weight: " + weight);
-
+    
+        // Iterate over the preferred ingredients and assign weights based on cooking counts
+        for (Map.Entry<String, Integer> entry : preferredIngredients.entrySet()) {
+            String ingredient = entry.getKey().toLowerCase(); // Normalize to lowercase for consistency
+            int cookCount = entry.getValue();
+    
+            // Weight is directly the cooking count
+            preferredWeights.put(ingredient, (double) cookCount);
         }
+    
         return preferredWeights;
     }
+    
 
     private double getWeight(Map<String, Double> ingredientWeights, String ingredient, Boolean useExpirationWeight) {
         double weight = ingredientWeights != null ? ingredientWeights.getOrDefault(ingredient.toLowerCase(), 0.0) : 1.0;
