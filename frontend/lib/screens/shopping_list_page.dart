@@ -24,6 +24,24 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       Provider.of<ShoppingListProvider>(context, listen: false)
           .initializeShoppingList();
     });
+
+    final Set<String> _selectedCategories = {}; // 选择的类别
+    String _searchQuery = ""; // 搜索关键字
+
+    @override
+    void initState() {
+      super.initState();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Provider.of<ShoppingListProvider>(context, listen: false)
+            .initializeShoppingList();
+      });
+    }
+  }
+
+  void _updateSearchQuery(String query) {
+    setState(() {
+      _searchQuery = query.trim().toLowerCase(); // 更新搜索关键字
+    });
   }
 
   void _navigateToAddShoppingItem() {
