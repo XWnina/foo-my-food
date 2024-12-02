@@ -189,7 +189,10 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
           'category': _selectedCategory,
           'storageMethod': _selectedStorageMethod,
           'ingredientId': widget.ingredient.ingredientId,
-          'userQuantity': int.parse(_quantityController.text),
+          'userQuantity': _quantityController.text.isNotEmpty
+              ? int.parse(_quantityController.text)
+              : widget.ingredient.baseQuantity,
+
           'name': _nameController.text.trim(),
           'expirationDate': _expirationDateController.text,
           'calories': _caloriesController.text.isNotEmpty
@@ -222,7 +225,9 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
             category: _selectedCategory!,
             storageMethod: _selectedStorageMethod!,
             expirationDate: _expirationDateController.text,
-            baseQuantity: int.parse(_quantityController.text),
+            baseQuantity: _quantityController.text.isNotEmpty
+                ? int.parse(_quantityController.text)
+                : widget.ingredient.baseQuantity,
             calories: _caloriesController.text.isNotEmpty
                 ? double.parse(_caloriesController.text)
                 : 0.0,
@@ -256,7 +261,9 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
           category: _selectedCategory!,
           storageMethod: _selectedStorageMethod!,
           expirationDate: _expirationDateController.text,
-          baseQuantity: int.parse(_quantityController.text),
+          baseQuantity: _quantityController.text.isNotEmpty
+              ? int.parse(_quantityController.text)
+              : widget.ingredient.baseQuantity,
           calories: _caloriesController.text.isNotEmpty
               ? double.parse(_caloriesController.text)
               : 0.0,

@@ -97,9 +97,9 @@ public class FoomyfoodApplication implements CommandLineRunner {
         // Step 2: Print details in a human-readable format
         printRecipesInDetails(recipeDetails);
         // Step 3: Print IDs based on conditions
-        // printRecipeIDs(userId, sourceChoice, useExpiring, usePreference);
+        printRecipeIDs(userId, sourceChoice, useExpiring, usePreference);
         // Step 4: Test JSON output
-        // testJsonOutput(userId, sourceChoice == 2, useExpiring, usePreference);
+        testJsonOutput(userId, sourceChoice == 2, useExpiring, usePreference);
     }
 
     private void printRecipesInDetails(List<Map<String, Object>> recipes) {

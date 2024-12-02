@@ -8,17 +8,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.foomyfood.foomyfood.database.db_repository.RecipeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.foomyfood.foomyfood.database.PresetRecipe;
 import com.foomyfood.foomyfood.database.Recipe;
+import com.foomyfood.foomyfood.database.db_repository.RecipeRepository;
 import com.foomyfood.foomyfood.database.db_service.PreferredIngredientsService;
 import com.foomyfood.foomyfood.database.db_service.PresetRecipeService;
 import com.foomyfood.foomyfood.database.db_service.RecipeService;
 import com.foomyfood.foomyfood.database.db_service.UserIngredientService;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SmartMenuService {
@@ -41,21 +41,18 @@ public class SmartMenuService {
         // Fetch preferred ingredients with their cooking counts
         Map<String, Integer> preferredIngredients = preferredIngredientsService.getPreferredIngredientsWithCookCount(userId);
 
-        // Sort preferred ingredients by cooking frequency in descending order
-        List<Map.Entry<String, Integer>> sortedPreferredIngredients = preferredIngredients.entrySet().stream()
-                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue())) // Descending order of frequency
-                .collect(Collectors.toList());
-
-        // Assign weights inversely proportional to rank of ingredient
+        // Create a map to store the final weights
         Map<String, Double> preferredWeights = new HashMap<>();
-        for (int i = 0; i < sortedPreferredIngredients.size(); i++) {
-            Map.Entry<String, Integer> entry = sortedPreferredIngredients.get(i);
-            String ingredient = entry.getKey();
-            double weight = 1.0 / (i + 1); // Weight decreases as rank increases
-            preferredWeights.put(ingredient.toLowerCase(), weight); // Normalize to lowercase for consistency
-            // System.out.println("Ingredient: " + ingredient + ", Rank: " + (i + 1) + ", Weight: " + weight);
 
+        // Iterate over the preferred ingredients and assign weights based on cooking counts
+        for (Map.Entry<String, Integer> entry : preferredIngredients.entrySet()) {
+            String ingredient = entry.getKey().toLowerCase(); // Normalize to lowercase for consistency
+            int cookCount = entry.getValue();
+
+            // Weight is directly the cooking count
+            preferredWeights.put(ingredient, (double) cookCount);
         }
+
         return preferredWeights;
     }
 
@@ -130,7 +127,13 @@ public class SmartMenuService {
                         matchedIngredients.add(currentUserIngredient);
                         double weight = getWeight(ingredientWeights, currentUserIngredient, useExpirationWeight);
                         ingredientScore += weight;
-                        matchedCount++;
+                        if (usePreferenceWeight) {
+                            if (weight != 0) {
+                                matchedCount++;
+                            }
+                        } else {
+                            matchedCount++;
+                        }
                     }
                 }
             }
@@ -274,6 +277,10 @@ public class SmartMenuService {
         List<Recipe> userRecipes = recipeService.getRecipesByUserId(userId);
         List<PresetRecipe> allPresetRecipes = presetRecipeService.getAllPresetRecipes();
         List<PresetRecipe> uniquePresetRecipes = allPresetRecipes;
+        // for (int k = 0; k < userRecipes.size(); k++) {
+        //     System.out.println("User recipe: " + userRecipes.get(k).getDishName());
+        // }
+        // System.out.println("================================");
 
         for (int i = 0; i < allPresetRecipes.size(); i++) {
             for (int j = 0; j < userRecipes.size(); j++) {
@@ -285,54 +292,34 @@ public class SmartMenuService {
                 String currentUserRecipeDescription = userRecipes.get(j).getDescription();
                 String currentPresetRecipeDescription = allPresetRecipes.get(i).getDescription();
 
-                // System.out.println("Current user recipe name: " + currentUserRecipeName);
-                // System.out.println("Current preset recipe name: " + currentPresetRecipeName);
-                // System.out.println("Current user recipe ingredient: " + currentUserIngredient);
-                // System.out.println("Current preset recipe ingredient: " + currentPresetRecipeIngredient);
-                // System.out.println("Current user recipe description: " + currentUserRecipeDescription);
-                // System.out.println("Current preset recipe description: " + currentPresetRecipeDescription);
-                // System.out.println("================================");
-                // System.out.println("================================");
-                // If the user recipe's name is null, set it to an empty string
                 if (currentUserRecipeDescription == null) {
                     currentUserRecipeDescription = "";
                 }
-                // If one of the user recipe's name, description, and ingredients dismatch the preset recipe's name, description, and ingredients, add the preset recipe to the list of unique preset recipes
-                // if (!(currentUserRecipeName.equals(currentPresetRecipeName)
-                //         && currentUserRecipeDescription.equals(currentPresetRecipeDescription)
-                //         && currentUserIngredient.equals(currentPresetRecipeIngredient))) {
-                //     uniquePresetRecipes.add(allPresetRecipes.get(i));
-                //     System.out.println("!!!!!!!!!!!!!!!!!!!!Added preset recipe to unique preset recipes!!!!!!!!!!!!!!!!!!!!");
-                //     System.out.println("Current preset recipe name: " + currentPresetRecipeName);
-                //     break;
-                // }
 
-                if (!currentUserRecipeName.equals(currentPresetRecipeName)) {
-                    // System.out.println("NAME MISMATCH");
-                    // System.out.println("Current user recipe name: " + currentUserRecipeName);
+                // If the recipe name, ingredients, and description are the same, remove the preset recipe from the list
+                if (currentUserRecipeName.equals(currentPresetRecipeName) && currentUserIngredient.equals(currentPresetRecipeIngredient)
+                        && currentUserRecipeDescription.equals(currentPresetRecipeDescription)) {
+                    // System.out.println("================================");
+                    // System.out.println("RECIPE MATCHED");
+                    uniquePresetRecipes.remove(allPresetRecipes.get(i));
                     break;
-                } else if (!currentUserIngredient.equals(currentPresetRecipeIngredient)) {
-                    // System.out.println("INGREDIENT MISMATCH");
-                    // System.out.println("Current user recipe name: " + currentUserRecipeName);
-                    break;
-                } else if (!currentUserRecipeDescription.equals(currentPresetRecipeDescription)) {
-                    // System.out.println("DESCRIPTION MISMATCH");
-                    // System.out.println("Current user recipe name: " + currentUserRecipeName);
-                    break;
-                } else {
-                    // System.out.println("ALL MATCH DELETE FROM LIST");
-                    // uniquePresetRecipes.remove(allPresetRecipes.get(i));
-                    break;
+                // } else {
+                //     System.out.println("NAME DIFFERENT");
+                //     System.out.println("User:" + currentUserRecipeName);
+                //     System.out.println(currentPresetRecipeName);
+                //     System.out.println("INGREDIENT DIFFERENT");
+                //     System.out.println("User:" + currentUserIngredient);
+                //     System.out.println(currentPresetRecipeIngredient);
+                //     System.out.println("DESCRIPTION DIFFERENT");
+                //     System.out.println("User:" + currentUserRecipeDescription);
+                //     System.out.println(currentPresetRecipeDescription);
+                //     System.out.println("================================");
                 }
+
             }
 
         }
-        // System.out.println("+++++++++++++++++++++++++++++++");
-        // for (int i = 0; i < uniquePresetRecipes.size(); i++) {
-        //     System.out.println(i);
-        //     System.out.println(uniquePresetRecipes.get(i).getDishName());
-        //     System.out.println(uniquePresetRecipes.get(i).getIngredients());
-        // }
+
         return uniquePresetRecipes;
     }
 
