@@ -47,39 +47,45 @@ class _AddRecipePageState extends State<AddRecipePage> {
     }
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile = await showModalBottomSheet(
-      context: context,
-      builder: (context) => Wrap(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.camera_alt),
-            title: const Text('Take a photo'),
-            onTap: () async {
-              Navigator.pop(context);
+  // Future<void> _pickImage() async {
+  //   final pickedFile = await showModalBottomSheet(
+  //     context: context,
+  //     builder: (context) => Wrap(
+  //       children: [
+  //         // ListTile(
+  //         //   leading: const Icon(Icons.camera_alt),
+  //         //   title: const Text('Take a photo'),
+  //         //   onTap: () async {
+  //         //     Navigator.pop(context);
 
-              final picked =
-                  await ImagePicker().pickImage(source: ImageSource.camera);
-              if (picked != null) {
-                _handleImagePicked(picked);
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.image),
-            title: const Text('Choose from gallery'),
-            onTap: () async {
-              Navigator.pop(context);
-              final picked =
-                  await ImagePicker().pickImage(source: ImageSource.gallery);
-              if (picked != null) {
-                _handleImagePicked(picked);
-              }
-            },
-          ),
-        ],
-      ),
-    );
+  //         //     final picked =
+  //         //         await ImagePicker().pickImage(source: ImageSource.camera);
+  //         //     if (picked != null) {
+  //         //       _handleImagePicked(picked);
+  //         //     }
+  //         //   },
+  //         // ),
+  //         ListTile(
+  //           leading: const Icon(Icons.image),
+  //           title: const Text('Choose from gallery'),
+  //           onTap: () async {
+  //             Navigator.pop(context);
+  //             final picked =
+  //                 await ImagePicker().pickImage(source: ImageSource.gallery);
+  //             if (picked != null) {
+  //               _handleImagePicked(picked);
+  //             }
+  //           },
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+  Future<void> _pickImage() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      _handleImagePicked(picked);
+    }
   }
 
   void _handleImagePicked(XFile pickedFile) {
@@ -191,8 +197,20 @@ class _AddRecipePageState extends State<AddRecipePage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            // GestureDetector(
+            //   onTap: _pickImage,
+            //   child: _image != null
+            //       ? Image.file(_image!,
+            //           height: 100, width: 100, fit: BoxFit.cover)
+            //       : Container(
+            //           height: 100,
+            //           width: 100,
+            //           color: greyBackgroundColor,
+            //           child: const Icon(Icons.camera_alt),
+            //         ),
+            // ),
             GestureDetector(
-              onTap: _pickImage,
+              onTap: _pickImage, // 点击后直接打开图库
               child: _image != null
                   ? Image.file(_image!,
                       height: 100, width: 100, fit: BoxFit.cover)
@@ -200,9 +218,10 @@ class _AddRecipePageState extends State<AddRecipePage> {
                       height: 100,
                       width: 100,
                       color: greyBackgroundColor,
-                      child: const Icon(Icons.camera_alt),
+                      child: const Icon(Icons.image), // 更改为表示图库的图标
                     ),
             ),
+
             const SizedBox(height: 16),
             TextField(
               controller: _recipeNameController,

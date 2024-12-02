@@ -147,46 +147,55 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
     }
   }
 
+  // Future<void> _pickImage() async {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return SafeArea(
+  //         child: Wrap(
+  //           children: <Widget>[
+  //             ListTile(
+  //               leading: const Icon(Icons.camera_alt),
+  //               title: const Text('Take a photo'),
+  //               onTap: () async {
+  //                 Navigator.of(context).pop();
+  //                 final pickedFile =
+  //                     await ImagePicker().pickImage(source: ImageSource.camera);
+  //                 if (pickedFile != null) {
+  //                   setState(() {
+  //                     _imageFile = File(pickedFile.path);
+  //                   });
+  //                 }
+  //               },
+  //             ),
+  //             ListTile(
+  //               leading: const Icon(Icons.photo_library),
+  //               title: const Text('Choose from gallery'),
+  //               onTap: () async {
+  //                 Navigator.of(context).pop();
+  //                 final pickedFile = await ImagePicker()
+  //                     .pickImage(source: ImageSource.gallery);
+  //                 if (pickedFile != null) {
+  //                   setState(() {
+  //                     _imageFile = File(pickedFile.path);
+  //                   });
+  //                 }
+  //               },
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
   Future<void> _pickImage() async {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: Wrap(
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Take a photo'),
-                onTap: () async {
-                  Navigator.of(context).pop();
-                  final pickedFile =
-                      await ImagePicker().pickImage(source: ImageSource.camera);
-                  if (pickedFile != null) {
-                    setState(() {
-                      _imageFile = File(pickedFile.path);
-                    });
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from gallery'),
-                onTap: () async {
-                  Navigator.of(context).pop();
-                  final pickedFile = await ImagePicker()
-                      .pickImage(source: ImageSource.gallery);
-                  if (pickedFile != null) {
-                    setState(() {
-                      _imageFile = File(pickedFile.path);
-                    });
-                  }
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+    }
   }
 
   Future<void> _uploadImage() async {
@@ -429,10 +438,10 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                     ],
                   ),
             const SizedBox(height: 16),
-            if (!widget.isPresetRecipe) 
-            Text(
-              'Total Times Cooked: ${widget.recipe['cookCount'] ?? 0}',
-            ),
+            if (!widget.isPresetRecipe)
+              Text(
+                'Total Times Cooked: ${widget.recipe['cookCount'] ?? 0}',
+              ),
           ],
         ),
       ),

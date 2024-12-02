@@ -39,48 +39,67 @@ class CreateAccountState extends State<CreateAccount> {
 
   // 让用户从图库或相机选择图片
   // 选择图片并检测大小
-Future<void> _pickImage() async {
-  final pickedFile = await showModalBottomSheet<XFile?>(
-    context: context,
-    builder: (context) => Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        ListTile(
-          leading: const Icon(Icons.photo_library),
-          title: const Text('Choose from gallery'),
-          onTap: () async {
-            Navigator.pop(context, await ImagePicker().pickImage(source: ImageSource.gallery));
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.camera_alt),
-          title: const Text('Take a picture'),
-          onTap: () async {
-            Navigator.pop(context, await ImagePicker().pickImage(source: ImageSource.camera));
-          },
-        ),
-      ],
-    ),
-  );
+// Future<void> _pickImage() async {
+//   final pickedFile = await showModalBottomSheet<XFile?>(
+//     context: context,
+//     builder: (context) => Column(
+//       mainAxisSize: MainAxisSize.min,
+//       children: <Widget>[
+//         ListTile(
+//           leading: const Icon(Icons.photo_library),
+//           title: const Text('Choose from gallery'),
+//           onTap: () async {
+//             Navigator.pop(context, await ImagePicker().pickImage(source: ImageSource.gallery));
+//           },
+//         ),
+//         ListTile(
+//           leading: const Icon(Icons.camera_alt),
+//           title: const Text('Take a picture'),
+//           onTap: () async {
+//             Navigator.pop(context, await ImagePicker().pickImage(source: ImageSource.camera));
+//           },
+//         ),
+//       ],
+//     ),
+//   );
 
-  if (pickedFile != null) {
-    final imageFile = File(pickedFile.path);
+//   if (pickedFile != null) {
+//     final imageFile = File(pickedFile.path);
 
-    // 获取图片大小，单位为字节
-    final int imageSize = imageFile.lengthSync();
+//     // 获取图片大小，单位为字节
+//     final int imageSize = imageFile.lengthSync();
 
-    // 1MB = 1,048,576 字节
-    if (imageSize > 1048576) {
-      _showSnackBar('The selected image exceeds 1MB. Please choose a smaller image.');
-      return; // 如果图片大小超出限制，直接返回
+//     // 1MB = 1,048,576 字节
+//     if (imageSize > 1048576) {
+//       _showSnackBar('The selected image exceeds 1MB. Please choose a smaller image.');
+//       return; // 如果图片大小超出限制，直接返回
+//     }
+
+//     setState(() {
+//       _image = imageFile; // 更新图片文件
+//     });
+//   }
+// }
+
+  Future<void> _pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      final imageFile = File(pickedFile.path);
+
+      // 检查图片大小是否超过 1MB
+      final int imageSize = imageFile.lengthSync();
+      if (imageSize > 1048576) {
+        _showSnackBar(
+            'The selected image exceeds 1MB. Please choose a smaller image.');
+        return; // 如果图片大小超出限制，直接返回
+      }
+
+      setState(() {
+        _image = imageFile; // 更新图片文件
+      });
     }
-
-    setState(() {
-      _image = imageFile; // 更新图片文件
-    });
   }
-}
-
 
   // 验证用户名字段
   Future<void> _validateUsername(String username) async {
@@ -123,7 +142,8 @@ Future<void> _pickImage() async {
         _confirmPasswordController.text,
       );
       // 新增密码复杂度验证
-      _passwordInvalid = !HelperFunctions.checkPasswordRequirements(_passwordController.text);
+      _passwordInvalid =
+          !HelperFunctions.checkPasswordRequirements(_passwordController.text);
     });
   }
 
@@ -146,7 +166,8 @@ Future<void> _pickImage() async {
       setState(() {
         _isSubmitting = false; // 重置提交状态
       });
-      _showSnackBar('Password does not meet the requirements or passwords do not match.');
+      _showSnackBar(
+          'Password does not meet the requirements or passwords do not match.');
       return;
     }
 
@@ -200,8 +221,9 @@ Future<void> _pickImage() async {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-                builder: (context) =>
-                    SecurityQuestionSelectionPage(email: _emailController.text)), // 跳转到 SecurityQuestionSelectionPage
+                builder: (context) => SecurityQuestionSelectionPage(
+                    email: _emailController
+                        .text)), // 跳转到 SecurityQuestionSelectionPage
           );
           break; // 停止轮询
         }
@@ -240,9 +262,22 @@ Future<void> _pickImage() async {
             ),
 
             // 头像上传框
+            // Center(
+            //   child: GestureDetector(
+            //     onTap: _pickImage,
+            //     child: CircleAvatar(
+            //       radius: 50.0,
+            //       backgroundColor: greyBackgroundColor,
+            //       backgroundImage: _image != null ? FileImage(_image!) : null,
+            //       child: _image == null
+            //           ? Icon(Icons.camera_alt, color: greyIconColor, size: 30)
+            //           : null,
+            //     ),
+            //   ),
+            // ),
             Center(
               child: GestureDetector(
-                onTap: _pickImage,
+                onTap: _pickImage, // 直接调用 _pickImage 方法
                 child: CircleAvatar(
                   radius: 50.0,
                   backgroundColor: greyBackgroundColor,
@@ -253,6 +288,7 @@ Future<void> _pickImage() async {
                 ),
               ),
             ),
+
             const SizedBox(height: 20),
 
             // First Name 输入框

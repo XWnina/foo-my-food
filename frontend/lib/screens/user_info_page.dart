@@ -79,12 +79,13 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   // 选择图片（相机或图库）
-  Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await ImagePicker().pickImage(source: source);
+  Future<void> _pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       final imageFile = File(pickedFile.path);
 
-      // 获取图片大小，单位为字节，限制为1MB
+      // 检查图片大小是否超过 1MB
       final int imageSize = imageFile.lengthSync();
       if (imageSize > 1048576) {
         _showError(
@@ -96,42 +97,41 @@ class _UserProfileState extends State<UserProfile> {
         _image = imageFile;
       });
 
-      // 每次选择图片后，检查表单是否有效
-      _checkIfFormIsValid();
+      _checkIfFormIsValid(); // 检查表单是否有效
     }
   }
 
   // 打开底部菜单让用户选择图片来源
-  Future<void> _showImageSourceSelection() async {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.camera),
-                title: const Text('Take a photo'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _pickImage(ImageSource.camera); // 使用相机拍照
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from gallery'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _pickImage(ImageSource.gallery); // 从图库选择
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  // Future<void> _showImageSourceSelection() async {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return SafeArea(
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: <Widget>[
+  //             ListTile(
+  //               leading: const Icon(Icons.camera),
+  //               title: const Text('Take a photo'),
+  //               onTap: () {
+  //                 Navigator.of(context).pop();
+  //                 _pickImage(ImageSource.camera); // 使用相机拍照
+  //               },
+  //             ),
+  //             ListTile(
+  //               leading: const Icon(Icons.photo_library),
+  //               title: const Text('Choose from gallery'),
+  //               onTap: () {
+  //                 Navigator.of(context).pop();
+  //                 _pickImage(ImageSource.gallery); // 从图库选择
+  //               },
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   // 验证用户名
   void _validateUsername(String username) {
@@ -370,9 +370,24 @@ class _UserProfileState extends State<UserProfile> {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
+            // Center(
+            //   child: GestureDetector(
+            //     onTap: _showImageSourceSelection, // 打开图片来源选择
+            //     child: CircleAvatar(
+            //       radius: 50.0,
+            //       backgroundColor: greyBackgroundColor,
+            //       backgroundImage: _image != null
+            //           ? FileImage(_image!)
+            //           : (_avatarUrl != null ? NetworkImage(_avatarUrl!) : null),
+            //       child: _image == null && _avatarUrl == null
+            //           ? Icon(Icons.camera_alt, size: 30, color: greyIconColor)
+            //           : null,
+            //     ),
+            //   ),
+            // ),
             Center(
               child: GestureDetector(
-                onTap: _showImageSourceSelection, // 打开图片来源选择
+                onTap: _pickImage, // 点击时直接跳转到图库
                 child: CircleAvatar(
                   radius: 50.0,
                   backgroundColor: greyBackgroundColor,
