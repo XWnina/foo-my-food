@@ -25,6 +25,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
   final RecipeCollectionService _recipeCollectionService =
       RecipeCollectionService();
   Set<String> _favoriteRecipes = {};
+  bool _isLoading = false;
   List<Recipe> _myRecipes = [];
   List<Recipe> _presetRecipes = [];
   List<Recipe> _filteredMyRecipes = [];
@@ -56,12 +57,32 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
     _initializeData();
   }
 
+  @override
+  void dispose() {
+    // 清理 TextEditingController 以释放资源
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _initializeData() async {
-    await Future.wait([
-      _fetchRecipes(),
-      _fetchUserFavorites(),
-    ]);
-    _generateMealPlan();
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await Future.wait([
+        _fetchRecipes(),
+        _fetchUserFavorites(),
+      ]);
+      _generateMealPlan();
+    } finally {
+      if (mounted) {
+        // 检查是否仍然挂载
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _toggleFavorite(Recipe recipe, bool isPresetRecipe) async {
@@ -155,12 +176,16 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
 
       switch (_sortBy) {
         case 'expires_soon':
-          customRecipesUrl = '$baseApiUrl/recipes/custom/expiring?userId=${widget.userId}';
-          presetRecipesUrl = '$baseApiUrl/recipes/preset/expiring?userId=${widget.userId}';
+          customRecipesUrl =
+              '$baseApiUrl/recipes/custom/expiring?userId=${widget.userId}';
+          presetRecipesUrl =
+              '$baseApiUrl/recipes/preset/expiring?userId=${widget.userId}';
           break;
         case 'usually_cooked':
-          customRecipesUrl = '$baseApiUrl/recipes/custom/preference?userId=${widget.userId}';
-          presetRecipesUrl = '$baseApiUrl/recipes/preset/preference?userId=${widget.userId}';
+          customRecipesUrl =
+              '$baseApiUrl/recipes/custom/preference?userId=${widget.userId}';
+          presetRecipesUrl =
+              '$baseApiUrl/recipes/preset/preference?userId=${widget.userId}';
           break;
         case 'all_recipes':
           customRecipesUrl = '$baseApiUrl/myrecipes/user/${widget.userId}';
@@ -168,34 +193,39 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
           break;
         case 'what_i_have':
         default:
-          customRecipesUrl = '$baseApiUrl/recipes/custom?userId=${widget.userId}';
-          presetRecipesUrl = '$baseApiUrl/recipes/preset?userId=${widget.userId}';
+          customRecipesUrl =
+              '$baseApiUrl/recipes/custom?userId=${widget.userId}';
+          presetRecipesUrl =
+              '$baseApiUrl/recipes/preset?userId=${widget.userId}';
           break;
       }
       final customRecipesResponse = await http.get(Uri.parse(customRecipesUrl));
       final presetRecipesResponse = await http.get(Uri.parse(presetRecipesUrl));
-      if (customRecipesResponse.statusCode == 200 && presetRecipesResponse.statusCode == 200) {
-        final List<dynamic> customRecipeData = json.decode(customRecipesResponse.body);
-        final List<dynamic> presetRecipeData = json.decode(presetRecipesResponse.body);
+      if (customRecipesResponse.statusCode == 200 &&
+          presetRecipesResponse.statusCode == 200) {
+        final List<dynamic> customRecipeData =
+            json.decode(customRecipesResponse.body);
+        final List<dynamic> presetRecipeData =
+            json.decode(presetRecipesResponse.body);
 
         // setState(() {
         //   _myRecipes = customRecipeData.map((data) => Recipe.fromJson(data)).toList();
         //   _presetRecipes = presetRecipeData.map((data) => Recipe.fromJson(data)).toList();
         //   _applyFilters();
         // });
-            setState(() {
-            _myRecipes = customRecipeData.map((data) {
-              print('Custom Recipe Data: $data'); // 打印 custom recipe data
-              return Recipe.fromJson(data);
-            }).toList();
+        setState(() {
+          _myRecipes = customRecipeData.map((data) {
+            print('Custom Recipe Data: $data'); // 打印 custom recipe data
+            return Recipe.fromJson(data);
+          }).toList();
 
-            _presetRecipes = presetRecipeData.map((data) {
-              print('Preset Recipe Data: $data'); // 打印 preset recipe data
-              return Recipe.fromJson(data);
-            }).toList();
-            _applyFilters();
-          });
-          _generateMealPlan();
+          _presetRecipes = presetRecipeData.map((data) {
+            print('Preset Recipe Data: $data'); // 打印 preset recipe data
+            return Recipe.fromJson(data);
+          }).toList();
+          _applyFilters();
+        });
+        _generateMealPlan();
       } else {
         throw Exception('Failed to load recipes');
       }
@@ -204,9 +234,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
     }
   }
 
-
-
-    void _applyFilters() {
+  void _applyFilters() {
     setState(() {
       if (_selectedIngredients.isEmpty) {
         _filteredMyRecipes = _myRecipes;
@@ -230,7 +258,6 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
       // No need for additional sorting as the API now returns sorted results
     });
   }
-
 
   void _addIngredient(String ingredient) {
     if (ingredient.isNotEmpty && !_selectedIngredients.contains(ingredient)) {
@@ -293,7 +320,7 @@ class _SmartMenuPageState extends State<SmartMenuPage> {
     );
   }
 
-void _generateMealPlan() {
+  void _generateMealPlan() {
     if (_filteredMyRecipes.isEmpty && _filteredPresetRecipes.isEmpty) {
       setState(() {
         _mealPlan = {
@@ -305,7 +332,10 @@ void _generateMealPlan() {
       return;
     }
 
-    List<Recipe> allRecipes = [..._filteredMyRecipes, ..._filteredPresetRecipes];
+    List<Recipe> allRecipes = [
+      ..._filteredMyRecipes,
+      ..._filteredPresetRecipes
+    ];
 
     /// New: Create a copy of allRecipes to modify
     List<Recipe> availableRecipes = List.from(allRecipes);
@@ -319,19 +349,19 @@ void _generateMealPlan() {
     });
   }
 
-
   Recipe? _getRandomRecipeByLabel(List<Recipe> recipes, String label) {
-    final matchingRecipes = recipes.where((recipe) =>
-      recipe.labels?.toLowerCase().contains(label.toLowerCase()) ?? false
-    ).toList();
+    final matchingRecipes = recipes
+        .where((recipe) =>
+            recipe.labels?.toLowerCase().contains(label.toLowerCase()) ?? false)
+        .toList();
     if (matchingRecipes.isEmpty) return null;
     matchingRecipes.shuffle();
     Recipe selectedRecipe = matchingRecipes.first;
+
     /// New: Remove the selected recipe from the available recipes
     recipes.remove(selectedRecipe);
     return selectedRecipe;
   }
-
 
   Future<void> _getMatchingIngredients(String query) async {
     try {
@@ -389,90 +419,95 @@ void _generateMealPlan() {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(),
+            )
+          : Column(
               children: [
-                if (_selectedIngredients.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: _buildIngredientChips(),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      if (_selectedIngredients.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: _buildIngredientChips(),
+                        ),
+                      TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search ingredients...',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            icon: Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                                _showDropdown = false;
+                                _showNoResultsMessage = false;
+                              });
+                            },
+                          ),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value;
+                            _showNoResultsMessage = false;
+                          });
+                          if (value.isNotEmpty) {
+                            _getMatchingIngredients(value);
+                          } else {
+                            setState(() {
+                              _showDropdown = false;
+                            });
+                          }
+                        },
+                        onSubmitted: (value) {
+                          _addIngredient(value);
+                        },
+                      ),
+                    ],
                   ),
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search ingredients...',
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() {
-                          _searchQuery = '';
-                          _showDropdown = false;
-                          _showNoResultsMessage = false;
-                        });
+                ),
+                if (_showDropdown)
+                  Container(
+                    constraints: BoxConstraints(maxHeight: 200),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: _matchingIngredients.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(_matchingIngredients[index]),
+                          onTap: () {
+                            _addIngredient(_matchingIngredients[index]);
+                          },
+                        );
                       },
                     ),
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                      _showNoResultsMessage = false;
-                    });
-                    if (value.isNotEmpty) {
-                      _getMatchingIngredients(value);
-                    } else {
-                      setState(() {
-                        _showDropdown = false;
-                      });
-                    }
-                  },
-                  onSubmitted: (value) {
-                    _addIngredient(value);
-                  },
+                if (_showNoResultsMessage)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      'No matching ingredients found.',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                Expanded(
+                  child: ListView(
+                    children: [
+                      _buildRecipeSection('My Recipes', _filteredMyRecipes),
+                      _buildRecipeSection(
+                          'Preset Recipes', _filteredPresetRecipes),
+                      _buildMealPlanSection(),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-          if (_showDropdown)
-            Container(
-              constraints: BoxConstraints(maxHeight: 200),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _matchingIngredients.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(_matchingIngredients[index]),
-                    onTap: () {
-                      _addIngredient(_matchingIngredients[index]);
-                    },
-                  );
-                },
-              ),
-            ),
-          if (_showNoResultsMessage)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'No matching ingredients found.',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-          Expanded(
-            child: ListView(
-              children: [
-                _buildRecipeSection('My Recipes', _filteredMyRecipes),
-                _buildRecipeSection('Preset Recipes', _filteredPresetRecipes),
-                _buildMealPlanSection(),
-              ],
-            ),
-          ),
-        ],
-      ),
       bottomNavigationBar: Container(
         color: AppColors.backgroundColor(context),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -515,20 +550,22 @@ void _generateMealPlan() {
       ),
     );
   }
-Future<void> _copyPresetRecipe(Recipe recipe) async {
+
+  Future<void> _copyPresetRecipe(Recipe recipe) async {
     try {
       //print(recipe.name.toString());
       final response = await http.post(
         Uri.parse('$baseApiUrl/recipes/copy'), // 替换为你的 API URL
         body: {
-        'userId': widget.userId,
-        'presetRecipeId': recipe.id.toString(),
-      },
+          'userId': widget.userId,
+          'presetRecipeId': recipe.id.toString(),
+        },
       );
       print(response.statusCode);
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${recipe.name} has been added to your recipes!')),
+          SnackBar(
+              content: Text('${recipe.name} has been added to your recipes!')),
         );
         _fetchRecipes(); // Refresh the recipe list
       } else {
@@ -541,7 +578,6 @@ Future<void> _copyPresetRecipe(Recipe recipe) async {
       print('Error copying recipe: $e');
     }
   }
-
 
   Widget _buildRecipeSection(String title, List<Recipe> recipes) {
     final bool isPresetRecipe = title == 'Preset Recipes';
@@ -564,7 +600,7 @@ Future<void> _copyPresetRecipe(Recipe recipe) async {
                   Icon(Icons.no_meals, size: 48, color: Colors.grey),
                   SizedBox(height: 8),
                   Text(
-                    isPresetRecipe 
+                    isPresetRecipe
                         ? 'No preset recipes available for your search'
                         : 'No recipes found. Try different ingredients or filters.',
                     textAlign: TextAlign.center,
@@ -668,14 +704,17 @@ Future<void> _copyPresetRecipe(Recipe recipe) async {
                             Text(
                               'Calories: ${recipe.calories} kcal',
                               style: TextStyle(
-                                  color: AppColors.cardExpiresTextColor(context),
+                                  color:
+                                      AppColors.cardExpiresTextColor(context),
                                   fontSize: 12),
                             ),
-                            if (recipe.labels != null && recipe.labels!.isNotEmpty)
+                            if (recipe.labels != null &&
+                                recipe.labels!.isNotEmpty)
                               Wrap(
                                 spacing: 4,
                                 runSpacing: 4,
-                                children: recipe.labels!.split(', ').map((label) {
+                                children:
+                                    recipe.labels!.split(', ').map((label) {
                                   return Container(
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 2, horizontal: 4),
@@ -706,7 +745,8 @@ Future<void> _copyPresetRecipe(Recipe recipe) async {
                                         builder: (BuildContext context) {
                                           return AlertDialog(
                                             title: Text('Confirm Copy'),
-                                            content: Text('Are you sure you want to copy this recipe to My Recipes?'),
+                                            content: Text(
+                                                'Are you sure you want to copy this recipe to My Recipes?'),
                                             actions: [
                                               TextButton(
                                                 onPressed: () {
@@ -728,18 +768,19 @@ Future<void> _copyPresetRecipe(Recipe recipe) async {
                                     },
                                     color: AppColors.appBarColor(context),
                                   ),
-                                if (!isPresetRecipe)
-                                  SizedBox(width: 48),
+                                if (!isPresetRecipe) SizedBox(width: 48),
                                 IconButton(
                                   icon: Icon(
                                     _isRecipeFavorited(recipe, isPresetRecipe)
                                         ? Icons.star
                                         : Icons.star_border,
-                                    color: _isRecipeFavorited(recipe, isPresetRecipe)
+                                    color: _isRecipeFavorited(
+                                            recipe, isPresetRecipe)
                                         ? Colors.yellow
                                         : Colors.grey,
                                   ),
-                                  onPressed: () => _toggleFavorite(recipe, isPresetRecipe),
+                                  onPressed: () =>
+                                      _toggleFavorite(recipe, isPresetRecipe),
                                 ),
                               ],
                             ),
@@ -769,7 +810,8 @@ Future<void> _copyPresetRecipe(Recipe recipe) async {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
-            ..._mealPlan.entries.map((entry) => _buildMealItem(entry.key, entry.value)),
+            ..._mealPlan.entries
+                .map((entry) => _buildMealItem(entry.key, entry.value)),
             SizedBox(height: 16),
             ElevatedButton(
               onPressed: _generateMealPlan,
@@ -787,18 +829,22 @@ Future<void> _copyPresetRecipe(Recipe recipe) async {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             mealType.capitalize(),
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          Text(
-            recipe != null
-                ? '${recipe.name} (${recipe.calories} kcal)'
-                : 'No suitable recipe found',
-            style: TextStyle(
-              color: recipe != null ? Colors.black : Colors.grey,
+          SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              recipe != null
+                  ? '${recipe.name} (${recipe.calories} kcal)'
+                  : 'No suitable recipe found',
+              style: TextStyle(
+                color: recipe != null ? Colors.black : Colors.grey,
+              ),
+              overflow: TextOverflow.visible, // 确保换行显示
             ),
           ),
         ],
@@ -846,45 +892,25 @@ Future<void> _copyPresetRecipe(Recipe recipe) async {
             ListTile(
               title: Text('What I have'),
               onTap: () {
-                setState(() {
-                  _sortBy = 'what_i_have';
-                  _applyFilters();
-                });
-                Navigator.pop(context);
-                 _fetchRecipes();
+                _changeModeAndFetchRecipes('what_i_have');
               },
             ),
             ListTile(
               title: Text('Expires soon'),
               onTap: () {
-                setState(() {
-                  _sortBy = 'expires_soon';
-                  _applyFilters();
-                });
-                Navigator.pop(context);
-                 _fetchRecipes();
+                _changeModeAndFetchRecipes('expires_soon');
               },
             ),
             ListTile(
               title: Text('Usually cooked'),
               onTap: () {
-                setState(() {
-                  _sortBy = 'usually_cooked';
-                  _applyFilters();
-                });
-                Navigator.pop(context);
-                 _fetchRecipes();
+                _changeModeAndFetchRecipes('usually_cooked');
               },
             ),
             ListTile(
               title: Text('All Recipes'),
               onTap: () {
-                setState(() {
-                  _sortBy = 'all_recipes';
-                  _applyFilters();
-                });
-                Navigator.pop(context);
-                _fetchRecipes();
+                _changeModeAndFetchRecipes('all_recipes');
               },
             ),
           ],
@@ -892,7 +918,24 @@ Future<void> _copyPresetRecipe(Recipe recipe) async {
       },
     );
   }
+
+  Future<void> _changeModeAndFetchRecipes(String newMode) async {
+    Navigator.pop(context); // 关闭 Bottom Sheet
+    setState(() {
+      _isLoading = true; // 开始加载
+      _sortBy = newMode;
+    });
+
+    await _fetchRecipes(); // 获取新数据
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false; // 数据加载完成
+      });
+    }
+  }
 }
+
 extension StringExtension on String {
   String capitalize() {
     return "${this[0].toUpperCase()}${this.substring(1)}";

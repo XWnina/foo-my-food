@@ -189,10 +189,9 @@ class FoodItemDetailPageState extends State<FoodItemDetailPage> {
           'category': _selectedCategory,
           'storageMethod': _selectedStorageMethod,
           'ingredientId': widget.ingredient.ingredientId,
-          'userQuantity': _quantityController.text.isNotEmpty
+          'baseQuantity': _quantityController.text.isNotEmpty
               ? int.parse(_quantityController.text)
               : widget.ingredient.baseQuantity,
-
           'name': _nameController.text.trim(),
           'expirationDate': _expirationDateController.text,
           'calories': _caloriesController.text.isNotEmpty

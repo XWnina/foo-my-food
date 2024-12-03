@@ -50,7 +50,7 @@ class Recipe {
       description: json['description'] ?? '',
       videoLink: json['videoLink'] ?? '',
       // Highlight: Handle both 'imageURL' and 'image' fields
-      imageUrl: json['imageURL'] ?? json['image'] ?? '',
+      imageUrl: json['imageURL'] ?? json['image'] ?? json['imageUrl'] ?? '',
     );
   }
 

@@ -404,37 +404,46 @@ class _RecipeDetailPageState extends State<RecipeDetailPage> {
                     ),
                   )
                 : Row(
+                    crossAxisAlignment: CrossAxisAlignment.start, // 确保内容从顶部对齐
                     children: [
-                      const Text('Video Link: '),
+                      const Text(
+                        'Video Link: ',
+                        style: TextStyle(fontSize: 16),
+                      ),
                       if (widget.recipe['videoLink'] != null &&
                           widget.recipe['videoLink'].isNotEmpty)
-                        GestureDetector(
-                          onTap: () async {
-                            final url = Uri.parse(widget.recipe['videoLink']);
-                            if (await canLaunchUrl(url)) {
-                              await launchUrl(url,
-                                  mode: LaunchMode.externalApplication);
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Could not launch ${widget.recipe['videoLink']}',
+                        Flexible(
+                          child: GestureDetector(
+                            onTap: () async {
+                              final url = Uri.parse(widget.recipe['videoLink']);
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url,
+                                    mode: LaunchMode.externalApplication);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                        'Could not launch ${widget.recipe['videoLink']}'),
                                   ),
-                                ),
-                              );
-                            }
-                          },
-                          child: Text(
-                            widget.recipe['videoLink'],
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.blue,
-                              decoration: TextDecoration.underline,
+                                );
+                              }
+                            },
+                            child: Text(
+                              widget.recipe['videoLink'],
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.blue,
+                                decoration: TextDecoration.underline,
+                              ),
+                              softWrap: true, // 启用自动换行
                             ),
                           ),
                         )
                       else
-                        Text('No video link for this recipe'),
+                        const Text(
+                          'No video link for this recipe',
+                          style: TextStyle(fontSize: 16),
+                        ),
                     ],
                   ),
             const SizedBox(height: 16),
